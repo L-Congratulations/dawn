@@ -199,3 +199,14 @@ element1~element2	p~ul	选择p元素之后的每一个ul元素	3
 6.3、固定定位：position: fixed 相对浏览器窗口进行定位。因此当滚动产生时，固定定位元素依然处于窗口的某个固定位置。
 6.4、粘性定位：position: sticky 是相对定位和固定定位的结合。默认情况下表现为相对定位，当浏览器窗口顶端与元素的距离等于 top 属性的值时，
 转变为固定定位。
+
+七、居中：
+.space {
+  width: 100vw;
+  height: 100vh;  /* 设置宽高以显示居中效果 */
+  display: flex;  /* 弹性布局 */
+  align-items: center;  /* 垂直居中 */
+  justify-content: center;  /* 水平居中 */
+}
+
+八、http
