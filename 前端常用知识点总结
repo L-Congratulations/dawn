@@ -15,7 +15,110 @@ git push origin master 把当前本地库里的改动推送到远程库(origin)�
 2.1、结构清晰：便于人理解维护。有利于搜索引擎及爬虫识别页面信息。
 2.2、即使没有css等样式效果的情况下也能呈现较好的内容结构与代码结构
 
-三、css选择器：选择出想要的元素。
+三、css选择器： 选择出我们需要添加样式的html元素。
+3.1、元素选择器：
+p {
+  color: red;
+}
+3.2、ID和类选择器：
+#notification {
+  font-size: 24px;
+}
+3.3、通用选择器：
+* {
+  box-sizing: border-box;
+}
+3.4、属性选择器：
+[attr]  [attr] 选择包含 attr 属性的所有元素，不论 attr 的值为何：
+[disabled] {
+  cursor: not-allowed;
+}
+
+[attr=val]  [attr=val] 仅选择 attr 属性被赋值为 val 的所有元素：
+[data-color="gray"] {
+  color: #ccc;
+}
+[attr~=val] [attr~=val] 仅选择 attr 属性的值（以空格间隔出多个值）中有包含 val 值的所有元素，比如位于被空格分隔的多个类（class）中的一个类。
+
+[attr*=val] [attr*=val] 选择 attr 属性的值中包含字符串 val 的元素：
+[title*="fuck"] {
+  display: none;
+}
+[attr^=val] [attr^=val] 选择 attr 属性的值以 val 开头（包括val）的元素：
+[href^="http://"] {
+  background-color: #f0ad4e;
+}
+[attr$=val] [attr$=val] 选择 attr 属性的值以 val 结尾（包括val）的元素：
+[src$="gif"] {
+  border: 1px solid #ccc;
+}
+[attr|=val] [attr|=val] 选择 attr 属性的值以 val（包括val）或 val-开头的元素（-用来处理语言编码）：
+[lang|="zh"] {
+  font-family: '微软雅黑';
+}
+3.5、伪类选择器：
+a:link { ... }
+a:visited { ... }
+a:hover { ... }
+a:active { ... }
+li:first-child { ... }
+li:last-child { ... }
+body :not(p) { ... }
+p:not(.warning) { ... }
+
+3.6、伪元素
+::after
+
+::after
+
+.clearfix::after {
+  content: '';
+  clear: both;
+  display: block;
+}
+::before
+
+::before
+
+.happy::before {
+  content: '😁';
+}
+::selection
+
+::selection 应用于文档中被用户高亮的部分（比如鼠标选中的部分）。
+
+p::selection {
+  color: white;
+  background: blue;
+}
+::backdrop
+
+::backdrop 实验特性
+
+::first-letter
+
+::first-letter 选中一整块文字第一行的第一个字母，当文字所处的行之前没有其他内容（如图片和内联的表格）。
+
+::first-line
+
+::first-line 将样式只应用于一个块状元素的首行。
+
+::-webkit-input-placeholder
+
+/* 设置 input 元素 placeholder 的字体颜色 */
+input::-webkit-input-placeholder {
+  color: #aaa;
+}
+3.7、组合选择器：
+A, B：
+.author, .famous {
+  font-weight: bold;
+}
+A B
+A > B
+A + B
+A ~ B
+
 选择器	示例	示例说明	CSS
 .class	.intro	选择所有class="intro"的元素	1
 #id	#firstname	选择所有id="firstname"的元素	1
