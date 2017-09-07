@@ -157,4 +157,15 @@ A ~ B
   justify-content: center;  /* 水平居中 */
 }
 
-八、http
+八、兼容：
+8.1、兼容产生的原因：新的功能旧版本不支持，不同浏览器实现方式不同。
+8.2、解决思路：
+根据产品需求选择合适技术（库）。
+根据兼容需求选择兼容工具(html5shiv.js-用于解决IE9以下版本浏览器对HTML5新增标签不识别，并导致CSS不起作用的问题。
+使用方法
+<!--[if lt IE 9]>
+<script type="text/javascript"  src="http://www.ijquery.cn/js/html5shiv.js"></script>
+<![endif]-->、
+respond.js、css reset、normalize.css、Modernizr)
+最后使用条件注释、CSS Hack、js 能力检测做一些补漏。
+或者使用替代方法，比如自己封装一个方法来实现相同的效果。
