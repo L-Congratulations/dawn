@@ -161,6 +161,7 @@ A ~ B
 8.1、兼容产生的原因：新的功能旧版本不支持，不同浏览器实现方式不同。
 8.2、解决思路：
 根据产品需求选择合适技术（库）。
+根据浏览器版本在用户中的分布情况，对旧的浏览器进行降级处理，或者直接提示用户升级浏览器。毕竟旧的浏览器厂商已经停止维护了。
 根据兼容需求选择兼容工具(html5shiv.js-用于解决IE9以下版本浏览器对HTML5新增标签不识别，并导致CSS不起作用的问题。
 使用方法
 <!--[if lt IE 9]>
@@ -168,4 +169,8 @@ A ~ B
 <![endif]-->、
 respond.js、css reset、normalize.css、Modernizr)
 最后使用条件注释、CSS Hack、js 能力检测做一些补漏。
+属性前缀法：color: yellow\9;  /*ie/edge 6-8*/IE6~IE10都认识"\9"
+<!--[if lt IE 9]>
+<script>window.location.href='http://cdn.dmeng.net/upgrade-your-browser.html?referrer='+location.href;</script>
+<![endif]-->  
 或者使用替代方法，比如自己封装一个方法来实现相同的效果。
