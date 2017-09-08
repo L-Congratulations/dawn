@@ -1,0 +1,3 @@
+一、在html中使用JavaScript
+1.1、带有async或者defer的script都会立刻下载并不阻塞页面解析。区别是async一旦下载完成就开始执行(当然是在window的onload之前)
+ 而对于带有defer的script,它们会确保按在页面中出现的顺序来执行,它们执行的时机是在页面解析完后,但在 DOMContentLoaded事件之前.
