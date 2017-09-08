@@ -183,3 +183,15 @@ respond.js、css reset、normalize.css、Modernizr)
 
 十、http：
 10.1、
+
+十一、BOM操作：浏览器对象模型
+11.1、BOM的核心是window对象  所有在全局作用域中声明的变量、函数、对象都会作为window的属性和方法
+var age = 24;
+
+function printName(){
+    console.log(age);
+}
+
+console.log(window.age);
+window.printName();
+
