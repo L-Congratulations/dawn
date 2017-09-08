@@ -174,3 +174,12 @@ respond.js、css reset、normalize.css、Modernizr)
 <script>window.location.href='http://cdn.dmeng.net/upgrade-your-browser.html?referrer='+location.href;</script>
 <![endif]-->  
 或者使用替代方法，比如自己封装一个方法来实现相同的效果。
+
+九、ajax跨域：协议域名端口一个不同都算跨域。不能读写对方的资源
+9.1、jsonp跨域：
+9.2、跨域资源共享CORS：支持现代浏览器，IE支持10以上。进行跨域请求的时候浏览器会给该请求加一个请求头：Origin。
+后台如果确定接受请求则在返回结果中加入一个响应头：Access-Control-Allow-Origin;浏览器判断该相应头中是否包含 Origin 的值，
+如果有则浏览器会处理响应，我们就可以拿到响应数据，如果不包含浏览器直接驳回
+
+十、http：
+10.1、
