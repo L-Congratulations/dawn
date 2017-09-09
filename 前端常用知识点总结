@@ -212,7 +212,13 @@ column-reverse 垂直从下到上
 .container {
   align-items: flex-start | flex-end | center | baseline | stretch;
 }
-12.4、子元素上的属性：
+12.4、align-content：弹性盒堆叠伸缩行的对齐方式
+.container {
+  align-content: flex-start | flex-end | center | space-between | space-around | stretch;
+}
+space-between 各行在弹性盒容器中平均分布。第一行的侧轴起始边界紧靠住弹性盒容器的侧轴起始内容边界，最后一行的侧轴结束边界紧靠住弹性盒
+容器的侧轴结束内容边界，剩余的行则按一定方式在弹性盒窗口中排列，以保持两两之间的空间相等。
+12.5、子元素上的属性：
 可以通过order属性改变，数值小的在前面，还可以是负数。order属性用来改变元素的排列顺序
 .item {
   order: <integer>;
@@ -226,3 +232,48 @@ align-self：弹性盒子元素在侧轴（纵轴）方向上的对齐方式，�
 .item {
   align-self: auto | flex-start | flex-end | center | baseline | stretch;
 }
+
+十三、DOM操作：
+document对象：：：：
+document.location：location属性返回一个只读对象，提供了当前文档的URL信息
+document.location.href // "http://user:passwd@www.example.com:4097/path/a.html?x=111#part1"
+// 优先从服务器重新加载
+document.location.reload(true)
+// 优先从本地缓存重新加载（默认值）
+document.location.reload(false)
+虽然location属性返回的对象是只读的，但是可以将URL赋值给这个属性，网页就会自动跳转到指定网址。
+document.location = 'http://www.example.com';
+// 等价于
+document.location.href = 'http://www.example.com';
+
+除了document对象，在DOM中最常用的就是Element对象了，Element对象表示HTML元素。
+element对象：：：：
+13.1、创建元素：
+13.1.1、createElement()  createElement方法用来生成HTML元素节点。
+var newDiv = document.createElement("div");
+13.1.2、createTextNode()  createTextNode方法用来生成文本节点，参数为所要生成的文本节点的内容。
+var newContent = document.createTextNode("Hello");
+13.2、查询元素：
+getXXXByXXX 获取的是动态集合，querySelector获取的是静态集合。
+13.3、添加元素到dom
+13.3.1、appendChild()  在元素末尾添加元素
+var newDiv = document.createElement("div");
+var newContent = document.createTextNode("Hello");
+newDiv.appendChild(newContent);
+13.3.2、insertBefore()   在某个元素之前插入元素
+13.4、替换元素：
+replaceChild()   replaceChild()接受两个参数：要插入的元素和要替换的元素
+newDiv.replaceChild(newElement, oldElement);
+13.5、删除元素：
+removeChild()   删除元素使用removeChild()方法即可
+parentNode.removeChild(childNode);
+13.6、克隆元素：
+cloneNode()    方法用于克隆元素，方法有一个布尔值参数，传入true的时候会深复制，也就是会复制元素及其子元素（IE还会复制其事件），
+false的时候只复制元素本身
+node.cloneNode(true);
+
+13.7、属性操作：
+getAttribute()  node.getAttribute('id');获取元素的attribute值
+createAttribute()  attribute = document.createAttribute(name);
+setAttribute()  用于设置元素属性
+romoveAttribute()  node.removeAttribute('id');
