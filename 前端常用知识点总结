@@ -247,6 +247,7 @@ document.location = 'http://www.example.com';
 document.location.href = 'http://www.example.com';
 
 除了document对象，在DOM中最常用的就是Element对象了，Element对象表示HTML元素。
+----------------------------------------------------------------------------------------------------------------------------
 element对象：：：：
 13.1、创建元素：
 13.1.1、createElement()  createElement方法用来生成HTML元素节点。
@@ -277,3 +278,21 @@ getAttribute()  node.getAttribute('id');获取元素的attribute值
 createAttribute()  attribute = document.createAttribute(name);
 setAttribute()  用于设置元素属性
 romoveAttribute()  node.removeAttribute('id');
+
+13.8、样式操作：
+可修改元素的 style 属性，修改结果直接反映到页面元素
+document.querySelector('p').style.color = 'red'
+
+获取样式 getComputedStyle    使用getComputedStyle获取元素计算后的样式，不要通过 node.style.属性 获取
+var node = document.querySelector('p')
+var color = window.getComputedStyle(node).color
+样式的改变尽量使用 class 的新增删除来实现
+
+13.9、页面高度：
+element.clientHeight content+padding 不包括border
+element.offsetHeight  包括border但是不包括margin
+document.body.clientHeight
+document.body.offsetHeight
+element.scrollHeight 元素滚动内容的总长度。如果元素没出现滚动条， scrollHeight等于 clientHeight
+element.scrollTop 滚动的高度
+window.innerHeight 窗口的高度
