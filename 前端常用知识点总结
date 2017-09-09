@@ -184,16 +184,7 @@ respond.js、css reset、normalize.css、Modernizr)
 十、http：
 10.1、
 
-十一、BOM操作：浏览器对象模型
-11.1、BOM的核心是window对象  所有在全局作用域中声明的变量、函数、对象都会作为window的属性和方法
-var age = 24;
 
-function printName(){
-    console.log(age);
-}
-
-console.log(window.age);
-window.printName();
 
 十二、flex
 12.1、flex-direction：规定子元素在父容器中的排列方式
@@ -296,3 +287,57 @@ document.body.offsetHeight
 element.scrollHeight 元素滚动内容的总长度。如果元素没出现滚动条， scrollHeight等于 clientHeight
 element.scrollTop 滚动的高度
 window.innerHeight 窗口的高度
+
+十一、BOM操作：浏览器对象模型
+11.1、BOM的核心是window对象  所有在全局作用域中声明的变量、函数、对象都会作为window的属性和方法
+var age = 24;
+function printName(){
+    console.log(age);
+}
+console.log(window.age);
+window.printName();
+11.2、window.innerHeight属性，window.innerWidth属性
+这两个属性返回网页的CSS布局占据的浏览器窗口的高度和宽度，单位为像素。很显然，当用户放大网页的时候（比如将网页从100%的大小放大为200%），
+这两个属性会变小。注意，这两个属性值包括滚动条的高度和宽度。
+
+11.3、scrollX、scrollY
+
+scrollX：滚动条横向偏移
+scrollY：滚动条纵向偏移
+这两个值随着滚动位置变化而变化
+
+scrollTo、scrollBy、scroll
+
+我们也可以通过方法scrollTo或者scroll方法改变滚动条位置到指定坐标
+
+window.scrollTo(0, 300); // 滚动条移动到300px处
+两个参数分别是水平、垂直方向偏移
+
+scrollBy可以相对当前位置移动滚动条，而不是移动到绝对位置
+
+scrollBy(0, 100); // 滚动条下移100px
+11.4、screen
+
+screen对象包含了显示设备的信息。
+
+// 显示设备的高度，单位为像素
+screen.height
+// 1920
+
+// 显示设备的宽度，单位为像素
+screen.width
+// 1080
+一般使用以上两个属性，了解设备的分辨率。上面代码显示，某设备的分辨率是1920x1080。除非调整显示器的分辨率，否则这两个值可以看作常量，
+不会发生变化。显示器的分辨率与浏览器设置无关，缩放网页并不会改变分辨率。
+
+十四、事件模型
+14.1、在DOM2级中使用addEventListener和removeEventListener来注册和解除事件（IE8及之前版本不支持）。这种函数较之之前的方法好处是
+ 一个dom对象可以注册多个相同类型的事件，不会发生事件的覆盖，会依次的执行各个事件函数。
+  click.addEventListener('click',function(){
+        alert('click one');
+    },false);第三个参数true代表捕获事件，false代表冒泡事件
+14.2、 DOM2级事件模型
+假设我们点击了ID为inner的div，那么此时的事件流程就是，首先执行捕获阶段：document-html-body-div(outer)。
+然后执行冒泡阶段：div(inner)-div(outer)-body-html-document。
+
+十五、AJAX
