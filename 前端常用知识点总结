@@ -299,36 +299,35 @@ window.printName();
 11.2、window.innerHeight属性，window.innerWidth属性
 这两个属性返回网页的CSS布局占据的浏览器窗口的高度和宽度，单位为像素。很显然，当用户放大网页的时候（比如将网页从100%的大小放大为200%），
 这两个属性会变小。注意，这两个属性值包括滚动条的高度和宽度。
-
 11.3、scrollX、scrollY
-
 scrollX：滚动条横向偏移
 scrollY：滚动条纵向偏移
 这两个值随着滚动位置变化而变化
-
 scrollTo、scrollBy、scroll
-
 我们也可以通过方法scrollTo或者scroll方法改变滚动条位置到指定坐标
-
 window.scrollTo(0, 300); // 滚动条移动到300px处
 两个参数分别是水平、垂直方向偏移
-
 scrollBy可以相对当前位置移动滚动条，而不是移动到绝对位置
-
 scrollBy(0, 100); // 滚动条下移100px
-11.4、screen
-
-screen对象包含了显示设备的信息。
-
+11.4、screen：screen对象包含了显示设备的信息。
 // 显示设备的高度，单位为像素
 screen.height
 // 1920
-
 // 显示设备的宽度，单位为像素
 screen.width
 // 1080
 一般使用以上两个属性，了解设备的分辨率。上面代码显示，某设备的分辨率是1920x1080。除非调整显示器的分辨率，否则这两个值可以看作常量，
 不会发生变化。显示器的分辨率与浏览器设置无关，缩放网页并不会改变分辨率。
+11.5、history对象
+history对象保存这用户上网的历史记录，从窗口被打开的那一刻算起。
+history.go(-1);
+后退一页。
+history.go(2)
+前进两页。
+history.go("wrox.com")
+跳转到最近的wrox.com页面。
+history.back()后退一页;history.forward();前进一页。
+if(if()history.length==0｛这应该是用户打开窗口的第一个页面｝。
 
 十四、事件模型
 目前共有三种事件模型，它们分别是：DOM0 级事件模型、IE 事件模型、DOM2 级事件模型
