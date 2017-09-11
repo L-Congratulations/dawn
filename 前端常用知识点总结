@@ -228,6 +228,7 @@ align-self：弹性盒子元素在侧轴（纵轴）方向上的对齐方式，�
 document对象：：：：
 document.location：location属性返回一个只读对象，提供了当前文档的URL信息
 document.location.href // "http://user:passwd@www.example.com:4097/path/a.html?x=111#part1"
+document.location.search // "?x=111"
 // 优先从服务器重新加载
 document.location.reload(true)
 // 优先从本地缓存重新加载（默认值）
@@ -247,6 +248,8 @@ var newDiv = document.createElement("div");
 var newContent = document.createTextNode("Hello");
 13.2、查询元素：
 getXXXByXXX 获取的是动态集合，querySelector获取的是静态集合。
+简单的说就是，动态就是选出的元素会随文档改变，静态的不会，取出来之后就和文档的改变无关了。
+如：lis = ul.getElementsByTagName("li")，当li动态添加时getXXXByXXX会更新，而 querySelector获取的则不会发生变化。
 13.3、添加元素到dom
 13.3.1、appendChild()  在元素末尾添加元素
 var newDiv = document.createElement("div");
@@ -309,15 +312,7 @@ window.scrollTo(0, 300); // 滚动条移动到300px处
 两个参数分别是水平、垂直方向偏移
 scrollBy可以相对当前位置移动滚动条，而不是移动到绝对位置
 scrollBy(0, 100); // 滚动条下移100px
-11.4、screen：screen对象包含了显示设备的信息。
-// 显示设备的高度，单位为像素
-screen.height
-// 1920
-// 显示设备的宽度，单位为像素
-screen.width
-// 1080
-一般使用以上两个属性，了解设备的分辨率。上面代码显示，某设备的分辨率是1920x1080。除非调整显示器的分辨率，否则这两个值可以看作常量，
-不会发生变化。显示器的分辨率与浏览器设置无关，缩放网页并不会改变分辨率。
+
 11.5、history对象
 history对象保存这用户上网的历史记录，从窗口被打开的那一刻算起。
 history.go(-1);
@@ -506,3 +501,16 @@ Cache-Control在http请求头中设置
 也就是一年。在一年时间内，资源文件如果本地有缓存，就会使用缓存；也就不会有304的回包。
 如果资源文件有修改，则更新文件内容，同时修改资源文件名，如common.v2.js，html页面也会引用新的资源文件名。
 通过这种方式，实现了：缓存文件没有更新，则使用缓存；缓存文件有更新，则第一时间使用最新文件的目的
+
+二十、AJAX
+浏览器与服务器之间采用HTTP协议，用户在浏览器地址键入一个网址，或者通过网页表单向服务器提交内容，这时浏览器就会向服务器发出http请求。
+具体来说AJAX包括以下几个步骤：
+创建AJAX对象》发送HTTP请求》接收服务器传回的数据》更新网页数据
+AJAX可以报送各种数据，包括字符串和二进制，而且还支持其他协议传送（ftp等）
+20.1、用法：
+// open方式用来指定http请求方式（get/post）、请求的网址、是否异步
+xhr.open('GET','/end',true);
+// send方法用来发送http请求
+xhr.send(null);
+// abort用来终止已发出的http请求
+xhr.abort();
