@@ -2,3 +2,72 @@
 二、用koa2搭建web服务器：
 2.1、初始化项目：npm init -y(会创建一个包含默认配置的package.json文件)
 2.2、安装koa2：npm i koa --save
+2.3、安装koa-router： npm i koa-router --save
+2.4、处理get请求：
+const Koa = require('koa');
+const router = require('koa-router')(); // 注意require('koa-router')返回的是一个函数
+const app = new Koa();
+
+app.use(async(ctx,next) =>{
+    // console.log(ctx.request);
+    await next();
+});
+
+router.get('/hello/:name', async(ctx,next) =>{
+    let name = ctx.params.name;
+    ctx.response.body = `<h1> hello, ${name}!`;
+});
+router.get('/', async(ctx, next) =>{
+    ctx.response.body = '<h1>home</h1>';
+});
+
+app.use(router.routes()); // 将路由功能注册到app上
+
+app.listen(3000);
+console.log('app has started at port 3000...');
+2.5、处理post请求：
+用post请求处理URL时，我们会遇到一个问题：post请求通常会发送一个表单，或者JSON，它作为request的body发送，但无论是Node.js提供的原始request对象，
+还是koa提供的request对象，都不提供解析request的body的功能！所以，我们又需要引入另一个middleware来解析原始request请求，然后，
+把解析后的参数，绑定到ctx.request.body中。
+npm i koa-bodyparser --save
+这个中间件koa-bodyparser必须在router之前被注册到app对象上。
+const Koa = require('koa');
+const router = require('koa-router')(); // 注意require('koa-router')返回的是一个函数
+const bodyParser = require('koa-bodyparser');
+const app = new Koa();
+
+
+app.use(async(ctx,next) =>{
+    // console.log(ctx.request);
+    await next();
+});
+
+router.get('/hello/:name', async(ctx,next) =>{
+    let name = ctx.params.name;
+    ctx.response.body = `<h1> hello, ${name}!`;
+});
+router.get('/', async(ctx, next) =>{
+    ctx.response.body =
+        `<h1>home</h1>
+        <form action='/signin' method='post'>
+            <p>name:<input name="name" value="koa"/></p>
+            <p>password:<input name="password" type="password"/></p>
+            <p><input type="submit" value="submit"/></p>
+        </form>`;
+});
+router.post('/signin', async(ctx,next) =>{
+    let name = ctx.request.body.name || '';
+    let password = ctx.request.body.password || '';
+    console.log(`登录的名字是:${name},密码是：${password}`);
+    if (name === 'koa' && password === '12345'){
+        ctx.response.body = `<h1>welcome,${name}!</h1>`
+    }else {
+        ctx.response.body = `<h1>名字或密码错误，请重新核对</h1>
+        <p><a href='/'>try again</a></p>`
+    }
+});
+app.use(bodyParser());
+app.use(router.routes());
+
+app.listen(3000);
+console.log('app has started at port 3000...');
