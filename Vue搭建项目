@@ -1,3 +1,4 @@
 一、Vue脚手架搭建项目：http://www.jianshu.com/p/1626b8643676
 二、用koa2搭建web服务器：
-2.1、初始化项目：npm 
+2.1、初始化项目：npm init -y(会创建一个包含默认配置的package.json文件)
+2.2、安装koa2：npm i koa --save
