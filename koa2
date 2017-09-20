@@ -1,7 +1,7 @@
 一、安装koa2（node >v7.6 ,npm >3.x）
 1.1、新建一个空的项目文件夹
 npm init -y 初始化文件夹
-npm install koa 下载安装koa
+npm install koa --save 下载安装koa
 1.2、node程序热更新：nodemon
 npm install nodemon -g
 安装完成后用：nodemon indes.js 来启动服务器
@@ -16,3 +16,15 @@ const Koa = require('koa');
 const app = new Koa();  // 实例化的时候要加括号Koa()
 const Router = require('koa-router');
 let home = new Router();  // 实例化的时候要加括号Router()
+let page = new Router();
+page.get('/404',async(ctx,next) =>{  // 在这的get()方法是调用的构造函数上的方法
+    ctx.body = `404 page!`
+});
+// 装载所有子路由
+let router = new Router()  
+router.use('/', home.routes(), home.allowedMethods())  // 将定义好的两个子路由都挂载到router主路由上
+在上面路由的参数：home.allowedMethods()用来规定home子路由的请求方式（get、post、。。。），如果不加则路由也可以正常跳转
+router.use('/page', page.routes(), page.allowedMethods())  // 将定义好的两个子路由都挂载到router主路由上
+
+// 加载路由中间件
+app.use(router.routes()).use(router.allowedMethods())  // 将主路由挂载到app对象上（注册到app对象上）
