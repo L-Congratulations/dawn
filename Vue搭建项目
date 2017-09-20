@@ -1,10 +1,9 @@
-一、Vue脚手架搭建项目：http://www.jianshu.com/p/1626b8643676
+一、Vue脚手架搭建项目：vue init webpack vueapp  cd vueapp npm install
 四、webstrom配置vue开发环境：
-4.1、添加es6支持
 4.2、在webstrom里面配置babel：http://blog.csdn.net/peade/article/details/76522177
 4.4、在vue文件中使用sass：
 4.5、在vue中引入elementUI：
-先安装element：npm i element-ui --save
+先安装element：npm i element-ui -S
 在入口文件main.js中引入element库：import Element from 'element-ui'
                                 import 'element-ui/lib/theme-default/index.css'
                                 Vue.use(Element);
@@ -13,14 +12,17 @@
                                 npm install file-loader --save-dev（如果安装时报错选择以管理员身份运行命令行）
 在 webpack.config.js 中的 rules 数组加入以下配置：
                                         {
-                                            test: /\\.css$/,
-                                            loader: "style!css"
+                                          test: /\.css$/,
+                                          include: [  
+                                            /src/,//表示在src目录下的css需要编译  
+                                            '/node_modules/element-ui/lib/'   //增加此项  
+                                          ],  
+                                          loader: 'style-loader!css-loader'
                                         },
                                         {
-                                            test: /\\.(eot|woff|woff2|ttf)([\\?]?.*)$/,
-                                            loader: "file"
+                                          test: /\.(eot|svg|ttf|woff|woff2)(\?\S*)?$/,
+                                          loader: 'file-loader'
                                         },
-
 4.3、添加Sass支持：先安装Ruby，然后在命令行输入：gem install sass 安装sass-》在webstrom中配置file watchers-》添加sass模块，
 program中路径填写ruby下的sass.bat
 二、用koa2搭建web服务器：
