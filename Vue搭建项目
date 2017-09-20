@@ -1,4 +1,28 @@
 一、Vue脚手架搭建项目：http://www.jianshu.com/p/1626b8643676
+四、webstrom配置vue开发环境：
+4.1、添加es6支持
+4.2、在webstrom里面配置babel：http://blog.csdn.net/peade/article/details/76522177
+4.4、在vue文件中使用sass：
+4.5、在vue中引入elementUI：
+先安装element：npm i element-ui --save
+在入口文件main.js中引入element库：import Element from 'element-ui'
+                                import 'element-ui/lib/theme-default/index.css'
+                                Vue.use(Element);
+安装webpack打包element的依赖包：npm install style-loader --save-dev
+                                npm install css-loader --save-dev
+                                npm install file-loader --save-dev（如果安装时报错选择以管理员身份运行命令行）
+在 webpack.config.js 中的 rules 数组加入以下配置：
+                                        {
+                                            test: /\\.css$/,
+                                            loader: "style!css"
+                                        },
+                                        {
+                                            test: /\\.(eot|woff|woff2|ttf)([\\?]?.*)$/,
+                                            loader: "file"
+                                        },
+
+4.3、添加Sass支持：先安装Ruby，然后在命令行输入：gem install sass 安装sass-》在webstrom中配置file watchers-》添加sass模块，
+program中路径填写ruby下的sass.bat
 二、用koa2搭建web服务器：
 2.1、初始化项目：npm init -y(会创建一个包含默认配置的package.json文件)
 2.2、安装koa2：npm i koa --save
@@ -74,9 +98,4 @@ console.log('app has started at port 3000...');
 
 三、链接数据库：
 
-四、webstrom配置vue开发环境：
-4.1、添加es6支持
-4.2、使用babel将es6转化为es5：安装babel：npm install babel -g,然后在setting-》tools-》file watchers-》添加babel模块
-4.4、在vue文件中使用sass：
-4.3、添加Sass支持：先安装Ruby，然后在命令行输入：gem install sass 安装sass-》在webstrom中配置file watchers-》添加sass模块，
-program中路径填写ruby下的sass.bat
+
