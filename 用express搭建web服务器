@@ -1,7 +1,0 @@
-一、express创建restful的HTTP服务（先不用typescript开发）
-1.1、初始化server文件夹：npm init -y
-// 1.2、引入类型定义文件：npm i @types/node --save（类型定义文件的作用是为了使开发者在使用typescript开发的过程中可以使用现在已有的JavaScript写成的库）
-// 1.3、node是不认识typescript的
-1.2、安装express框架：npm i express --save
-
-二、使用es6编写node
