@@ -2,6 +2,18 @@
 四、webstrom配置vue开发环境：
 4.2、在webstrom里面配置babel：http://blog.csdn.net/peade/article/details/76522177
 4.4、在vue文件中使用sass：
+首先安装sass：先安装Ruby，然后在命令行输入：gem install sass 安装sass
+然后安装webpack打包sass模块：npm install node-sass --save-dev（
+                                            在安装node-sass的时候因为被墙安装不上，需要安装淘宝镜像来安装
+                                            npm install -g cnpm --registry=https://registry.npm.taobao.org  （安装淘宝镜像）
+                                            cnpm install node-sass  --save （使用淘宝镜像安装node-sass））
+                            npm install sass-loader --save-dev
+在webpack.base.config.js的rules数组中加入：
+                                        {
+                                          test: /\.scss$/,
+                                          loaders: ["style", "css", "sass"]
+                                        },
+在.vue文件中的style文件设置成：<style lang="sass" >(如果设置成scss则是scss语法)                                       
 4.5、在vue中引入elementUI：
 先安装element：npm i element-ui -S
 在入口文件main.js中引入element库：import Element from 'element-ui'
