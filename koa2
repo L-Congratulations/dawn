@@ -1,0 +1,18 @@
+一、安装koa2（node >v7.6 ,npm >3.x）
+1.1、新建一个空的项目文件夹
+npm init -y 初始化文件夹
+npm install koa 下载安装koa
+1.2、node程序热更新：nodemon
+npm install nodemon -g
+安装完成后用：nodemon indes.js 来启动服务器
+
+二、知识点
+2.1、async、await使用：
+async/await 的特点：可以让异步逻辑用同步写法实现
+                  最底层的await返回需要是Promise对象
+                  可以通过多层 async function 的同步写法代替传统的callback嵌套
+2.2、koa-router：安装路由   npm install --save koa-router
+const Koa = require('koa');
+const app = new Koa();  // 实例化的时候要加括号Koa()
+const Router = require('koa-router');
+let home = new Router();  // 实例化的时候要加括号Router()
