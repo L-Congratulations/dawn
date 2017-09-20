@@ -37,6 +37,8 @@
                                         },
 4.3、添加Sass支持：先安装Ruby，然后在命令行输入：gem install sass 安装sass-》在webstrom中配置file watchers-》添加sass模块，
 program中路径填写ruby下的sass.bat
+
+
 二、用koa2搭建web服务器：
 2.1、初始化项目：npm init -y(会创建一个包含默认配置的package.json文件)
 2.2、安装koa2：npm i koa --save
