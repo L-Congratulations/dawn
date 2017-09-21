@@ -30,6 +30,8 @@ router.use('/page', page.routes(), page.allowedMethods())  // 将定义好的两
 app.use(router.routes()).use(router.allowedMethods())  // 将主路由挂载到app对象上（注册到app对象上）
 
 2.3、请求数据处理：
+node中在字符串里面拿到变量值需要使用${name}: ctx.response.body = `<h1>welcome ${name}</h1>`
+
 2.3.1、get请求：
 在koa中，获取GET请求数据源头是koa中request对象中的query方法或querystring方法，query返回是格式化好的参数对象，querystring返回的是请求字符串，
 由于ctx对request的API有直接引用的方式，所以获取GET请求数据有两个途径。
@@ -39,3 +41,59 @@ app.use(router.routes()).use(router.allowedMethods())  // 将主路由挂载到a
 2.是从上下文的request对象中获取
 请求对象ctx.request.query，返回如 { a:1, b:2 }
 请求字符串 ctx.request.querystring，返回如 a=1&b=2
+
+2.3.2、post请求：
+用post请求处理URL时，我们会遇到一个问题：post请求通常会发送一个表单，或者JSON，它作为request的body发送，但无论是Node.js提供的原始request对象，
+还是koa提供的request对象，都不提供解析request的body的功能！
+所以，我们又需要引入另一个middleware来解析原始request请求，然后，把解析后的参数，绑定到ctx.request.body中。
+koa-bodyparser就是用来干这个活的。
+nom install koa-bodyparser --save
+// 当POST请求的时候，中间件koa-bodyparser解析POST表单里的数据，并显示出来：ctx.request.body 里面存的就是{"userName":"a","password":""}，
+需要哪个值直接ctx.request.body.userName去取值。
+引入const bodyParser = require('koa-bodyparser');然后在router之前被注册到app对象上（只要在router注册到app上之前注册就行）：
+app.use(bodyParser());。
+------------------------------------------------------------------------------------------------------------------------------
+const Koa = require('koa');
+const Router = require('koa-router');
+const app = new Koa();
+const badyParser = require('koa-bodyparser');
+const router = new Router();
+
+router.get('/send',async(ctx,next)=>{
+    let html = `
+    <h1>请填写下面表单并提交</h1>
+    <form method="post" action="/receive">
+        <p>userName</p>
+        <input type="text" name="userName">
+        <p>password</p>
+        <input type="password" name="password">
+        <input type="submit" value="submit">
+    </form>
+    `;
+    ctx.response.body = html;
+});
+router.post('/receive',async(ctx,next)=>{
+   let name = ctx.request.body.userName || '';
+   let password = ctx.request.body.password || '';
+   console.log(`${name} && ${password}`);
+   if (name === 'a' && password === '1234'){
+       ctx.response.body = `<h1>welcome ${name}</h1>`
+   }else {
+       ctx.response.body = `
+       <h1>请重新核对您的账号和密码并重新登录</h1>
+       <a href="/send">传送地址</a>
+       `
+   }
+});
+app.use(badyParser());
+app.use(router.routes());
+
+app.listen(3000,()=>{
+    console.log('server has started at port 3000')
+});
+-----------------------------------------------------------------------------------------------------------------------------
+2.4、静态资源加载：
+一个http请求访问web服务静态资源，一般响应结果有三种情况：
+                                                    访问文本，例如js，css，png，jpg，gif
+                                                    访问静态目录
+                                                    找不到资源，抛出404错误
