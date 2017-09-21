@@ -92,8 +92,28 @@ app.listen(3000,()=>{
     console.log('server has started at port 3000')
 });
 -----------------------------------------------------------------------------------------------------------------------------
-2.4、静态资源加载：
-一个http请求访问web服务静态资源，一般响应结果有三种情况：
+2.4、静态资源加载：koa-static
+一个http请求访问web服务！！静态资源！！，一般响应结果有三种情况：
                                                     访问文本，例如js，css，png，jpg，gif
                                                     访问静态目录
                                                     找不到资源，抛出404错误
+           
+安装koa-static中间件：npm install koa-static --save
+Koa静态文件指定中间件Koa-static，npm install Koa-static之后就可以使用Koa-static负责托管 Koa 应用内的静态资源。
+映射了静态文件目录，引用的时候直接去该目录下寻找资源，会减少一些消耗。（不知道讲的准确不准确，只是个人的理解）指定public为静态文件目录的代码如下
+
+    var staticServer = require('koa-static');
+    var path = require('path');
+    router.get('/static',async(ctx,next)=>{    
+        ctx.response.body = `<h1>静态文件</h1>
+            <a href="/image/3.jpg">点击显示第三张图片</a>        
+            `
+        });
+    const staticPath = './static';
+    app.use(staticServer(
+        path.join(__dirname,staticPath)
+    ));
+当static注册到app上之后就可以通过url直接访问放在服务器里面的静态文件。注意路径不包括/static。请求静态资源的路径是：
+http://localhost:3000/image/3.jpg
+
+2.5、文件上传
