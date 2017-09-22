@@ -5,7 +5,26 @@ npm install koa --save 下载安装koa
 1.2、node程序热更新：nodemon
 npm install nodemon -g
 安装完成后用：nodemon indes.js 来启动服务器
-
+三、中间件概念：Koa 的最大特色，也是最重要的一个设计，就是中间件（middleware）
+3.1、如：最原始的写法
+const main = ctx => {
+  console.log(`${Date.now()} ${ctx.request.method} ${ctx.request.url}`);
+  ctx.response.body = 'Hello World';
+};
+中间件写法：把打印功能单独封装成一个函数
+const logger  = (ctx, next)=>{
+  console.log(`${Date.now()} ${ctx.request.method} ${ctx.request.url}`);
+  next();
+}
+app.use(logger )
+像上面代码中的logger函数就叫做"中间件"（middleware），因为它处在 HTTP Request 和 HTTP Response 中间，用来实现某种中间功能。
+app.use()用来加载中间件。
+简单来说就是app.use()挂载那个函数，在运行服务的时候就会执行那个函数里面的代码。
+执行函数的逻辑顺序为函数调用的顺序。
+基本上，Koa 所有的功能都是通过中间件实现的，前面例子里面的main也是中间件。每个中间件默认接受两个参数，第一个参数是 Context 对象，
+第二个参数是next函数。只要调用next函数，就可以把执行权转交给下一个中间件。
+3.2、中间件栈：
+多个中间件会形成一个栈结构（middle stack），以"先进后出"（first-in-last-out）的顺序执行。
 二、知识点
 2.1、async、await使用：
 async/await 的特点：可以让异步逻辑用同步写法实现
