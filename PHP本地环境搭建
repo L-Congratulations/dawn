@@ -1,5 +1,6 @@
 一、php环境安装套件：
 WampServer安装-》http://developer.51cto.com/art/201704/536857.htm
+phpmyadmin:用户：liushuai 密码：为空
 三、php程序编写：
 2.1、php入门：在PHP编程中需要在每条语句的末尾加入分号；    在PHP中也有注释语句：用双斜杠（//）来表示
 2.1.1、echo是PHP中的输出语句，可以把字符串输出（字符串用双引号括起来，“echo”这个命令是告诉服务器，打印一串字符。）：注意echo关键字与字符串之间
