@@ -3,7 +3,9 @@
     将图片存放在根目录下的static文件夹，然后设置imgUrl的路径为static文件夹下的图片路径imgUrl:'/static/logo1.png'
 5.2、在布局的时候需要空的div做占位的时候在里面填写内容&nbsp;来做填充
 5.3、v-for：<span v-for="link in footerTip.links">将整个span进行循环n次，循环的数据可以是对象或者数组
-
+        <div class="customerContent" v-for="(customer,index) in customer.customers" >
+        获取到当前是第几次循环使用index获取：v-for="(customer,index) in customer.customers"
+        使用三元运算符判断奇偶数，并执行相应的操作： <el-row v-bind:class="(index % 2 == 1) ? even : ''">
 一、Vue脚手架搭建项目：vue init webpack vueapp  cd vueapp npm install
 四、webstrom配置vue开发环境：
 4.2、在webstrom里面配置babel：http://blog.csdn.net/peade/article/details/76522177
