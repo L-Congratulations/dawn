@@ -1,3 +1,9 @@
+五、vue常见问题解决方案：
+5.1、使用属性绑定v-bing:src='imgUrl'传递图片路径的时候因为编译图片路径报错：
+    将图片存放在根目录下的static文件夹，然后设置imgUrl的路径为static文件夹下的图片路径imgUrl:'/static/logo1.png'
+5.2、在布局的时候需要空的div做占位的时候在里面填写内容&nbsp;来做填充
+
+
 一、Vue脚手架搭建项目：vue init webpack vueapp  cd vueapp npm install
 四、webstrom配置vue开发环境：
 4.2、在webstrom里面配置babel：http://blog.csdn.net/peade/article/details/76522177
