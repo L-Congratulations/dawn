@@ -379,3 +379,11 @@ Triple<String, Integer, Float> triple = new Triple<String, Integer, Float>();
 triple.setA("something");
 triple.setB(1);
 triple.setC(1.0f);
+
+八、java合集：
+8.1、java的容器：
+定义好Post类之后，现在需要对博客文章进行管理。我们可以定义一个PostRepository类，通过PostRepository可以做以下操作：
+创建博客
+删除博客
+获取一篇博客的内容
+获取博客列表
