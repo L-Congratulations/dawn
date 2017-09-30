@@ -7,6 +7,19 @@
         获取到当前是第几次循环使用index获取：v-for="(customer,index) in customer.customers"
         使用三元运算符判断奇偶数，并执行相应的操作： <el-row v-bind:class="(index % 2 == 1) ? even : ''">
         绑定的class样式名要在data中先声明才能生效：return{even:'even',}
+5.4、使用css将图片置灰：
+.gray { 
+    -webkit-filter: grayscale(100%);
+    -moz-filter: grayscale(100%);
+    -ms-filter: grayscale(100%);
+    -o-filter: grayscale(100%);
+    
+    filter: grayscale(100%);
+	
+    filter: gray;
+}
+<img src="mm1.jpg" />
+<img src="mm1.jpg" class="gray" />
 一、Vue脚手架搭建项目：vue init webpack vueapp  cd vueapp npm install
 四、webstrom配置vue开发环境：
 4.2、在webstrom里面配置babel：http://blog.csdn.net/peade/article/details/76522177
