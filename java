@@ -249,3 +249,133 @@ String的替换
 String的截取
 
 六、静态变量和静态方法：
+当为一个类创建实例时，每个不同的实例的成员变量都有自己特定的值。
+有时我们希望定义一个类成员，使其作为该类的公共成员，所有实例都共享该成员变量，此时需要使用static关键字
+根据字面意思我们可以猜测static是静态的意思，被它们修饰的变量或者方法就含有“静态”的性质，与“静态”对应的就是“实例”，
+因为“实例“都是程序在运行时动态生成的。
+
+6.1、static修饰变量：所有的实例都会对原变量产生影响，只分配一个内存。普通变量是对原始值的拷贝，静态变量则直接改变原始值。静态变量可以通过类名直接访问
+类的成员变量中，用static修饰的变量称为静态变量或者类变量，而没有用static修饰的变量则是普通变量。
+对于普通成员变量，每创建一个该类的实例就会创建该成员变量的一个拷贝，分配一次内存。由于成员变量是和类的实例绑定的，
+所以需要通过对象名进行访问，而不能直接通过类名对它进行访问。
+而对于静态变量在内存中只有一份，Java虚拟机（JVM）只为静态变量分配一次内存，在加载类的过程中完成静态变量的内存分配。
+由于静态变量属于类，与类的实例无关，因而可以直接通过类名访问这类变量。
+我们来修改Post类，增加一个计数器，记录Post对象的个数。
+
+public class Post {
+
+    private String title;
+    private String content;
+    
+    public static int count = 0;
+    
+    public Post(){
+        count++;
+    }
+    ...
+}
+title和content是我们之前定义的实例成员变量，每个Post实例都独立的拥有title和content属性，此时修改这两个字段的值，对其他Post实例不会有影响。
+
+我们再来看count，我们将其声明为static，表明count是个静态变量。当我们修改count的值时，所有实例的count值都会改变。每当我们实例化一个Post对象，
+我们使count值+1，此时，我们可以直接通过Post.count 得到一共有多少Post实例。
+6.2、static修饰方法：在方法前加修饰符，表明该方法与某个具体实例无关，仅仅是该类的一个公共方法。
+public class Post {
+        
+    private String title;
+    private String content;
+    
+    private static int count = 0;
+    
+    public Post(){
+        count++;
+    }
+    
+    public static int getCount(){
+        return count;
+    }
+        ...
+}
+这里我们不希望count属性直接暴露为公开的属性，因为公开后，任何地方都可以通过Post.count++来改变count值。我们只希望在实例化时使count值+1。
+因此我们可以将count声明为私有变量。
+同时我们又希望能够直接通过Post类得到当前Post实例的数量，因此我们声明了一个静态的getCount方法。声明后，我们不需要实例化Post类，直接通过:
+Post.getCount()   // 这里我们是通过类名.方法的方式访问静态方法getCount()的。
+得到当前Post实例的数量。而此时也没有count值会在外部被修改的风险。
+声明成static的方法有几条限制：
+
+仅能调用其他的static方法。
+只能访问static数据。
+不能以任何方式引用this或super
+静态方法可以直接通过类名调用，任何的该类的实例也都可以调用它的静态方法，因此静态方法中不能用this和super关键字。
+在一个static方法中引用任何实例变量都是非法的。
+
+6.3、static修饰代码块：
+类似于静态变量和静态方法，有static修饰的代码块称为静态代码块。
+
+它独立于类成员，可以有多个，JVM加载类的时候会执行这些静态代码块，如果static代码块有多个，JVM则会按照它们在类中出现的顺序依次执行它们，
+且每个代码块只能执行一次。我们可以利用静态代码块可以对一些static变量进行赋值。
+
+如果我们的Post数量是从数据库中取得的，此时如果简单的给count赋值为1明显是不对的，此时我们可以通过静态代码段在类加载进来时执行获取count值的代码块：
+
+public class Post {
+        
+    private String title;
+    private String content;
+    
+    private static int count = 0;
+    
+    static {
+        count = 100; //这里假设100是从数据库中获取Post的数量
+    }
+    
+    public Post(){
+        count++;
+    }
+    
+    public static int getCount(){
+        return count;
+    }
+        ...
+}
+
+七、泛型：在使用泛型时,我们可以把类型作为参数传入到泛型类中。类似于把参数传入到方法中一样。
+一个类的成员变量，一个函数中的参数，都具有一种数据类型，可以为基本数据类型（如int类型）或者引用类型（如Car类型）。但是当数据类型不确定时，代码就无法
+复用，为了让代码通用性更高，我们可以把类型作为参数传入到泛型类中。
+使用泛型类时，注意实际传入的类型参数不能是原生类型，必须是引用类型，因此如果希望传入int类型的话，那么需要传入int对应的包装类Interger。
+对应地，double类型则要传入包装类Double
+泛型类支持多个类型参数。比方说我们需要实现一个三元组Triple类，存储三个类型的变量，我们可以实现如下：
+public class Triple<A, B, C> {
+    private A a;
+    private B b;
+    private C c;
+
+    public A getA() {
+        return a;
+    }
+
+    public void setA(A a) {
+        this.a = a;
+    }
+
+    public B getB() {
+        return b;
+    }
+
+    public void setB(B b) {
+        this.b = b;
+    }
+
+    public C getC() {
+        return c;
+    }
+
+    public void setC(C c) {
+        this.c = c;
+    }
+
+}
+使用Triple类的方式如下：
+
+Triple<String, Integer, Float> triple = new Triple<String, Integer, Float>();
+triple.setA("something");
+triple.setB(1);
+triple.setC(1.0f);
