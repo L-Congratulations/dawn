@@ -1,4 +1,19 @@
 五、vue常见问题解决方案：
+6.2、vue组件中引入其他组件：
+import RebateHeader from './common/RebateHeader.vue'
+export default {
+  data(){
+    return{
+
+    }
+  },
+  components:{
+    'RebateHeader':RebateHeader
+  }
+}
+6.1、关于element中icon图标显示不出来的解决办法：将css的cdn路径https://unpkg.com/element-ui/lib/theme-default/index.css
+下的内容拷贝覆盖本地node_modules里面对应的index.css文件。
+
 5.1、使用属性绑定v-bing:src='imgUrl'传递图片路径的时候因为编译图片路径报错：
     将图片存放在根目录下的static文件夹，然后设置imgUrl的路径为static文件夹下的图片路径imgUrl:'/static/logo1.png'
 5.2、在布局的时候需要空的div做占位的时候在里面填写内容&nbsp;来做填充
