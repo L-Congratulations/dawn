@@ -1,3 +1,7 @@
+Tip:
+1、navicat版本使用百度软件中心的就行，不需要升级。因为最新版本的使用破解软件破解不成功。Navicat版本和破解工具：
+https://pan.baidu.com/disk/home#list/vmode=list&path=%2F%E8%B5%84%E6%96%99%E5%88%86%E7%B1%BB%2F%E6%95%B0%E6%8D%AE%E5%BA%93%2FNavicat
+2、使用idea搭建maven项目：http://blog.csdn.net/myarrow/article/details/50824793
 一、环境搭建：
 1.1、安装jdk：访问http://www.oracle.com/technetwork/java/javase/downloads/index.html下载jdk
 1.2、配置环境变量：https://course.tianmaying.com/java-basic+java-environment#2
