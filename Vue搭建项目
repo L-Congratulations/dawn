@@ -1,4 +1,22 @@
 五、vue常见问题解决方案：
+6.3、vue子路由和子路由重定向
+{
+      path:'/help',
+      name:'Help',
+      component:RebateHelp,
+      redirect:'/help/first', // 重定向路由，进入路由默认显示的页面
+      children:[
+        {
+          path:'/help/first',
+          component:First
+        },
+        {
+          path:'/help/second',
+          component:Second
+        },
+      ]
+    }
+    子页面渲染在父页面的router-view标签里面
 6.2、vue组件中引入其他组件：
 import RebateHeader from './common/RebateHeader.vue'
 export default {
