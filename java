@@ -23,7 +23,19 @@ rd file：删除文件夹，只能删除空文件夹
 cls :清屏
 exit ：退出
 三、java语言概述：
-
+重点学习java EE
+四、java环境搭建：
+4.1、jre：java运行环境（电脑中只有装了jre才能运行java代码）
+     jre由jvm（java虚拟机）和核心类库组成。java程序就是再jvm中运行
+4.2、jdk：java开发工具
+     jdk有jre和java开发包组成
+     作为编写java的程序员，只需要安装jdk就可以了
+     jdk安装：安装目前稳定版本就行，足够用了。
+4.3、配置环境变量：
+安装完jdk后安装目录：
+bin：可执行命令的目录，.exe文件
+环境变量：
+     
 Tip:
 1、navicat版本使用百度软件中心的就行，不需要升级。因为最新版本的使用破解软件破解不成功。Navicat版本和破解工具：
 https://pan.baidu.com/disk/home#list/vmode=list&path=%2F%E8%B5%84%E6%96%99%E5%88%86%E7%B1%BB%2F%E6%95%B0%E6%8D%AE%E5%BA%93%2FNavicat
