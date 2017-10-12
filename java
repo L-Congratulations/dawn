@@ -54,7 +54,55 @@ path：运行逻辑：当我们在d盘执行ping命令时，系统首先会在d�
 在系统变量下新建一个变量名：JAVA_HOME 变量值是：jdk的安装路径，如C:\Program Files\Java\jdk-9 
 然后点开path，在path中新建一个路径，此路径引用刚才咱们建的变量，引用的方式：%变量名%  %JAVA_HOME%此时该路径就指向的是C:\Program Files\Java\jdk-9
 因为java命令是在C:\Program Files\Java\jdk-9 的bin文件下，因此path新增路径的完整写法是：%JAVA_HOME%\bin
-     
+
+
+五、java的第一个程序：
+5.1、class类写法：
+class 类名{
+  // 类体
+}
+但是此程序现在不能运行，一定要有一个java主函数（主方法）的入口
+class HelloWorld{ // 类
+    public static void main(String[] args){ // 主函数的入口
+        System.out.println("hello"); // 主函数中的代码
+    }
+}
+此时执行java文件的时候才会执行main函数里面的内容
+
+六、java的运行机制（一个java程序如何运行）：
+在编辑器中编写的HelloWorld.java文件是不能直接执行的，这是java的源代码。
+必须要编译成字节码文件（*.class)才能执行，编译其实是在执行一条命令javac的命令。
+运行使用java命令，运行的是.class文件
+class文件要想运行需要将class文件加载到jvm中
+当执行java HelloWorld的时候，就会立马在内存中创建一个java虚拟机，然后立刻把HelloWorld.class调入（复制一份到）到java虚拟机中
+jvm是在要运行class文件的时候创建的一个虚拟机，创建完了之后执行class文件。和编译过程没有关系。
+cpu负责调度，将class文件拷贝到jvm虚拟机中
+
+必须要先编译：javac HelloWorld.java 编译完成后会产生一个HelloWorld.class的文件，这个文件只有计算机能读懂。
+因此电脑真正能执行的文件是HelloWorld.class，运行时只需要执行：java HelloWorld就能识别执行，执行java HelloWorld.class会报错
+
+java HelloWorld 运行过程是把HlloWorld.class加载到内存当中然后执行里面的代码
+
+七、classpath（类路径）
+7.1、默认情况下要想编译java文件需要进入到该文件所在的目录然后执行java命令
+要想在任意盘符下都能编译某个java文件，就需要配置classpath
+在系统变量下新建变量名：classpath 变量值：你存放class文件所在的路径
+如果配置了classpath，当我们在运行java文件的时候只会去classpath所配置的路径下寻找class文件运行。如果classpath路径下找不到要运行的文件才会
+在当前文件夹下查找
+
+八、标识符和关键字
+8.1、定义常量的时候每个字母都大写，多个单词定义常量时用_连接
+
+
+8.2、在Java中关键字中所有字母都是小写的
+
+九、注释：
+文档注释：
+/** 
+  注释内容
+ */
+十、进制：
+
 Tip:
 1、navicat版本使用百度软件中心的就行，不需要升级。因为最新版本的使用破解软件破解不成功。Navicat版本和破解工具：
 https://pan.baidu.com/disk/home#list/vmode=list&path=%2F%E8%B5%84%E6%96%99%E5%88%86%E7%B1%BB%2F%E6%95%B0%E6%8D%AE%E5%BA%93%2FNavicat
