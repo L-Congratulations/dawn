@@ -1,3 +1,13 @@
+八、提取bootstrap中图标文件并使用
+
+七、vue中使用ajax进行数据请求
+http://blog.csdn.net/qq_26744901/article/details/69572204
+7.1、首先npm install axios -S 将axios导入到项目仓库
+然后将axios引入到项目中：
+import axios from 'axios'
+Vue.prototype.$http = axios;
+并在原型连上进行修改
+
 五、vue常见问题解决方案：
 6.3、vue子路由和子路由重定向
 {
