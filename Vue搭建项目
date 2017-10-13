@@ -1,5 +1,5 @@
-八、提取bootstrap中图标文件并使用
-
+八、使用阿里的iconfont图标：http://www.iconfont.cn
+加入库----》下载代码----》在项目中引入iconfont.css文件-----》<i class="icon iconfont icon-yonghu"></i>引入icon图标
 七、vue中使用ajax进行数据请求
 http://blog.csdn.net/qq_26744901/article/details/69572204
 7.1、首先npm install axios -S 将axios导入到项目仓库
