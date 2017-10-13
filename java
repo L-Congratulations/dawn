@@ -74,8 +74,10 @@ class HelloWorld{ // 类
 必须要编译成字节码文件（*.class)才能执行，编译其实是在执行一条命令javac的命令。
 运行使用java命令，运行的是.class文件
 class文件要想运行需要将class文件加载到jvm中
-当执行java HelloWorld的时候，就会立马在内存中创建一个java虚拟机，然后立刻把HelloWorld.class调入（复制一份到）到java虚拟机中
+当执行java HelloWorld的时候，就会立马在内存中创建一个java虚拟机（jvm虚拟机在内存中占用一定空间），然后立刻把HelloWorld.class调入
+（复制一份到）到java虚拟机中
 jvm是在要运行class文件的时候创建的一个虚拟机，创建完了之后执行class文件。和编译过程没有关系。
+当class文件中的代码执行完毕之后，jvm会消失，jvm所占用的内存空间会被释放
 cpu负责调度，将class文件拷贝到jvm虚拟机中
 
 必须要先编译：javac HelloWorld.java 编译完成后会产生一个HelloWorld.class的文件，这个文件只有计算机能读懂。
@@ -83,12 +85,16 @@ cpu负责调度，将class文件拷贝到jvm虚拟机中
 
 java HelloWorld 运行过程是把HlloWorld.class加载到内存当中然后执行里面的代码
 
+当运行HelloWorld.class文件的时候（执行 java HelloWorld 命令的时候）：首先在内存中创建jvm，然后cpu把class文件加载到jvm中，然后运行class文件
+中的代码。代码执行完毕后释放jvm
+
+
 七、classpath（类路径）
 7.1、默认情况下要想编译java文件需要进入到该文件所在的目录然后执行java命令
 要想在任意盘符下都能编译某个java文件，就需要配置classpath
 在系统变量下新建变量名：classpath 变量值：你存放class文件所在的路径
 如果配置了classpath，当我们在运行java文件的时候只会去classpath所配置的路径下寻找class文件运行。如果classpath路径下找不到要运行的文件才会
-在当前文件夹下查找
+在当前文件夹下查找。classpath是运行文件而不是编译文件
 
 八、标识符和关键字
 8.1、定义常量的时候每个字母都大写，多个单词定义常量时用_连接
@@ -102,6 +108,15 @@ java HelloWorld 运行过程是把HlloWorld.class加载到内存当中然后执�
   注释内容
  */
 十、进制：
+10.1、进制转换：
+十进制转成其他进制：把一个数转化成几进制就除几，直到除不动
+把余数倒序排列就是结果
+把其他进制转化成十进制：转化成几进制就乘几
+每一位数*10的（n-1）幂然后求和（n是原始数值的位数）
+
+
+十一、常量、变量和数据类型
+11.1、
 
 Tip:
 1、navicat版本使用百度软件中心的就行，不需要升级。因为最新版本的使用破解软件破解不成功。Navicat版本和破解工具：
