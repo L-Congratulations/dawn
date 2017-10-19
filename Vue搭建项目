@@ -1,3 +1,29 @@
+十、vuex
+引入vuex： npm install vuex --save
+在src目录下新建文件夹vuex
+在vuex文件夹下新建store.js
+在store.js文件下：
+import Vue from 'vue'
+import Vuex from 'vuex'
+import state from './state' // 对应的state
+import mutations from './mutations'
+Vue.use(Vuex);
+export default new Vuex.Store({
+  state,
+  mutations
+})
+在main.js文件里面加入
+import Vuex from 'vuex'
+import store from './vuex/store'
+Vue.use(Vuex)
+并在vue实例中引入store
+new Vue({
+  el: '#app',
+  router,
+  store,
+  template: '<App/>',
+  components: { App }
+})
 九、element的表单验证：
 http://www.rxshc.com/78.html
 八、使用阿里的iconfont图标：http://www.iconfont.cn
