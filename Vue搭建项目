@@ -1,3 +1,32 @@
+十二、父子组件信息传递
+在父组件：
+data里面添加要传递的数据：
+ data(){
+    return{
+	investmentProList:JSON.parse(localStorage.getItem('investmentProList')), // investmentProList结果是一个对象
+	}
+	}
+ 然后将数据绑定到子组件上：
+ <brand-list :message=investmentProList.reZone></brand-list> // 同一个子组件渲染到不同的地方的时候可以通过绑定不同的数据来达到效果
+ 			// 在这的message是子组件接收时的key
+ <brand-list :message=investmentProList.firstZone></brand-list>
+ 
+ 在子组件接收数据并把数据填充到dom中：
+ props:['message'], // 通过peops及与父组件约定好的key来接收父组件传递的数据。props是和data并列存在的，也是双向绑定
+  data(){
+    return{}
+    }
+    <div class="company" v-for="list in message">  // 将接收到的message填入到dom中
+十一、本地存储：
+http://blog.csdn.net/hbcui1984/article/details/8466743
+保存数据：localStorage.setItem(key,value);
+读取数据：localStorage.getItem(key);
+删除单个数据：localStorage.removeItem(key);
+删除所有数据：localStorage.clear();
+得到某个索引的key：localStorage.key(index);
+json字符串和对象互转
+JSON.parse(jsonString);    //转换为json对象
+JSON.stringify(jsObject); //转换为json类型的字符串　　
 十、vuex
 引入vuex： npm install vuex --save
 在src目录下新建文件夹vuex
@@ -24,6 +53,9 @@ new Vue({
   template: '<App/>',
   components: { App }
 })
+在文件中引入数据和方法：
+{{$store.state.count}}引入共享数据
+ <button @click="$store.commit('add')">+</button>引入方法
 九、element的表单验证：
 http://www.rxshc.com/78.html
 八、使用阿里的iconfont图标：http://www.iconfont.cn
