@@ -1,3 +1,32 @@
+十三、路由传参和组件接收参数：
+一个组件在不同路由里面重复利用的时候，就需要根据路由去修改组件里面的值：
+因此就涉及到一下几个问题：
+13.1、通过不同的路由获取不同的参数：
+有两种方法可以在子页面获取到路由中的信息
+（1）、直接通过this.$route来获取路由中包含的信息。如：console.log(this.$route.name);
+（2）、通过vue-router封装好的方法：to.path来获取到路由中的信息。如：
+	beforeRouteEnter   (to, from, next) {
+	    console.log(to.name);
+	    }
+13.2、将从路由中获取到的参数传递给vue实例中的data。因为组件在被多次调用的时候只会在第一次调用时实例化，非首次调用都不会重新实例化，所以不能
+通过vue的生命周期钩子来完成数据的动态更新。
+因此要使用vue-router的钩子函数来达到效果。
+但是beforeRouteEnter钩子在执行的时候vue实例还没创建，因此无法直接调用到vue实例中的data，只能用next参数调用方法达到目的：
+ beforeRouteEnter   (to, from, next) {
+    console.log(to.name);
+    let lists = JSON.parse(localStorage.getItem('msg')).Home[to.name];
+    next(vm => vm.setData(lists)); // // 通过 `vm` 访问组件实例
+  },
+//  beforeRouteUpdate (to, from, next) { //
+//    this.list = null
+//    list = JSON.parse(localStorage.getItem('msg')).Home[to.name];
+//    next(this.setData(list))
+//  },
+  methods:{
+    setData(list){  // 在这定义setData来完成对vue实例中的参数赋值的目的
+        this.list = list
+    }
+  }
 十二、父子组件信息传递
 在父组件：
 data里面添加要传递的数据：
