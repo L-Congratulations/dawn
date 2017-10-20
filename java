@@ -1,3 +1,30 @@
+十五、函数的语法：
+
+十四、条件语句
+14.1、switch：
+char grade = 'a'  
+switch(grade){  // switch接收的变量可以是byte、short、int、char、String
+	case 'a':
+	case 'b': // 当变量是a或者b的时候都会输出aaaa
+	 System.out.println("aaaa");
+	 break;
+	
+}
+双引号就是字符串：
+String grade = "aa"
+switch(grade){
+	case "aa": // 注意case接收的数据类型和grade定义的需要一致
+	System.out.println("aaaa")
+	break;
+}
+
+14.2、三元运算符：
+int gender =1;
+char text = gender == 1?'男':'女' // 含义是定义一个变量text来接收后面三元运算符返回的结果
+因为三元运算返回的结果是字符型男或女所以text的类型就是char
+gender返回的结果是布尔型
+因此text只是接收三元运算的结果和gender没有关系
+
 新体系：
 一、计算机系统
 1.1、播放mp3的执行过程：
