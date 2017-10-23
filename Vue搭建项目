@@ -1,3 +1,24 @@
+十五、修改列表中被点击元素的属性：
+要精确修改每个被点元素需要使用index作为判断的变量：
+<span v-for="(item,index) in filterList.income.options"
+              @click="incomeValue($event,index)"
+              :class="{ 'static': isActive === index}">{{item}}</span>
+	       然后通过改变	isActive === index是true还是false来动态修改static这个class是否添加到dom元素中      
+ 在data里面定义一个初始值：
+  isActive1:0,
+      isActive2:0,
+      isActive3:0,
+ 通过改变this.$data.isActive1 = index;来确定是哪个属性改变     
+ incomeValue:function (e,index) {
+      this.$data.isActive1 = index;
+    },
+十四、vue获取当前元素的所有属性：
+@click="getOption($event)"
+ methods:{
+    getOption:function (e) {
+      console.log(e.target)    
+    }
+  }
 十三、路由传参和组件接收参数：
 一个组件在不同路由里面重复利用的时候，就需要根据路由去修改组件里面的值：
 因此就涉及到一下几个问题：
@@ -85,6 +106,18 @@ new Vue({
 在文件中引入数据和方法：
 {{$store.state.count}}引入共享数据
  <button @click="$store.commit('add')">+</button>引入方法
+ 
+ 在js中引入vuex的state：
+  methods:{
+    getOption:function (e) {
+      console.log(e.target.innerText)
+      this.$store.state.filterLists.income = e.target.innerText
+      console.log(this.$store.state.filterLists.income)
+    }
+  }
+ 
+ 
+ 
 九、element的表单验证：
 http://www.rxshc.com/78.html
 八、使用阿里的iconfont图标：http://www.iconfont.cn
