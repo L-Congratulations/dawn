@@ -1,3 +1,8 @@
+十六、vue-router在路由中传参：
+首先在链接里面写入需要传入的键值对{path:'/listDetail',query:{id:index,fatherName:list.fatherName}}这种写法不需要重新配置router的index.js文件
+	<router-link :to="{path:'/listDetail',query:{id:index,fatherName:list.fatherName}}">
+然后通过[this.$route.query.id]获取传递的参数：
+	listDetail:JSON.parse(localStorage.getItem('msg')).Home[this.$route.query.fatherName][this.$route.query.id],
 十五、修改列表中被点击元素的属性：
 要精确修改每个被点元素需要使用index作为判断的变量：
 <span v-for="(item,index) in filterList.income.options"
