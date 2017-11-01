@@ -14,9 +14,97 @@
  通过数组的下标操作数组
  如果操作超过了数组长度（数组长度5，操作第6个），就会报错，这种报错叫做数组越界
  
- 数组第二种定义的方法：
+ 数组第二种定义的方法：是最常用的方法比较简洁
  数据类型[] 数组名 = {值1，值2，值3}
   int[] arr = {1,3,5,8}
+  数组第三种定义方式：
+  数据类型[] 数组民 = new 数据类型[]{值1，值2，值3}
+  char[] arr = new char[]{'a','b','c'}
+  
+ 18.1、数组在内存中的结构
+ 在java中内存被分为两种栈和堆：栈和堆都是一块内存空间，只是大小不一样
+ 1.栈：容量小，存取速度快，适合存储生命周期短的数据。栈中存储变量（局部变量）
+ 栈的特点：先进后出，后进先出，这是因为在存储数据的时候先进来的数据在最底部，和砌墙类似，数据出去的时候从上边先出去
+ （变量，在程序运行的时候会在内存中开辟对应的空间，当程序执行结束之后空间就会被释放）（有队列先进后出）
+ 
+ 2.堆：容量很大，存取速度慢，适合存取声明周期长的数据。堆适合存储对象。
+ 堆的特点：没有队列，随取随用
+ 
+ 3、数组在内存中的存储逻辑
+ int[] arr = {1,3,5,8}
+ 数组是引用类型，存储在堆中
+ 在堆中任何一个存储空间都有名字，也就是地址，没有名字就找不到在堆中的位置（每个房间都有一个固定的地址，该房子也有一个唯一的名字302间）在内存中必须要
+ 有地址。一个数组只有一个地址。
+ 在堆内存中地址一般采用16进制如0x98.代表当前内存空间的地址。当调用堆内存中的数组的时候就是根据这个地址来找到对应的存储空间的
+ 在栈中划分一块空间，叫arr，里面存的内容就是堆中数组存储空间的地址0x98
+ 
+ 4、遍历数组：把指定结构的数据全都访问一边
+ 求一个数组中的极值：最重要的是思想思路
+ 首先要明确，方法定义和调用的位置！！！！
+ class Demo{
+ // 调用方法在主函数中运行
+    public static void main(String[] args) {
+        int[] arr = {1,3,6,321,1335,5,7};
+        int maxVal = maxValue(arr);
+        System.out.println(maxVal);
+    }
+    // 定义的方法在类里面，主函数外面
+    public static int maxValue(int[] array){
+//        定义结果变量，并把第一个值付给result
+        int result = array[0];
+//        然后遍历数组
+        for (int i = 1; i < array.length; i++ ){
+            如果result小于所比较的数的时候 把数值大的数赋值result
+            if (result<array[i]){
+                result = array[i]
+            }
+        }
+        return result;
+    }
+}
+5、数组常用操作
+冒泡排序：相邻的两个数逐个作比较，如果前一个数比后一个数小，那么就交换过来，当第一轮比较完毕后最小的值一定产生在末尾
+每一轮比较都会产生一个最小值
+public static void orderArr(int[] array){
+        // 外出的循环是循环几轮
+        for (int i = 0; i < array.length-1; i++){
+            // 没轮循环比较的次数
+            for (int j = 0; j < array.length - i - 1; j++){
+                // 如果后面数值比较大泽交换位置
+                if (array[j+1] > array[j]){
+                    int temp = array[j+1];
+                    array[j+1] = array[j];
+                    array[j] = temp;
+                }
+            }
+        }
+    }
+6、数组常用的操作
+查找：二分法查找
+二分法查找的前提条件：有序的数组。算法这种东西就是自己找规律然后用代码实现
+public static int findIndexBinary(int[] array,int num){
+        //最小索引
+       int minIndex = 0;
+       //最大索引
+       int maxIndex = array.length - 1;
+       //中间索引
+       int middleIndex = (minIndex+maxIndex)/2;
+       while (num != array[middleIndex]){
+           //如果num大于中间值
+           if (num > array[middleIndex]){
+               //更新最小索引
+               minIndex = middleIndex + 1;
+           }else {
+               //更新最大索引
+               maxIndex = middleIndex - 1;
+           }
+           //更新中间索引
+           middleIndex = (minIndex + maxIndex)/2;
+       }
+       //返回目标索引
+       return middleIndex;
+   }
+把一个数组从大到小排序，实现的方法有很多种
 十七、数据类型：
 java中的数据类型分为两大类：基本类型和引用类型
 基本类型：byte，short，int，long，float，double，char，boolean
