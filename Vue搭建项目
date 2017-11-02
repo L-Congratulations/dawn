@@ -1,3 +1,45 @@
+十七、用axios进行ajax跨域请求:
+用vue-cli配置跨域：
+在config\index.js中配置
+proxyTable: {
+        '/api': {
+          target: 'http://192.168.1.106:8081/api',	  
+	  在这的auth是非必须的，http://192.168.1.106:8081/api他的意思是在实际url中api代表：http://192.168.1.106:8081/api
+	  而没有的时候：http://192.168.1.106:8081/在实际的url中api代表：http://192.168.1.106:8081/
+          changeOrigin: true,
+          pathRewrite: {
+            '^/api': ''
+          }
+        }
+    },
+ 然后在axios中   
+  this.$refs[formName].validate((valid) => {
+          if (valid) {
+            console.log('开始发送ajax');
+//            this.$router.push({path:'/'})
+            let str = 'userName=admin&password=admin'
+            this.$http({
+              method:'post',            
+              url:'/api/auth',   // 此时请求的实际路径为：http://192.168.1.106:8081/auth
+              data: str
+            }).then(response=>{
+              console.log('请求成功')
+              console.log(response);
+              this.$router.push({path:'/'})
+            }).catch(function (error) {
+              console.log(error);
+            });
+          } else {
+//            console.log('表单格式有问题');
+//            console.log(md5('aaaa'));
+            return false;
+          }
+        })
+一定要明确传参方式，axios是option形式传参（http://www.jb51.net/article/118030.htm）
+因此官方写的那种data传参形式要修改成：let str = 'userName=admin&password=admin'格式才能传参成功
+也可以用第三方库qs等吧对象自动转成如上字符串
+
+
 十六、vue-router在路由中传参：
 首先在链接里面写入需要传入的键值对{path:'/listDetail',query:{id:index,fatherName:list.fatherName}}这种写法不需要重新配置router的index.js文件
 	<router-link :to="{path:'/listDetail',query:{id:index,fatherName:list.fatherName}}">
