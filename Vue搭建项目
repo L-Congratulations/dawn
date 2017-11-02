@@ -39,7 +39,33 @@ proxyTable: {
 因此官方写的那种data传参形式要修改成：let str = 'userName=admin&password=admin'格式才能传参成功
 也可以用第三方库qs等吧对象自动转成如上字符串
 
-
+注意两点：post请求的请求体必须是 'userName=admin&password=admin'格式才能成功，以对象的形式发送会请求失败
+post请求的格式：this.axios({
+              method: 'post',
+              url: '/api/auth',
+              data:str
+            }).then()
+	    不能this.axios.post(...)这种请求方式也会报错。get可以使用这种方式，不过建议都用同一种格式。
+	    
+let str = 'userName=admin&password=admin'
+this.axios({
+              method: 'post',
+              url: '/api/auth',
+              data:str
+            }).then(response=>{
+              console.log('请求成功')
+              console.log(response);
+              this.$router.push({path:'/'})
+            }).catch(function (error) {
+              console.log(error);
+            });
+            this.axios.get('/api/hello/hello1',{
+              headers:{"Authorization":bear ,"Content-Type":"application/json"},
+            }).then((res) =>{
+              console.log(res.data)
+            })
+	    
+	    
 十六、vue-router在路由中传参：
 首先在链接里面写入需要传入的键值对{path:'/listDetail',query:{id:index,fatherName:list.fatherName}}这种写法不需要重新配置router的index.js文件
 	<router-link :to="{path:'/listDetail',query:{id:index,fatherName:list.fatherName}}">
