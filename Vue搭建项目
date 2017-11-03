@@ -2,6 +2,14 @@
 十八、js对字符串进行base64和md5加密：
 下载base64 npm 包：npm install --save js-base64
 下载md5依赖包：npm install --save js-md5
+在项目中引入base64和md5
+在main.js中import base64 from 'js-base64/base64'（这样base64全局可以用）
+在需要md5的文件中引入import md5 from 'js-md5/src/md5'（哪个文件需要就在哪个文件中引入，在main.js中引入不起作用）
+使用语法对字符串进行转换：
+	    let data64 =Base64.encode(data);
+            console.log(data64)
+            let data5 = md5(data64+"o0davw")
+            console.log(data5)
 十七、用axios进行ajax跨域请求:
 用vue-cli配置跨域：
 在config\index.js中配置
