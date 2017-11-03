@@ -1,4 +1,4 @@
-引入
+
 十八、js对字符串进行base64和md5加密：
 下载base64 npm 包：npm install --save js-base64
 下载md5依赖包：npm install --save js-md5
