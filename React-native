@@ -1,0 +1,8 @@
+一、安装官方推荐脚手架：create-react-app
+1.1、安装教程：https://www.rails365.net/articles/kai-fa-react-ying-yong-zui-hao-jiao-shou-jia-create-react-app
+一、安装模拟器：
+下载逍遥安卓模拟器
+安装完模拟器后，要使用adb命令Android studio才能识别出来；
+打开cmd,输入：adb connect 127.0.0.1:21503（逍遥安卓模拟器的端口号是21503。夜神玩模拟器的端口号是62001。）
+connected to 127.0.0.1:21503 就代表连上了
+执行下“adb devices”查看下是否有连接设备
