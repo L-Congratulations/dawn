@@ -12,6 +12,16 @@ connected to 127.0.0.1:21503 就代表连上了
 三、react-native安装教程
 3.1、下载Android studio：http://www.android-studio.org/index.php/download
 3.2、安装studio：
-3.3、修改react-native启动的端口
+3.3、项目创建和启动的组合方式
+组合1
+  create-react-native-app AwesomeProject
+  cd AwesomeProject
+  npm start
+组合2 
+react-native init AwesomeProject 
+cd AwesomeProject 
+react-native run-android
+
+修改react-native启动的端口
 react-native start --port 9999
 3.4、
