@@ -1,3 +1,22 @@
+十九、vue2.0，可以在组件created中调用实现ajax的方法比如，
+export default {
+        created(){
+               this.request();
+        },
+        methods:{
+                request(){
+                      this.axios({
+			method:"get",
+			url:"/api/free/productlist",
+		      }).then(res =>{
+			console.log(res);
+		      }).catch(err =>{
+			console.log(err);
+		      })
+                }
+        }
+}
+
 
 十八、js对字符串进行base64和md5加密：
 下载base64 npm 包：npm install --save js-base64
