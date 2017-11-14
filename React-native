@@ -10,7 +10,8 @@
 打开cmd,输入：adb connect 127.0.0.1:21503（逍遥安卓模拟器的端口号是21503。夜神玩模拟器的端口号是62001。）
 connected to 127.0.0.1:21503 就代表连上了
 执行下“adb devices”查看下是否有连接设备
-二、yarn要安装环境变量：
+二、yarn全局安装不能执行全局命令时：
+要安装环境变量：
 首先，先查看一下yarn的bin目录，输入yarn global bin
 然后在path里面配置上边输出的路径
 用yarn下载的包在运行react native init app 报错的解决办法：
