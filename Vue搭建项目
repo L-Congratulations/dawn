@@ -28,6 +28,9 @@ methods: {
       this.activeIndex=JSON.parse(localStorage.getItem('menuName'))
       console.log("data初始化结束"+this.activeIndex)
     },
+    
+    
+    最简单的方法，给加了router-link-active的class的菜单添加样式，就可以达到目的
 二十、代码编写规范
 20.1、每一项按结构分都可以分为：标题和内容 超链接
 在定义对象的时候：{title:'',contents:''，hyperlink:''}
