@@ -1,3 +1,33 @@
+二十一、解决navMenu导航菜单点击刷新按钮后菜单选项自动跳转到首选项的问题
+原理：菜单激活状态是根据一个属性:default-active="activeIndex"来决定的，当activeIndex中的值和菜单选项中对应的name值相同时就会激活对应的菜单选项
+，因此要想让在页面刷新的时候activeIndex的值不会初始化，就必须修改data的值。
+但是在使用vuex的时候虽然也能存储状态，但是因为渲染顺序的原因，navMenu初始化结束之后才会渲染与他同级的子页面，状态更新不会触发。而且这种方法即使
+能行，也涉及到了跨页面传值，不符合组件的设计思想，耦合度太高
+另一种方法是在点击菜单选项的时候将该选项的routerName保存到localStore里面，这样只是涉及到了逻辑操作，并不涉及业务联系，这种方法更好，耦合度为零
+同时能实现预期效果
+methods: {
+      handleSelect(key, keyPath) {
+        console.log('点击'+keyPath[0]);
+        let name = keyPath[0];
+        localStorage.setItem('menuName',JSON.stringify(name))
+        console.log("存在本地的menu名字"+JSON.parse(localStorage.getItem('menuName')))
+        console.log("home:" +this.$store.state.routerName)
+
+      },
+    },
+    created:function () { 
+     console.log("data初始化之前"+this.activeIndex)
+    if (JSON.parse(sessionStorage.getItem('menuName')) === null){
+        this.activeIndex = 'Home';
+        console.log('首次加载时：'+this.activeIndex)
+      }else {
+        this.activeIndex=JSON.parse(sessionStorage.getItem('menuName'))
+        console.log('activeIndex的实际值:'+JSON.parse(sessionStorage.getItem('menuName')))
+      }   
+     
+      this.activeIndex=JSON.parse(localStorage.getItem('menuName'))
+      console.log("data初始化结束"+this.activeIndex)
+    },
 二十、代码编写规范
 20.1、每一项按结构分都可以分为：标题和内容 超链接
 在定义对象的时候：{title:'',contents:''，hyperlink:''}
