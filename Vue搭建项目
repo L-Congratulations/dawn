@@ -1,4 +1,24 @@
+二十三、vue绑定class
+只要是data中的数据就是双向绑定，无论嵌套多少层，只要改变就会触发视图更新
+class样式绑定：
+:class="{'contentHide': list.disabled}"
 
+contentHide是类名：
+.contentHide
+      display: none
+list.disabled是布尔值
+来决定该class是否添加到元素当中
+
+把所有想要改变的属性或者值抽象成对象，以属性绑定的形式渲染到dom中，然后通过改变对象的值来改变dom
+如修改input框是否可以编辑：需要操作dom属性的disabled，因此把disabled以属性绑定的形式渲染到dom中，
+通过双向数据绑定，动态更新对象的disabled:true来控制dom元素能否进行编辑
+<input type="text"  class="inputCss" v-model="list.content" :class="{'inputShow': !list.disabled}" :disabled="list.disabled">
+{option:'userName',icon:'',title:'用户名',content:'1111',operation:'修改',operation1:'',disabled:true},
+<div class="msgContentOperation"><span v-on:click="changeInput(index)">修改</div>
+changeInput(index){
+//      console.log(index)
+      this.$data.msgContent[index].disabled = false
+    },
 二十二、vue的全选反选
 首先要记住有点用vue开发不要总想着去操作dom元素！！！要尽量去操作数据，这样是最简单也是性能最好的操作方式。
 比如，CheckBox的全中和分选中，并获取到选中元素的value
