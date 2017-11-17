@@ -1,3 +1,68 @@
+
+二十二、vue的全选反选
+首先要记住有点用vue开发不要总想着去操作dom元素！！！要尽量去操作数据，这样是最简单也是性能最好的操作方式。
+比如，CheckBox的全中和分选中，并获取到选中元素的value
+不要去检测input的dom属性是否选中，也不要去从dom属性中拿value值，
+可以新建一个对象来存储需要检测的属性和需要获取的value值
+通过操作对象来达到目的
+使用对象还是数组循环数据，用数组更好一些，可以把对象放到数组里面循环数组，这样数组中只包含一个元素，就是对象。使用起来更方便
+
+全选反选的数据结构：
+原理是首先v-module双向绑定会动态更新对象中checked的值。 然后就是通过selectAll方法根据选择状态来修改content对象中所有checked属性的值
+
+msgLists:[
+          {
+          title: [],
+          checkedAll:true,
+          content: [
+            {"name": "demo1", "checked": true},
+            {"name": "demo2", "checked": false},
+            {"name": "demo3", "checked": true},
+            {"name": "demo4", "checked": true},
+          ],
+        }
+        ]
+ dom结构：	
+<div class="msgLists" v-for="list in msgLists">
+            <div class="msgListTitle">
+              <p class="checkInput"></p>
+              <p class="msgType"><input type="checkbox" class="check" @click="selectAll(list)"
+                                        v-model='list.checkedAll'>消息类型</p>
+              <p class="msgContent">内容</p>
+              <p class="msgSendTime">发送时间</p>
+              <p class="msgOperation">操作</p>
+              {{list.checkedAll}}
+            </div>
+            <div class="msgListContent" v-for="item in list.content">
+              <p class="checkInput"></p>
+              <p class="msgType"><input type="checkbox" class="checkChild" v-model="item.checked"
+                                         :value="item.name" v-on:click="selectItem(list,item)">消息类型</p>
+              <p class="msgContent">内容</p>
+              <p class="msgSendTime">发送时间</p>
+              <p class="msgOperation">操作</p>
+            </div>
+          </div>
+ 调用的方法：
+ selectAll: function(item) {
+        //如果父级被选中，那么子集循环，全被给checked=true
+        if(item.checkedAll){
+          item.content.forEach(function(item){
+            item.checked=false;
+          });
+        }else{
+          //相反，如果没有被选中，子集应该全部checked=false
+          item.content.forEach(function(item){
+            item.checked=true;
+
+          });
+        }
+      },
+      selectItem: function(item,s,index) {
+        //父级选中条件
+        //子集有选中的，那么父级checked=true
+        //some检测的就是有一个满足的就为true
+        item.checked=s.checked ? true : item.children.some(a => a.checked);
+      },
 二十一、解决navMenu导航菜单点击刷新按钮后菜单选项自动跳转到首选项的问题
 原理：菜单激活状态是根据一个属性:default-active="activeIndex"来决定的，当activeIndex中的值和菜单选项中对应的name值相同时就会激活对应的菜单选项
 ，因此要想让在页面刷新的时候activeIndex的值不会初始化，就必须修改data的值。
