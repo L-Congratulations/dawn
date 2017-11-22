@@ -1,3 +1,63 @@
+八、组件的属性（相当于class）
+大多数组件在创建时就可以使用各种参数来进行定制。用于定制的这些参数就称为props（属性）。
+
+export default class HelloWorldApp extends Component{
+    render(){
+        let pic = {
+            uri: 'https://upload.wikimedia.org/wikipedia/commons/d/de/Bananavarieties.jpg'
+        };
+        return(
+            <Text>Hello world!</Text>,
+            <Image source={pic} style={{width :193, height: 110 , marginTop: 100}}/>
+        )
+    }
+}
+
+AppRegistry.registerComponent('HelloWorldApp',() => HelloWorldApp)
+
+
+8.1、首先在创建一个组件的时候变量需要卸载render函数里面，和return并列的位置
+return里面只添加需要渲染在页面里面的结构代码，不能将变量写在里面。return返回的就是组件最终需要在页面显示的内容
+8.2、请注意{pic}外围有一层括号，我们需要用括号来把pic这个变量嵌入到JSX语句中。括号的意思是括号内部为一个js变量或表达式，
+需要执行后取值。因此我们可以把任意合法的JavaScript表达式通过括号嵌入到JSX语句中。
+
+在jsx语句中引用变量的时候需要在变量外边包裹一层{}，这样才能告诉jsx模板我这是引用的变量或者表达式，而不会被解释成其他的内容
+
+8.3、AppRegistry.registerComponent(appKey:string,getComponentFunc:ComponentProvider)  static静态方法，进行注册组件
+定义了一个名为HelloWorldApp的新的组件（Component），并且使用了名为AppRegistry的内置模块进行了“注册”操作。
+
+这个先了解，深究后边需要再去详细了解
+
+
+七、编写react-native起步
+7.1、首先也是组件的概念，把每一个功能模块封装成一个组件
+  而一个App的最终界面，其实也就是各式各样的组件的组合。
+7.2、因为是使用的jsx语法(JSX——是一种在JavaScript中嵌入XML结构的语法)，所以所有的代码都包含在js文件内。
+7.3、编写一个组件，首先要引入对应 react内置组件如<Text></Text>(它专门用来显示文本)
+然后用es6的class语法定义一个组件
+class HelloWorldApp extends Component {
+  render() {
+    return (
+      <Text>Hello world!</Text>
+    );
+  }
+}
+上面的代码定义了一个名为HelloWorldApp的新的组件（Component）。
+组件本身结构可以非常简单——唯一必须的就是在render方法中返回一些用于渲染结构的JSX语句。
+7.4、组件编写完成之后要暴露出去，这样才能被其他文件引用
+该组件编写在Hello.js的文件中：
+export default class HelloWorldApp extends Component{
+    render(){
+        return(
+            <Text>Hello world!</Text>
+        )
+    }
+}
+这样在需要使用HelloWorldApp组件的时候直接使用import语法就能引用到import App from './Hello';
+
+
+六、react-native实现热更新
+
 五、安装react-native时要用java1.8才能启动成功
 java1.9累死你启动不起来，各种报错
 
