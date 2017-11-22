@@ -1,3 +1,89 @@
+十一、使用flex-box布局
+我们在React Native中使用flexbox规则来指定某个组件的子元素的布局。Flexbox可以在不同屏幕尺寸上提供一致的布局结构。
+
+React Native中的Flexbox的工作原理和web上的CSS基本一致，当然也存在少许差异。首先是默认值不同：flexDirection的默认值是column而不是row，
+而flex也只能指定一个数字值。
+
+
+十、设置宽高
+最简单的给组件设定尺寸的方式就是在样式中指定固定的width和height。React Native中的尺寸都是无单位的，表示的是与设备像素密度无关的逻辑像素点。
+<View style={{width: 50, height: 50, backgroundColor: 'powderblue'}} />
+为了使用清晰方便使用：
+const styles = StyleSheet.create({
+            bigblue:{
+                color:'#409EFF',
+                fontSize:30,
+                fontWeight:'bold',
+                width: 100,
+                height: 100,
+                backgroundColor: '#CBF514'
+            },
+            red:{
+                color:'#f55231'
+            }
+
+        });
+ 这种方式定义更好
+ 所有的样式都定义在styles里面，包括布局：
+        red:{
+                color:'#f55231',
+                flex:3,
+                backgroundColor: '#EFF51C'
+            }
+
+九、组件的样式
+所有的核心组件都接受名为style的属性。这些样式名基本上是遵循了web上的CSS的命名，只是按照JS的语法要求使用了驼峰命名法，
+例如将background-color改为backgroundColor。
+
+可以直接在组件中内联使用style属性，如：<Image style={{width :193, height: 110 , marginTop: 100}}/> style为react内置属性因此可以
+在任意组件中内联使用，注意对于多个单词组成的属性名要用驼峰方式
+
+
+style属性可以是一个普通的JavaScript对象。这是最简单的用法，因而在示例代码中很常见。你还可以传入一个数组
+——在数组中位置居后的样式对象比居前的优先级更高，这样你可以间接实现样式的继承。
+实际开发中组件的样式会越来越复杂，我们建议使用StyleSheet.create来集中定义组件的样式。比如像下面这样：
+
+因此规定所有样式都使用StyleSheet.create来创建：
+const styles = StyleSheet.create({
+  bigblue: {
+    color: 'blue',
+    fontWeight: 'bold',
+    fontSize: 30,
+  },
+  red: {
+    color: 'red',
+  },
+});
+
+调用的时候直接按照属性调用就行：<Text style={styles.red}>just red</Text>
+style内置属性 = 大括号包裹的属性变量
+如果引用的style变量是一个数组，那么后声明的会覆盖前边相同的样式<Text style={[styles.red, styles.bigblue]}>red, then bigblue</Text>
+
+class SetStyles extends Component{
+    render(){
+        const styles = StyleSheet.create({
+            bigblue:{
+                color:'#409EFF',
+                fontSize:30,
+                fontWeight:'bold'
+            },
+            red:{
+                color:'#f55231'
+            }
+
+        });
+        return(
+            <View>
+                <Text style={styles.red}>just red</Text>
+                <Text style={styles.bigblue}>just red</Text>
+                <Text style={[styles.red,styles.bigblue]}>just red</Text>
+                <Text style={[styles.bigblue,styles.red]}>just red</Text>
+            </View>
+        )
+    }
+}
+注意：color的值不能是颜色的英文color:'red' 会报错
+
 八、组件的属性（相当于class）
 大多数组件在创建时就可以使用各种参数来进行定制。用于定制的这些参数就称为props（属性）。
 
@@ -14,7 +100,8 @@ export default class HelloWorldApp extends Component{
 }
 
 AppRegistry.registerComponent('HelloWorldApp',() => HelloWorldApp)
-
+// 注册应用(registerComponent)后才能正确渲染
+// 注意：只把应用作为一个整体注册一次，而不是每个组件/模块都注册
 
 8.1、首先在创建一个组件的时候变量需要卸载render函数里面，和return并列的位置
 return里面只添加需要渲染在页面里面的结构代码，不能将变量写在里面。return返回的就是组件最终需要在页面显示的内容
@@ -28,7 +115,7 @@ return里面只添加需要渲染在页面里面的结构代码，不能将变�
 
 这个先了解，深究后边需要再去详细了解
 
-
+8.4、
 七、编写react-native起步
 7.1、首先也是组件的概念，把每一个功能模块封装成一个组件
   而一个App的最终界面，其实也就是各式各样的组件的组合。
