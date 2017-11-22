@@ -1,3 +1,8 @@
+十二、真机调试
+调试时热更新：抖动手机或者选择menu键调出调试菜单
+然后选择Enable Hot Reloading（这个更好用些） 或 Enable Live Reload 因为起作用的时机不同，所以后者会退出app需要重新进入才能按逻辑顺序正常打开更新
+完成的app界面
+
 十一、使用flex-box布局
 我们在React Native中使用flexbox规则来指定某个组件的子元素的布局。Flexbox可以在不同屏幕尺寸上提供一致的布局结构。
 
