@@ -1,3 +1,40 @@
+十三、自定义组件及引用：
+自定义组件：和写普通组件一样，需要注意的是自定义的ui dom结构外边要包裹一层<View style={height:200}></view>,最主要的作用就是给组件一个初始化的
+高度，否则在引入组件的时候会因为没有高度组件显示不出来。要记住把组件暴露出去export default Banner 这样才能引用的地方找到
+return (
+            <View style={{height:200}}>
+                <Swiper style={styles.wrapper} showsButtons={true}
+                        autoplay = {true}
+                        buttonWrapperStyle={{height:200}}
+                        height={200}
+                        paginationStyle={{bottom: 870}}>
+                    <View style={styles.slide1}>
+                        <Image source={require('../img/logo.png')} style={styles.img}/>
+                    </View>
+                    <View style={styles.slide2}>
+                        <Text style={styles.text}>Beautiful</Text>
+                        <Image source={require('../img/logo.png')} style={styles.img}/>
+                    </View>
+                    <View style={styles.slide3}>
+                        <Text style={styles.text}>And simple</Text>
+                    </View>
+                </Swiper>
+            </View>
+            )
+            
+            
+引用自定义组件：首先就是把需要使用的组件引入到本模块import Banner from './components/Banner'
+然后就是直接在组件中引用模块就行，<Banner/>
+return(
+            <View>
+                <Text>泰山金融公告</Text>
+                <Banner/>(或<Banner></Banner>)
+                <Image source={homeImg} style={{width:193,height:100,backgroundColor: '#3bff20'}}/>
+                <Text>泰山金融公告</Text>
+                <Text>demo111</Text>
+                <Text>ss</Text>
+            </View>
+        )
 十二、真机调试
 调试时热更新：抖动手机或者选择menu键调出调试菜单
 然后选择Enable Hot Reloading（这个更好用些） 或 Enable Live Reload 因为起作用的时机不同，所以后者会退出app需要重新进入才能按逻辑顺序正常打开更新
@@ -9,6 +46,7 @@
 React Native中的Flexbox的工作原理和web上的CSS基本一致，当然也存在少许差异。首先是默认值不同：flexDirection的默认值是column而不是row，
 而flex也只能指定一个数字值。
 
+react native中有两个基本元素< View >与< Text >，分别类似于web端div和span，用于布局和修饰。需要注意的是，react native不是所有的CSS属性都支持，
 
 十、设置宽高
 最简单的给组件设定尺寸的方式就是在样式中指定固定的width和height。React Native中的尺寸都是无单位的，表示的是与设备像素密度无关的逻辑像素点。
