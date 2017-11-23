@@ -1,3 +1,10 @@
+十四、注意点：
+元素没在视图中显示出来绝大多数是因为没有高度，因此要在外边套一层有高度的壳子把元素展示出来：
+                <View style={{height:30}}>
+                    <Text style={styles.noticeStyles}>泰山金融公告</Text>
+                </View>
+react-native布局只能靠view元素来进行布局，
+
 十三、自定义组件及引用：
 自定义组件：和写普通组件一样，需要注意的是自定义的ui dom结构外边要包裹一层<View style={height:200}></view>,最主要的作用就是给组件一个初始化的
 高度，否则在引入组件的时候会因为没有高度组件显示不出来。要记住把组件暴露出去export default Banner 这样才能引用的地方找到
@@ -21,8 +28,6 @@ return (
                 </Swiper>
             </View>
             )
-            
-            
 引用自定义组件：首先就是把需要使用的组件引入到本模块import Banner from './components/Banner'
 然后就是直接在组件中引用模块就行，<Banner/>
 return(
