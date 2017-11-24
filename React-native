@@ -1,3 +1,43 @@
+十五、react-native导航栏：
+https://reactnavigation.org/docs/intro/quick-start
+http://m.blog.csdn.net/qq_24867873/article/details/78607564
+注意，导航文件要作为项目的入口文件（在导航页引入各个page页面实现导航效果，其他页面都是作为引用页面导入到导航页的）
+
+首先引入相关的函数和组件：
+import React,{ Component} from 'react'
+import { View, Text, StyleSheet, Button} from 'react-native'
+import { StackNavigator} from 'react-navigation'
+import HomeScreen from './pages/HomeScreen'
+import Investment from './pages/Investment'
+import Find from './pages/Find'
+import Mine from './pages/Mine'
+然后将页面挂载到导航组件上，并暴露出去：
+const RootNavigator = StackNavigator({
+    Home: {
+        screen: HomeScreen,
+        navigationOptions: {
+            headerTitle: 'Home',
+        },
+    },
+    Mine: {
+        screen: Mine,
+        navigationOptions: {
+            headerTitle: 'Mine',
+        },
+    },
+});
+export default RootNavigator;
+
+需要注意的是，因为要传参，在跳转的页面需要按钮来触发，
+                <Button
+                    onPress={() => navigate('Mine')}
+                    title="Go to Mine">
+
+                </Button>
+ 这块需要传递一个参数navigate要通过这种方式来传递：               
+const {navigate} = this.props.navigation;
+
+
 十四、注意点：
 元素没在视图中显示出来绝大多数是因为没有高度，因此要在外边套一层有高度的壳子把元素展示出来：
                 <View style={{height:30}}>
