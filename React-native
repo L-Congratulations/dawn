@@ -1,4 +1,5 @@
 十五、react-native导航栏：
+https://reactnavigation.org/docs/intro/headers
 https://reactnavigation.org/docs/intro/quick-start
 http://m.blog.csdn.net/qq_24867873/article/details/78607564
 注意，导航文件要作为项目的入口文件（在导航页引入各个page页面实现导航效果，其他页面都是作为引用页面导入到导航页的）
@@ -29,6 +30,7 @@ const RootNavigator = StackNavigator({
 export default RootNavigator;
 
 需要注意的是，因为要传参，在跳转的页面需要按钮来触发，
+
                 <Button
                     onPress={() => navigate('Mine')}
                     title="Go to Mine">
@@ -36,7 +38,7 @@ export default RootNavigator;
                 </Button>
  这块需要传递一个参数navigate要通过这种方式来传递：               
 const {navigate} = this.props.navigation;
-
+注意只要是注册了navigation，就可以通过onPress={() => navigate('Mine')}这种方式来跳转页面
 
 十四、注意点：
 元素没在视图中显示出来绝大多数是因为没有高度，因此要在外边套一层有高度的壳子把元素展示出来：
