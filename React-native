@@ -1,3 +1,13 @@
+十六、导航栏标题样式调整：
+https://reactnavigation.org/docs/navigators/stack
+Home: {
+        screen: TabNavigation,
+        navigationOptions: {
+            header:null
+        },
+    },
+
+
 十五、react-native导航栏：
 https://reactnavigation.org/docs/intro/headers
 https://reactnavigation.org/docs/intro/quick-start
