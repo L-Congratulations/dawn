@@ -1,3 +1,36 @@
+
+十九、布局：
+首先return（）中的元素只能有一个，不能同时return多个元素，如果有多个元素需要将其用View标签包裹起来，如：
+              <View style={styles.wrap}>
+                <Text>
+                    我的页面
+                </Text>
+                <Button
+                     onPress={() => navigate('Home')}
+                     title="Go to Home"
+                 />
+
+                <Register/>
+
+             </View>
+ 然后所有的布局都需要通过给View设置属性来完成，Text等内置标签使用flexBox属性并不会起作用。因此，如果想给哪个标签定位，就需要在外边先套一层View标签
+ 定位的方法主要是padding，margin，配合flexBox布局中的：flexDerection:'row'（用来规定是横向布局还是纵向布局，默认是纵向）、
+  flexGrow：1（子元素都是1代表平分父元素，占得数值越大则占得空间越大），
+十八、Button使用
+                <Button
+                    onPress={() => navigate('ScrollTab')}
+                    title="Go to ScrollTab">
+
+                </Button>
+                注意，在<Button></Button>的中间填充的内容无效，真正在button按钮中显示的是title里面的内容。如果没有title在编译运行的时候会报错
+                所有内置标签的属性，不需要通过符号来进行区分，比较清晰的做法是新的属性换行写。如下面这种写法是错误的：
+                <Button
+                    onPress={() => navigate('ScrollTab')};或者,
+                    title="Go to ScrollTab">
+
+                </Button>
+
+
 十七、横向滑动导航：
 https://github.com/skv-headless/react-native-scrollable-tab-view
 
