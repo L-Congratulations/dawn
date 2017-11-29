@@ -1,3 +1,7 @@
+二十一、flex布局，垂直划分每个模块所占的面积
+当父元素有固定高度的时候，将每个子元素的高度设为0，然后通过flexGrow：1方法就可以按比例划分子元素所占父元素的百分比。
+如果父元素没有设置高度，那么子元素会直接高度为0，不会显示
+
 二十、rn中引入icon并使用
 
 十九、布局：
@@ -37,13 +41,42 @@ https://github.com/skv-headless/react-native-scrollable-tab-view
 
 十六、导航栏标题样式调整：
 https://reactnavigation.org/docs/navigators/stack
+隐藏导航栏header
 Home: {
         screen: TabNavigation,
         navigationOptions: {
             header:null
         },
     },
+显示导航栏header，并显示固定的提示：
+Register:{
+        screen: Register,
+        navigationOptions:{
+            title:'注册'
+        }
+    },
+这样导航头就会显示‘注册’俩字
 
+修改完成之后要重启才会生效
+
+在react-native中修改样式要作用到具体的元素才会生效，没有继承
+修改header的样式是：headerStyle
+修改header标题的样式是：headerTitleStyle
+修改header标题返回按钮的样式是：
+Register:{
+        screen: Register,
+        navigationOptions:{
+            title:'注册',
+            headerStyle:{
+                backgroundColor:'#4a29ff',
+
+            },
+            headerTitleStyle:{
+                color:'#fff',
+                fontSize:12
+            }
+        }
+    },
 
 十五、react-native导航栏：
 https://reactnavigation.org/docs/intro/headers
