@@ -1,6 +1,13 @@
-二十一、flex布局，垂直划分每个模块所占的面积
+二十一、flex布局，垂直划分每个模块所占的面积和设置宽度
 当父元素有固定高度的时候，将每个子元素的高度设为0，然后通过flexGrow：1方法就可以按比例划分子元素所占父元素的百分比。
 如果父元素没有设置高度，那么子元素会直接高度为0，不会显示
+
+设置宽度：需要给父级设置一个flex：1
+      <View style={{flex: 1}}>
+        <View style={{flex: 1, backgroundColor: 'powderblue'}} />
+        <View style={{flex: 2, backgroundColor: 'skyblue'}} />
+        <View style={{flex: 3, backgroundColor: 'steelblue'}} />
+      </View>
 
 二十、rn中引入icon并使用
 
