@@ -1,9 +1,87 @@
 二十三、react语法笔记
+跟据官方教程：
+styles和class并列写
 
+render(){
+        let activityLists = [
+            {
+                left:{
+                    activityName:'签到',
+                    activityIntroduce:'赚泰山币',
+                    activityIcon:'',
+                    activityDetailLink:''
+                },
+                right:{
+                    activityName:'摇一摇',
+                    activityIntroduce:'人品爆发',
+                    activityIcon:'',
+                    activityDetailLink:''
+                }
+            },
+            {
+                left:{
+                    activityName:'邀请好友',
+                    activityIntroduce:'奖励返现',
+                    activityIcon:'',
+                    activityDetailLink:''
+                },
+                right:{
+                    activityName:'红包',
+                    activityIntroduce:'投资抵现',
+                    activityIcon:'',
+                    activityDetailLink:''
+                }
+            }
+        ];
+        let renderActivity = [];
+        for(let i=0;i<activityLists.length;i++){
+            renderActivity.push(
+                <View style={styles.activityItemWrap}>
+                    <View style={styles.activityItem}>
+                        <View style={styles.activityNameGroup}>
+                            <Text style={styles.activityName}>{activityLists[i].left.activityName}</Text>
+                            <Text style={styles.activityIntroduce}>{activityLists[i].left.activityIntroduce}</Text>
+                        </View>
+                        <View style={styles.activityIcon}>
+                            <Image/>
+                        </View>
+                    </View>
+                    <View style={styles.activityItem}>
+                        <View style={styles.activityNameGroup}>
+                            <Text style={styles.activityName}>{activityLists[i].right.activityName}</Text>
+                            <Text style={styles.activityIntroduce}>{activityLists[i].right.activityIntroduce}</Text>
+                        </View>
+                        <View style={styles.activityIcon}>
+                            <Image/>
+                        </View>
+                    </View>
+                </View>
+            )
+        }
+        return(
+            <View style={styles.ActivityAreaWrap}>
+                {renderActivity}
+            </View>
+        )
+    }
 
-
-
-
+跳转链接写法：
+首先在注入TouchableHighlight，onPress事件需要TouchableHighlight等组件来使用
+<TouchableHighlight
+                        onPress={() => navigate('Register')}
+                        style={{flex:1}}>
+                        <View style={styles.activityItem}>
+                            <View style={styles.activityNameGroup}>
+                                <Text style={styles.activityName}
+                                >{activityLists[i].left.activityName}</Text>
+                                <Text style={styles.activityIntroduce}>{activityLists[i].left.activityIntroduce}</Text>
+                            </View>
+                            <View style={styles.activityIcon}>
+                                <Image source={require('../img/4.png')} style={styles.activityImage}/>
+                            </View>
+                        </View>
+                    </TouchableHighlight>
+              这里  TouchableHighlight需要设置    style={{flex:1}}才能将内容撑开 <View style={styles.activityItem}>的样式不需要加flex：1
 二十二、ScrollView能自己撑开高度，前提是外边没有套View标签。
 对于视图中ScrollView因为可滑动区会被头部的固定标签往下挤，就是ScrollView滚动高度固定，但是因为头部有固定导航条，吧ScrollView视图向下挤了。
 解决方法是style={{backgroundColor:'#ff3adc',marginBottom:50}}设置一个bottom，把style={{backgroundColor:'#ff3adc',marginBottom:50}}的
