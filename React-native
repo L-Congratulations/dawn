@@ -1,3 +1,9 @@
+二十三、react语法笔记
+
+
+
+
+
 二十二、ScrollView能自己撑开高度，前提是外边没有套View标签。
 对于视图中ScrollView因为可滑动区会被头部的固定标签往下挤，就是ScrollView滚动高度固定，但是因为头部有固定导航条，吧ScrollView视图向下挤了。
 解决方法是style={{backgroundColor:'#ff3adc',marginBottom:50}}设置一个bottom，把style={{backgroundColor:'#ff3adc',marginBottom:50}}的
