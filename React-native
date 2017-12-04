@@ -1,3 +1,29 @@
+二十四、css命名规范：
+1、不同内容使用不同的前缀来进行区分
+    /*history*/
+    .od_his_dtl_x{}       
+    
+    /*set meal*/
+    .od_set_ml_x{}
+    .od_set_ml_lst_x{}
+    
+    /*pic menu*/
+    .od_pic_mu_x{}
+    .od_pic_des{}
+    
+2、面向属性命名
+这种命名就是要让你把页面啊设计啊什么的通通塞到马桶里冲走，不要管页面什么位置，什么内容，there is noting, 这儿什么都没有，
+既然什么都没有，也就没有了任何限制，
+
+感觉还是加前缀，根据内容命名好
+3、尽量无层级，无标签
+#test .test{}， ul.test{}，#test ul{} 以及.test{}。
+中.test{}是渲染速度最快的
+4、可以使用简拼：box_backgroundcolor  box_bg_color
+
+
+5、命名规则：
+页面外围控制整体佈局宽度：wrapper
 二十三、react语法笔记
 跟据官方教程：
 styles和class并列写
