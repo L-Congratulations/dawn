@@ -97,6 +97,8 @@ render(){
 
 跳转链接写法：
 首先在注入TouchableHighlight，onPress事件需要TouchableHighlight等组件来使用
+import { Text, TouchableHighlight} from 'react-native'
+
 <TouchableHighlight
                         onPress={() => navigate('Register')}
                         style={{flex:1}}>
