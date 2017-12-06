@@ -1,3 +1,10 @@
+二十六、textInput样式：
+<TextInput
+                                        onChangeText={(text) => this.setState({text})}
+                                        value={this.state.text}
+                                        placeholder='请输入验证码'
+                                        underlineColorAndroid="transparent" // 去掉底部下划线
+                                    />
 二十五、StackNavigator实现自定义导航跳转到任意界面，因为直接通过标签引入的组件没有在navigator里面注册，所以直接引入的无法使用navigator导航
 
 
