@@ -1,3 +1,7 @@
+二十八、路由传参和 取参
+
+
+
 二十七、reactnative本地存储react-native-storage
 这是一个本地持久存储的封装，可以同时支持react-native(AsyncStorage)和浏览器(localStorage)。
 
