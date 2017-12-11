@@ -6,10 +6,76 @@ npm install --save redux-thunk   【redux-thunk是用来让redux有异步的acti
 
 30.2、建立项目结构目录：
 根目录下新建redux文件夹
-redux文件夹内包含action文件夹，
+redux文件夹内包含action文件夹，reducers文件夹，store文件夹
+action文件夹内包含ActionTypes.js 和 Action.js
+reducers文件夹内包含Index.js和LoginReducers.js
+store文件夹内包含 configuerStore.js
 
+Redux三个最重要的概念：action，reducer，store。我们一步步看实例如何实现。
+30.3、Action：是用户触发某个动作之后执行的实际代码，通过  dispatch将用户的操作引到知action：
+                            onPress={()=>{
+                                        dispatch(performLoginAction(this.state.username,this.state.password))
+                                    }}
+                                    
+Action中主要就是触发事件所执行的逻辑---
+首先引入了动作执行的type：ActionTypes
+然后如：
+import * as types from '../constants/ActionTypes';
 
+// 模拟服务器返回的用户信息
+let user = {
+    'name': 'admin',
+    'age': '24'
+}
 
+// 执行登录
+export function doLogin() {
+    return dispatch = >{
+        dispatch(isLogining());
+        // 模拟用户登录
+        let result = fetch('https://github.com/').then((res) = >{
+            dispatch(loginSuccess(true, user));
+        }).
+        catch((e) = >{
+            dispatch(loginSuccess(false, null));
+        });
+    }
+}
+
+// 正在登录
+function isLogining() {
+    return {
+        type: types.LOGIN_IN_DOING
+    }
+}
+
+// 登录完成
+function loginSuccess(isSuccess, user) {
+    return {
+        type: types.LOGIN_IN_DONE,
+        isSuccess: isSuccess,
+        user: user
+    }
+}
+
+30.4、export和export default的区别：
+//export和export default的区别是前者可以导出多个后者只能导出一个
+    // export导出：
+    // export const str = 'hello world'
+    //
+    // export function f(a){
+    //     return a+1
+    // }
+    // import对应的导入：
+    // import { str, f } from 'demo1' //也可以分开写两次，导入的时候带花括号
+    //
+    // export default导出：
+    // export default const str = 'hello world'
+    // import对应的导入：
+    // import str from 'demo1' //导入的时候没有花括号
+    
+    
+    
 
 
 二十八、路由传参和 取参
