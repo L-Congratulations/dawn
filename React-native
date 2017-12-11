@@ -1,3 +1,17 @@
+三十、redux：
+30.1、首先下载引入依赖文件：
+npm install --save redux 【redux的包】
+npm install --save react-redux  【react-redux是redux需要依赖的包】
+npm install --save redux-thunk   【redux-thunk是用来让redux有异步的action事务】
+
+30.2、建立项目结构目录：
+根目录下新建redux文件夹
+redux文件夹内包含action文件夹，
+
+
+
+
+
 二十八、路由传参和 取参
 
 
