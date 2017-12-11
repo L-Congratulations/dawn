@@ -74,7 +74,40 @@ function loginSuccess(isSuccess, user) {
     // import对应的导入：
     // import str from 'demo1' //导入的时候没有花括号
     
-    
+30.5、登录的action：
+// 在这编写执行login动作的逻辑代码
+// 登录页通过onPress事件，使用dispatch方法将登陆操作传递到这个页面
+import * as types from './constants/ActionTypes'
+let user={
+    'name':'admin',
+    'age':24
+};
+export function doLogin() {
+    return dispatch =>{
+        dispatch(isLogining()); // 发出一个action，表示正在登陆
+        let result = fetch('https://github.com/').then((res)=>{
+            // 使用fetch进行ajax请求，请求成功之后执行dispatch发出一个action，表示登录成功
+            dispatch(loginSuccess(true,user)); // 发出一个action，并把服务器返回来的数据发出去
+            // 在这的user是一个模拟的服务器返回来的对象。如果是ajax则传res.data.userMsg
+        }).catch((err)=>{
+            dispatch(loginSuccess(false,null)); // 如果请求失败会发送一个提示错误的结果
+        })
+    }
+}
+function isLogining() {
+    return{
+        type:types.LOGIN_IN_DOING
+    }
+}
+function loginSuccess(isSuccess,user) {
+    return{
+        type: types.LOGIN_IN_DONE,
+        isSuccess:isSuccess,
+        user:user
+    }
+}
+
+// 在action中，通过dispatch将内容传递给reducer
     
 
 
