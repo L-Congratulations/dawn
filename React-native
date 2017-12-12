@@ -1,3 +1,11 @@
+其实知识这东西永远都是学不完的,你会的比别人多点,别人有一天也会超过你的,所以知识改变命运这种说法是并不正确的,
+知识在60-70年代可以改变命运,这句话也是李嘉诚说的确实符合,但是现在获取知识的途径太多了,只要你想学你永远都学不完,
+然而这并没有什么卵用,对于你的命运,只是你工作的可以好一点而已,每月可以多拿一千两千块钱,你还是娶不到媳妇,买不起房.
+真正改变命运的不是知识,而是智慧,有一千种成功的方式,就看你有没有动脑子去想,有人想过但被各种困难阻碍,这种属于嘴上的智慧.
+
+
+
+
 三十、redux：
 30.1、首先下载引入依赖文件：
 npm install --save redux 【redux的包】
@@ -75,9 +83,10 @@ function loginSuccess(isSuccess, user) {
     // import str from 'demo1' //导入的时候没有花括号
     
 30.5、登录的action：
-// 在这编写执行login动作的逻辑代码
-// 登录页通过onPress事件，使用dispatch方法将登陆操作传递到这个页面
-import * as types from './constants/ActionTypes'
+// 在这编写执行login动作的逻辑代码，
+// 登录页通过onPress事件，使用dispatch方法将登陆操作传递到这个页面，
+// 这其实是对login操作动作根据结果执行不同的action（动作的下发），action的具体操作在reducer中
+import * as types from '../constants/ActionTypes'
 let user={
     'name':'admin',
     'age':24
@@ -107,8 +116,119 @@ function loginSuccess(isSuccess,user) {
     }
 }
 
-// 在action中，通过dispatch将内容传递给reducer
+// 在action中，通过dispatch将内容传递给reducer，也就是接下来的执行逻辑是reducer
+
+30.6、登录的reducer：
+// 在这承接actions中的Login.js，
+// 在这的逻辑其实就是对action的处理，负责返回新的状态函数，这也是reducer存在的作用
+
+import * as types from '../constants/ActionTypes'
+
+// 根据数据结果给数据进行初始化
+// 登录操作有登录状态status，是否登录成功，和用户信息三个值
+const initialState = {
+    status:'init',// init,doing,done
+    inSuccess:false,
+    user:null
+};
+
+export default function loginIn(state=initialState,action) {// 这的action参数对应的是
+    // actions中Login.js 里面的：
+    // dispatch(loginSuccess(true,user));
+    // function loginSuccess(isSuccess,user) {
+    //     return{
+    //         type: types.LOGIN_IN_DONE,
+    //         isSuccess:isSuccess,
+    //         user:user
+    //     }
+    // }
+    // 这个action参数则对应的就是函数loginSuccess(true,user)执行的结果，也就是
+    //     {
+    //         type: types.LOGIN_IN_DONE,
+    //         isSuccess:isSuccess,
+    //         user:user
+    //     }   这个对象。换句话说就是在actions的Login.js里的dispatch最终将loginSuccess
+    // 的执行结果传递到了这个页面
+
+    switch (action.type){
+        case types.LOGIN_IN_INIT:
+            return{
+                ...state,
+                // es6语法，执行的结果就是把state里面所有的键值对列出来，如
+                // loading:false, data:''
+            };
+        case types.LOGIN_IN_DOING:
+            return{
+                ...state,
+                status:'doing'
+            };
+        case types.LOGIN_IN_DONE:
+            return{
+                ...state,
+                status:'done',
+                isSuccess:action.isSuccess,
+                user:action.user
+            };
+        default:
+            return state;
+    }
+}
+
+// 由于redux中只允许有一个store，当业务量比较多，我们会使用多个reducer。这时候我们
+// 需要把这些reducer组合起来，把他们集中到index中
+
+30.7、将所有reduxer整合的index.js
+
+// 在这个文件里将把所有的reducer整合到一起
+import { combineReducers} from 'redux'
+import loginIn from './Login'
+
+const rootReducer = combineReducers({
+    loginIn
+});
+
+export default rootReducer
+
+// 将reducer文件整合之后下一步是store编写
+
+
+30.8、store的基本写法：
+
+// 这个是store的基本写法
+import { createStore, applyMiddleware} from 'redux'
+import thunkMiddleware from 'redux-thunk'
+import rootReducer from '../reducers/index'
+
+const createStoreWithMiddleware = applyMiddleware(thunkMiddleware)(createStore);
+// applyMiddleware函数表示将中间件thunkMiddleware应用在redux action过程中
+// thunkMiddleware是一个异步中间件
+export default function configureStore(initialState) {
+    const store = createStoreWithMiddleware(rootReducer,initialState);
+    // createStoreWithMiddleware表示用reducer来创建store
+    return store;
+}
+
+// 接下来将store关联到组件的根目录上，
     
+30.9、将store和整个应用关联：
+在项目入口文件内：
+import { AppRegistry } from 'react-native';
+import App from './app/StackNavigator';
+import {Provider} from 'react-redux'
+import configureStore from './app/redux/store/configureStore'
+
+const store = configureStore();
+
+AppRegistry.registerComponent('reactApp', () =>{
+    return(
+        <Provider store={store}>
+            {/*使用Provider包裹整个程序的入口文件APP，同时将store传递进去*/}
+            <App/>
+        </Provider>
+    )
+}
+
+);
 
 
 二十八、路由传参和 取参
