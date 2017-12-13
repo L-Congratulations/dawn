@@ -230,6 +230,37 @@ AppRegistry.registerComponent('reactApp', () =>{
 
 );
 
+30.10、在页面中注册和调用store中的属性和方法：
+首先在页面中引入
+import { connect} from 'react-redux' // connect(select)(LoginPage)表示LoginPage组件对store的状态感兴趣。
+import {doLogin} from '../redux/actions/Login' // 页面中需要调用的函数
+
+function select(store) {
+    return{
+        status:store.loginIn.status,
+        isSuccess:store.loginIn.isSuccess,
+        data:store.loginIn.data
+    }
+}
+
+export default connect(select)(Mine)   表示Mine会检测store中loginIn.status的状态，当发生改变的时候会刷新Mine页面
+
+获取store中的数据是通过this.props.isSuccess方式获得的，如上所示的代码中select关联的是loginIn对应的state状态，那么this.props.isSuccess
+取到的就是store.loginIn.isSuccess,对应的值，当store.loginIn.isSuccess发生改变的时候就会刷新页面，
+
+获取数据并绑定到页面，当数据更新时刷新页面：
+function select(store) {
+    return{
+        status:store.loginIn.status,
+        isSuccess:store.loginIn.isSuccess,
+        data:store.loginIn.data
+    }
+}
+// export default Mine
+export default connect(select)(Mine)
+此时已经将login返回的data数据传递到了页面，然后通过
+{this.props.data.age}直接取值
+
 
 二十八、路由传参和 取参
 
