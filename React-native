@@ -14,7 +14,7 @@ npm install --save redux-thunk   【redux-thunk是用来让redux有异步的acti
 
 30.2、建立项目结构目录：
 根目录下新建redux文件夹
-redux文件夹内包含action文件夹，reducers文件夹，store文件夹
+redux文件夹内包含action文件夹，reducers文件夹，store文件夹,cons
 action文件夹内包含ActionTypes.js 和 Action.js
 reducers文件夹内包含Index.js和LoginReducers.js
 store文件夹内包含 configuerStore.js
