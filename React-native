@@ -288,6 +288,10 @@ export default connect(select)(Mine)
 此时已经将login返回的data数据传递到了页面，然后通过
 {this.props.data.age}直接取值
 
+30.11、页面中的提示框：
+import {ToastAndroid} from 'react-native'
+ ToastAndroid.show('手机号和验证码不能为空', ToastAndroid.SHORT)
+
 
 二十八、路由传参和 取参
 
