@@ -251,6 +251,27 @@ export default connect(select)(Mine)  // 将select中的变量绑定到该页面
 // 的值发生改变时，status也会发生改变，
 表示Mine会检测store中loginIn.status的状态，当发生改变的时候会刷新Mine页面
 
+使用redux之后必须改变页面上的值才会触发页面更新，如：
+改变store.loginIn.status的值，因为store.loginIn.status与页面的status进行了绑定，所以每次store.loginIn.status改变的时候页面的status也会随着改变
+，在本案例中，分析函数可以得知，每次触发按钮之后store.loginIn.status的值会先变成doing，然后再变成done。每次触发按钮store.loginIn.status的值
+都发生了改变done-》doing-》done，，所以页面中的status也是会done-》doing-》done，因此每次触发按钮都会刷新页面。总结来说就是通过
+store.loginIn.status间接触发了页面state值的改变，所以会刷新页面
+反例：当store.loginIn.status没有和页面元素绑定的时候，无论点击多少次按钮都不会触发页面更新，因为页面中的status是undefined，每次点击按钮都是
+undefined，没有数据更新，也就没有了页面更新。
+同理：当页面只绑定isSuccess1:store.loginIn.isSuccess,的时候，因为页面中isSuccess1的值最开始是reducer中规定的初始值false，
+当点击按钮之后store.loginIn.isSuccess的值变为true，所以isSuccess1的值也会变为true，此时会刷新一次页面，当再次点击按钮的时候
+store.loginIn.isSuccess的值一直为true，对应的store.loginIn.status依旧会每次变更。但是页面并不会刷新。
+-------------------------------------------------------------------------------------------------------------------------------------
+所以页面刷新触发的条件只有一个就是
+页面内state的值发生改变，而改变页面内的值可以有两种方式，直接页面内通过setState修改state的值和通过修改store中的值来间接修改页面内的值，使其发生
+改变。将store中的值和页面state中的值绑定的方法就是：
+let select =(store) =>({
+    status:store.registerIn.status,   
+});
+export default connect(select)(Register)
+此时store.registerIn.status和页面的status已经绑定，修改值的时候就会刷新页面，绑定值其实是绑定到了this.props.status，此时就能通过store来控制
+页面刷新
+------------------------------------------------------------------------------------------------------------------------------------
 获取store中的数据是通过this.props.isSuccess方式获得的，如上所示的代码中select关联的是loginIn对应的state状态，那么this.props.isSuccess
 取到的就是store.loginIn.isSuccess,对应的值，当store.loginIn.isSuccess发生改变的时候就会刷新页面，
 
