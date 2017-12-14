@@ -14,11 +14,11 @@ npm install --save redux-thunk   【redux-thunk是用来让redux有异步的acti
 
 30.2、建立项目结构目录：
 根目录下新建redux文件夹
-redux文件夹内包含action文件夹，reducers文件夹，store文件夹,cons
-action文件夹内包含ActionTypes.js 和 Action.js
+redux文件夹内包含action文件夹，reducers文件夹，store文件夹,constant文件夹
+action文件夹内包含各个业务逻辑处理的action，承接的是页面用户操作传递过来的函数Login.js,Register.js等
 reducers文件夹内包含Index.js和LoginReducers.js
 store文件夹内包含 configuerStore.js
-
+constant文件夹包含定死的字符串，作为标识ActionTypes.js
 Redux三个最重要的概念：action，reducer，store。我们一步步看实例如何实现。
 30.3、Action：是用户触发某个动作之后执行的实际代码，通过  dispatch将用户的操作引到知action：
                             onPress={()=>{
@@ -237,13 +237,19 @@ import {doLogin} from '../redux/actions/Login' // 页面中需要调用的函数
 
 function select(store) {
     return{
+    // 注意，这里的status对应的是该页面中的变量名：this.props.status,this.props.isSuccess1,this.props.data2
+    // store.loginIn.status对应的是reducer对应的变量名，
+    // 这段代码的意思是将login的reducer里面所存store的值store.loginIn.status传递到页面中，在页面中的变量名status来存储从store传递过来的值
+    // 通过this.props.status取到值
         status:store.loginIn.status,
-        isSuccess:store.loginIn.isSuccess,
-        data:store.loginIn.data
+        isSuccess1:store.loginIn.isSuccess,
+        data2:store.loginIn.data
     }
 }
 
-export default connect(select)(Mine)   表示Mine会检测store中loginIn.status的状态，当发生改变的时候会刷新Mine页面
+export default connect(select)(Mine)  // 将select中的变量绑定到该页面，页面中的status会和store中的store.loginIn.status同步，当store中
+// 的值发生改变时，status也会发生改变，
+表示Mine会检测store中loginIn.status的状态，当发生改变的时候会刷新Mine页面
 
 获取store中的数据是通过this.props.isSuccess方式获得的，如上所示的代码中select关联的是loginIn对应的state状态，那么this.props.isSuccess
 取到的就是store.loginIn.isSuccess,对应的值，当store.loginIn.isSuccess发生改变的时候就会刷新页面，
