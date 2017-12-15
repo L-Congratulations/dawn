@@ -292,6 +292,29 @@ export default connect(select)(Mine)
 import {ToastAndroid} from 'react-native'
  ToastAndroid.show('手机号和验证码不能为空', ToastAndroid.SHORT)
 
+30.12、调用store中的数据和action中的方法：（原则上是可以在任意页面调用其中的任意一个数据和方法）
+调用action中的方法：
+首先在页面中引入import {doLogin} from "../redux/actions/Login";
+然后再页面中调用：
+                  <Button
+                        onPress={() =>{
+                            this.props.dispatch(doLogin('',''))
+                        }}
+                        title='注销'>
+
+                    </Button>
+                    
+调用store中的数据：
+首先将数据绑定到页面：
+import {connect} from 'react-redux'
+let select =(store) =>({
+    isSuccess:store.loginIn.isSuccess,
+});
+export default connect(select)(Mine)
+
+然后调用：
+this.props.isSuccess
+
 
 二十八、路由传参和 取参
 
