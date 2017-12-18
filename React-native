@@ -4,7 +4,30 @@
 真正改变命运的不是知识,而是智慧,有一千种成功的方式,就看你有没有动脑子去想,有人想过但被各种困难阻碍,这种属于嘴上的智慧.
 
 
+三十二、reactnative tabnavigator 监听点击事件：
+ Home:{
+        screen:HomeScreen,
+        navigationOptions:{
+            tabBarLabel:'首页',
+            headerLeft:null, //去除返回按钮
+            tabBarIcon:({tintColor}) =>(
+                <Image
+                source={require('./img/4.png')}
+                style={[{tintColor:tintColor,width:26,height:26}]}/>
+            ),
+            onNavigationStateChange:(()=>alert('首页')),           
+            tabBarOnPress:function (route) {
+                console.log('this');
+                console.log(this);
+                console.log('route');
+                console.log(route);
+               route.jumpToIndex(0);
 
+            }
+        },
+
+三十一、加载缓慢bug
+console.log(this)的时候回拖慢渲染速度，渲染很慢
 
 三十、redux：
 30.1、首先下载引入依赖文件：
