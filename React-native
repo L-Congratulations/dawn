@@ -396,7 +396,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 export default class FlatListBasics extends Component {
   render() {
     return (
-      <View style={styles.container}>
+      <View style={styles.container}>  // 在外层包裹的View要设置属性flex=1，这样才能占满整个屏幕
         <FlatList
           data={[
             {key: 'Devin'},
