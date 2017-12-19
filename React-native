@@ -389,6 +389,33 @@ this.props.isSuccess
 二十三、react语法笔记
 跟据官方教程：
 styles和class并列写
+数据列表的渲染尽量不用for循环，利用reactnative自带的方法：
+列表渲染：
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+
+export default class FlatListBasics extends Component {
+  render() {
+    return (
+      <View style={styles.container}>
+        <FlatList
+          data={[
+            {key: 'Devin'},
+            {key: 'Jackson'},
+            {key: 'James'},
+            {key: 'Joel'},
+            {key: 'John'},
+            {key: 'Jillian'},
+            {key: 'Jimmy'},
+            {key: 'Julie'},
+          ]}
+          renderItem={({item}) => <Text style={styles.item}>{item.key}</Text>}
+        />
+      </View>
+    );
+  }
+}
+
+
 
 render(){
         let activityLists = [
