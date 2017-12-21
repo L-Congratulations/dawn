@@ -873,18 +873,20 @@ yarn config set disturl https://npm.taobao.org/dist --global
 3.1、下载Android studio：http://www.android-studio.org/index.php/download
 3.2、安装studio：
 3.3、项目创建和启动的组合方式
-组合1
-  create-react-native-app AwesomeProject
-  cd AwesomeProject
-  npm start
-组合2 
 react-native init AwesomeProject 
 cd AwesomeProject 
 react-native run-android
-
-修改react-native启动的端口
-react-native start --port 9999
-或者通过修改配置文件修改：
-http://blog.csdn.net/fengyuzhengfan/article/details/77389953
 3.4、
+
+一、根据reactnative官网教程安装reactnative环境：
+1.1、下载javaSdk安装并配置环境变量
+变量名：JAVA_HOME
+变量值：C:\Program Files\Java\jdk1.8.0_152 【jdk安装路径】
+变量名：Path
+变量值：;%JAVA_HOME%\bin;%JAVA_HOME%\jre\bin;
+变量名：CLASSPATH
+变量值：.;%JAVA_HOME%\lib\dt.jar;%JAVA_HOME%\lib\tools.jar;【.不能漏】
+
+
+1.1、安装Python2和node并配置环境变量
 
