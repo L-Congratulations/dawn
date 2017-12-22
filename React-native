@@ -905,5 +905,13 @@ npm install -g yarn react-native-cli
 1.5、安装AndroidStudio
 下载studio：http://www.android-studio.org/
 
+1.6、配置AndroidSdk环境变量：
+新建变量名：ANDROID_HOME
+变量值：C:\Users\Administrator\AppData\Local\Android\Sdk
+
+在path变量中添加：
+Android SDK的tools和platform-tools目录
+C:\Users\Administrator\AppData\Local\Android\Sdk\tools
+C:\Users\Administrator\AppData\Local\Android\Sdk\platform-tools
 
 
