@@ -2,10 +2,19 @@
 知识在60-70年代可以改变命运,这句话也是李嘉诚说的确实符合,但是现在获取知识的途径太多了,只要你想学你永远都学不完,
 然而这并没有什么卵用,对于你的命运,只是你工作的可以好一点而已,每月可以多拿一千两千块钱,你还是娶不到媳妇,买不起房.
 真正改变命运的不是知识,而是智慧,有一千种成功的方式,就看你有没有动脑子去想,有人想过但被各种困难阻碍,这种属于嘴上的智慧.
-1 4 11 26 30 9 10                10 16 23 27 30 5 10  
 
+三十五、图片剪裁
+https://github.com/ivpusic/react-native-image-crop-picker
+三十四、图片上传
+https://github.com/react-community/react-native-image-picker
+遇到的问题：java语法报错，
+了解了：react-native link
+
+图片上传到服务器：
+https://www.jianshu.com/p/b5c81d7dfbb9
+http://blog.csdn.net/withings/article/details/71363433
 三十三、上拉刷新，下拉加载实现：
-
+https://github.com/shiwenwen/react-native-swRefresh
 
 三十二、reactnative tabnavigator 监听点击事件：
  Home:{
