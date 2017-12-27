@@ -3,6 +3,18 @@
 然而这并没有什么卵用,对于你的命运,只是你工作的可以好一点而已,每月可以多拿一千两千块钱,你还是娶不到媳妇,买不起房.
 真正改变命运的不是知识,而是智慧,有一千种成功的方式,就看你有没有动脑子去想,有人想过但被各种困难阻碍,这种属于嘴上的智慧.
 
+三十九：reactnative  onRefresh:PropTypes.func,报错
+过去我们可以直接使用 React.PropTypes 进行属性确认，不过这个自 React v15.5 起就被移除了。所以现在我们改用 prop-types 库代替。
+npm install --save prop-types 
+在需要使用的 js 文件中使用如下代码引入：
+import PropTypes from 'prop-types';
+三十八、app引导页
+
+三十七、App启动页白屏处理：
+
+
+三十六、icon图标
+https://github.com/oblador/react-native-vector-icons
 三十五、图片剪裁
 https://github.com/ivpusic/react-native-image-crop-picker
 三十四、图片上传
