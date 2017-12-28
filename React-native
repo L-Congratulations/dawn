@@ -23,6 +23,9 @@ import com.cboy.rn.splashscreen.SplashScreen; // here
 
 三十六、icon图标
 https://github.com/oblador/react-native-vector-icons
+icon使用：https://www.jianshu.com/p/2317d8fa3202?from=groupmessage
+先引入：import Icon from 'react-native-vector-icons/FontAwesome';
+然后调用：<Icon name="home" size={20} color="blue" style={styles.icon}/>
 三十五、图片剪裁
 https://github.com/ivpusic/react-native-image-crop-picker
 三十四、图片上传
