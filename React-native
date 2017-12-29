@@ -2,7 +2,15 @@
 知识在60-70年代可以改变命运,这句话也是李嘉诚说的确实符合,但是现在获取知识的途径太多了,只要你想学你永远都学不完,
 然而这并没有什么卵用,对于你的命运,只是你工作的可以好一点而已,每月可以多拿一千两千块钱,你还是娶不到媳妇,买不起房.
 真正改变命运的不是知识,而是智慧,有一千种成功的方式,就看你有没有动脑子去想,有人想过但被各种困难阻碍,这种属于嘴上的智慧.
-
+四十二、rn教程：
+https://www.jianshu.com/p/fa0874be0827
+四十一、app分享：
+https://github.com/songxiaoliang/react-native-share
+四十、react-native插件汇总：
+https://www.jianshu.com/p/53ff78168acc
+https://segmentfault.com/a/1190000008878128
+http://blog.csdn.net/qq_25404567/article/details/56510844
+http://www.jcodecraeer.com/a/opensource/2015/1117/3695.html
 三十九：reactnative  onRefresh:PropTypes.func,报错
 过去我们可以直接使用 React.PropTypes 进行属性确认，不过这个自 React v15.5 起就被移除了。所以现在我们改用 prop-types 库代替。
 npm install --save prop-types 
@@ -21,6 +29,9 @@ import org.devio.rn.splashscreen.SplashScreen; // here
 // react-native-splash-screen < 0.3.1
 import com.cboy.rn.splashscreen.SplashScreen; // here
 
+配置好文件后在启动页面引入：
+
+
 三十六、icon图标
 https://github.com/oblador/react-native-vector-icons
 icon使用：https://www.jianshu.com/p/2317d8fa3202?from=groupmessage
@@ -32,7 +43,8 @@ https://github.com/ivpusic/react-native-image-crop-picker
 https://github.com/react-community/react-native-image-picker
 遇到的问题：java语法报错，
 了解了：react-native link
-
+npm i react-native-splash-screen --save
+react-native link react-native-splash-screen
 图片上传到服务器：
 https://www.jianshu.com/p/b5c81d7dfbb9
 http://blog.csdn.net/withings/article/details/71363433
