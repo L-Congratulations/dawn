@@ -46,3 +46,11 @@ if a >= 0:
     print(a)
 else:
     print(-a)
+
+3.3、数据类型和变量
+
+
+
+四、安装mysql
+在百度软件中心中选5.7.17版本安装 http://rj.baidu.com/soft/detail/17534.html
+教程：http://www.jb51.net/article/119685.htm
