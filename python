@@ -1,0 +1,5 @@
+一、windows集成python2和python3
+
+安装python3的时候选择自定义安装
+在命令行调用的时候 py -2调用的是python2的命令
+py -3调用的是python3的命令
