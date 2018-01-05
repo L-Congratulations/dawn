@@ -1,8 +1,6 @@
 一、windows集成python2和python3
+https://www.cnblogs.com/thunderLL/p/6643022.html
 
-安装python3的时候选择自定义安装
-在命令行调用的时候 py -2调用的是python2的命令
-py -3调用的是python3的命令
 
 二、python入门
 exit()退出Python
@@ -23,7 +21,8 @@ print ('这是','第一个','中间是           多个空格')
 Python提供了一个input()，可以让用户输入字符串，并存放到一个变量里
 当你输入name = input()并按下回车后，Python交互式命令行就在等待你的输入了。这时，你可以输入任意字符，然后按回车后完成输入。
 
-输入完成后，不会有任何提示，Python交互式命令行又回到>>>状态了。那我们刚才输入的内容到哪去了？答案是存放到name变量里了。可以直接输入name查看变量内容：
+输入完成后，不会有任何提示，Python交互式命令行又回到>>>状态了。那我们刚才输入的内容到哪去了？答案是存放到name变量里了
+可以直接输入name查看变量内容：
 name = input()
 print('名字是： ',name)
 
@@ -36,3 +35,14 @@ print('名字是： ',name)
 
 
 三、python基础：
+3.1、注释：
+以#开头的语句是注释，注释是给人看的，可以是任意内容，解释器会忽略掉注释。
+
+3.2、语句：
+Python的语法比较简单，采用缩进方式，每一行都是一个语句，当语句以冒号:结尾时，缩进的语句视为代码块。
+# print absolute value of an integer:
+a = 100
+if a >= 0:
+    print(a)
+else:
+    print(-a)
