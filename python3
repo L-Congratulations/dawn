@@ -1,3 +1,52 @@
+九、python基础-dict和set
+9.1、python内置了字典：dict的支持dict全程dictionary，在其他语言中也称为map，使用键-值（key-value）存储，具有极快的查找速度
+用python写一个dict：
+>>> d = {'one':95, 'two': 80 , 'three': 99}  // dict是用{}
+>>> d['one']   // 取值的时候是根据索引[]来查找
+95
+
+把数据放入dist的方法，除了初始化时指定外，还可以通过key放入：
+>>> d['four'] = 67
+>>> d['four']
+67
+
+由于一个key只能对应一个value，所以当多次对一个key放入value的时候，后面的值会把前面的值覆盖
+
+如果key不存在则会报错
+要避免key不存在的错误，有两种办法：
+一是：通过in判断key是否存在：
+>>> 'five' in d
+False
+二是：通过dict提供的get（）方法，如果key不存在key返回NOne或者自己制定的value：
+>>> d.get('five')  // 如果没有key则什么都不返回，有的话则返回对应的value
+>>> d.get('five', -1) // 如果没有key则返回-1，有的话返回对应的value
+
+
+删除一个key：
+用pop(key)方法，对应的calue也会从dict中删除
+
+请务必主要，dict内部存放的顺序和key放入的顺序是没有关系的
+
+
+和list比较，dict有以下几个特点：
+（1）、查找和插入的速度极快，不会随着key的增加而变慢
+（2）、需要占用大量的内存，内存浪费多
+所以，dict是用空间来换取时间的一种方法
+
+dictkey用在需要高速查找的很多地方，python代码中几乎无处不在，正确使用dict非常重要，需要记牢的第一条就是dict的key必须是不可变对象
+dict是通过key计算位置，使用的算法称为哈希算法
+
+在python中，字符串、整数等都是不可变的，因此可以放心地作为key。而list是可变的，不能作为key
+
+
+
+9.2、set
+set和dict类似，也是一组key的集合，但不存储value。在set中，没有重复的key
+重复的元素会被自动过滤掉
+
+通过add(key)添加元素到set中 通过remove(key)方法删除元素
+set和dict的唯一区别仅在于没有存储对应的value，
+
 八、python基础-循环
 为了让计算机能计算成千上万次的重复运势，我们就需要循环语句
 python的循环有两种
