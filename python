@@ -1,5 +1,32 @@
 七、python基础-条件判断
-7.1、
+计算机之所以能做很多自动化的任务，因为他可以自己做条件判断
+7.1、if
+根据python的缩进规则，如果if语句判断是true，就把说句的两行print语句执行了，否则什么也不做
+age = 20
+if age >= 18:   // 注意不要少写了冒号:
+    print('your age is', age)
+    print('adult')
+
+
+if <条件判断1>:
+    <执行1>
+elif <条件判断2>:
+    <执行2>
+elif <条件判断3>:
+    <执行3>
+else:
+    <执行4>
+    
+7.2、字符串不能直接和整数比较，需要用int()函数将str转化成整数
+s = input('birth: ')
+birth = int(s)
+if birth < 2000:
+    print('00前')
+else:
+    print('00后')
+    
+    
+    
 
 六、python基础-list和tuple
 6.1、list
