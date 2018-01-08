@@ -1,3 +1,62 @@
+八、python基础-循环
+为了让计算机能计算成千上万次的重复运势，我们就需要循环语句
+python的循环有两种
+8.1、for...in循环，依次把list或tuple中的每个元素迭代出来
+>>> names = ['one','two','three']
+>>> for name in names:
+        print(name)
+        
+做累加：
+>>> sum = 0
+>>> for x in [1,2,3,4,5,6,7]:
+        sum = sum + x
+>>>print(sum)        
+
+range():可以生成一个整数序列
+>>> first = range(6)   // 生成的序列是从0开始小于6的整数
+>>>print(first)
+range(0,6)
+
+list()：函数可以将range转换为list
+>>>list(first)
+[0,1,2,3,4,5]
+
+
+8.2、while循环
+只要条件满足，就不断循环，条件不满足时退出循环。如计算100以内所有奇数之和：
+>>> sun = 0
+>>> n = 99
+>>> while n>0:
+        sum = sum + n
+        n = n - 2
+>>> print(sum)        
+
+
+break语句可以提前退出循环：
+n = 1
+while n <= 100:
+    if n > 10: # 当n = 11时，条件满足，执行break语句
+        break # break语句会结束当前循环
+    print(n)
+    n = n + 1
+print('END')
+
+continue语句可以跳过当前这次循环，直接开始下一次循环
+n = 0
+while n < 10:
+    n = n + 1
+    if n % 2 == 0: # 如果n是偶数，执行continue语句
+        continue # continue语句会直接继续下一轮循环，后续的print()语句不会执行
+    print(n)
+上面的程序可以打印出1～10。但是，如果我们想只打印奇数，可以用continue语句跳过某些循环
+
+break语句可以在循环过程中直接退出循环，而continue语句可以提前结束本轮循环，并直接开始下一轮循环。这两个语句通常都必须配合if语句使用。
+
+要特别注意，不要滥用break和continue语句。break和continue会造成代码执行逻辑分叉过多，容易出错。大多数循环并不需要用到break和continue语句，
+上面的两个例子，都可以通过改写循环条件或者修改循环逻辑，去掉break和continue语句。
+
+
+
 七、python基础-条件判断
 计算机之所以能做很多自动化的任务，因为他可以自己做条件判断
 7.1、if
