@@ -1,3 +1,31 @@
+十六、web框架：
+了解了WSGI框架，我们发现：其实一个web App，就是写一个WSGI的护理函数，针对
+每个HTTP请求进行响应。
+但是如何处理HTTP请求不是问题，问题是如何处理100个不同的URL。
+每一个URL可以对应get和post请求，当然还有put，delete等请求，但是我们通常只考虑
+最常见的get和post请求。
+一个最简单的想法是从environ变量中取出HTTP请求的信息，然后逐个判断。
+只是这么写下去代码是肯定没法维护了
+
+代码这么写没法维护的原因是因为WSGI提供的接口虽然比HTTP接口高级了不少，但和
+web APP的处理逻辑比，还是比较低级，我们需要在WSGI接口只是能进一步抽象，让
+我们专注于用一个函数处理一个URL，至于URL到函数的映射，就交给web框架来做。
+
+由于用python开发一个web框架十分容易，所以python有上百个开源的web框架。这里
+我们之间选择一个比较流行的web框架——flask来使用。
+
+用flask编写web app比WSGI接口简单，我们先用pip安装Flask：
+pip3 install flask
+
+然后写一个app.py，处理3个URL，分别是：
+GET/:首页，返回Home
+GET/signin:登录页，显视登录表单
+POST/signin:处理登录表单，显示登录结果
+
+同一个URL/signin分别有get和post两种请求，映射到两个处理函数中
+flask通过python的装饰器在内部自动地吧URL和函数关联起来，所以，
+
+
 十五、WSGI接口：
 15.1、了解了HTTP协议和HTML文档，我们其实明白了一个web应用的本质就是：
 （1）、浏览器发送一个HTTP请求。
