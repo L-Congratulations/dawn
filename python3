@@ -1,4 +1,30 @@
-十四、web开发：
+十五、WSGI接口：
+15.1、了解了HTTP协议和HTML文档，我们其实明白了一个web应用的本质就是：
+（1）、浏览器发送一个HTTP请求。
+（2）、服务器收到请求，生成一个HTML文档。
+（3）、服务器吧HTML文档作为HTTP响应的body发送给浏览器。
+（4）、浏览器收到HTTP响应，从HTTP的body中取出HTML文档并显示。
+
+所以最简单的web应用就是先把HTML用文件保存好，用一个现成的HTTP服务器软件，
+接收用户请求，从文件中读取HTML，返回。Apache、Nginx、Lighttpd等这些常见
+的静态服务器就是干这件事情的。
+
+如果要动态生成HTML，就需要吧上述步骤自己来实现。不过，接受HTTP请求、解析
+HTTP请求、发送HTTP响应都是苦力活，如果我们自己来写这些底层代码，还没开始
+写动态HTML呢，就得花把个月去读HTTP规范。
+正确的做法是底层代码由专门的服务器软件实现，我们用python专注于生成HTML文档。
+以为我们不希望接触到tcp链接、HTTP原始请求和响应格式，所以，需要一个统一的接口
+，让我们专心用python编写web业务。
+
+这个接口就是WSGI：web server gateway interface
+
+WSGI接口定义非常简单，他只要求web开发者实现一个函数，就可以响应HTTP请求。
+我们来看一个最简单的web版本的“hello，web！”：
+
+
+
+
+十四、HTTP简介：
 14.1、HTTP协议简介：
 
 浏览器和服务器之间的传输协议是HTTP，用于浏览器和服务器的通信。
@@ -40,6 +66,45 @@ HTTP协议同时具备极强的扩展性，虽然浏览器请求的是http://www
 比如<img src="http://i1.sinaimg.cn/home/2013/1008/U8455P30DT20131008135420.png">，
 从而将请求压力分散到各个服务器上，并且，一个站点可以链接到其他站点，无数个站点互相链接起来，
 就形成了World Wide Web，简称WWW。
+
+14.3、HTTP格式
+每个HTTP请求和响应都遵循相同的格式，一个HTTP包含header和body两部分，其中body是可选的。
+HTTP协议是一种文本协议，所以，他的格式也非常简单。
+HTTP get请求的格式：
+
+GET /path HTTP/1.1
+Header1: Value1
+Header2: Value2
+Header3: Value3
+
+HTTP POST请求的格式：
+
+POST /path HTTP/1.1
+Header1: Value1
+Header2: Value2
+Header3: Value3
+
+body data goes here...
+
+当遇到连续两个\r\n时，Header部分结束，后面的数据全部是Body。
+
+HTTP响应的格式：
+
+200 OK
+Header1: Value1
+Header2: Value2
+Header3: Value3
+
+body data goes here...
+
+HTTP响应如果包含body，也是通过\r\n\r\n来分隔的。请再次注意，body的数据类型是由
+content-type头来确定，如果是网页，body就是文本，如果是图片，body就是图片的
+二进制数据。
+
+当存在content-encoding时，body数据是被压缩的，最常见的压缩方式是gzip，所以，看到
+Content-Encoding: gzip时，需要将body数据线解压缩，才能得到真正1数据。压缩的目的
+在于减少body的大小，加快网络传输。
+
 
 
 
