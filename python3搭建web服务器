@@ -1,0 +1,151 @@
+因为是初学，所以选择django（jianggo）框架，以熟悉开发流程和python语法为目的
+（Django适合初学者或者小团队，Tornado适合高度定制。功能和性能更强大但也更复杂，先从简单的入手）
+
+一、环境配置
+python3.x
+IPython：增强的python交互命令行，比python自带的功能更强大
+Django（pip3 install Django）
+检测Django是否安装成功：python3 -m django --version
+
+二、开始
+当用Django搭建好项目之后命令行里面就多了一个命令：django-admin
+我们就用它来创建我们的工程。
+2.1、使用Django创建工程：
+django-admin.py startproject myblog（django-admin startproject myblog ）
+
+2.2、启动Django项目：
+进入到项目目录：cd first
+使用python启动项目：python3 manage.py runserver 8000
+有点问题，很正常，根据提示，我们重新输入：
+python3 manage.py migrate
+然后再次启动python3 manage.py runserver 8000 发现没有报错信息。
+访问端口：localhost:8000浏览器已经能正常访问服务器，项目搭建成功
+（我们运行网站成功后会自动多出一个文件，是数据库文件）
+
+三、Django创建应用
+3.1、项目目录详解：
+（1）、manage.py:是总管家，几乎做所有的事情都需要找它（管理项目：包括数据库建立、服务器运行（python3 manage.py runserver 8000）、测试。。））
+查看manage.py的功能：在命令行输入python3 manage.py
+（2）、myblog目录下的文件详解：
+此处的myblog是项目的容器，这个名称和我们的工程名称是一样的，不建议修改。
+《1》、settings.py：项目的总配置文件
+里面包含了数据库、web应用，时间等各种配置
+整个网站的配置文件，
+我们通过查阅文档还可以进行额外的配置
+《2》、urls.py：url配置文件
+Django项目中所有地址（页面）都需要我们自己去配置其URL
+《3》、wsgi.py:python服务器网关接口
+Django（在本地运行是启动的服务器是一个小型的服务器，以方便程序员进行调试为主，要是将应用挂载到公网上的时候需要使用大型的服务器如Apache）和大型服务器的接口
+
+3.2、创建应用：在Django中如何创建一个应用
+Django中使用应用来分割功能，比如一个游戏网站需要包含四个模块（游戏新闻、游戏论坛、玩家博客系统、在线商城）
+说白了就是根据更能来划分代码模块，一个功能作为一个应用来处理。
+
+（1）、创建应用blog
+以博客模块为例使用Django创建一个应用
+打开命令行，进入项目中manage.py同级目录
+在命令行输入：python3 manage.py startapp blog
+（2）、添加应用名到settings.py中的INSTALLED_APPS里
+找到INSTALLED_APPS（是这个网站所有添加的应用，它里面会默认有一些Django自带的应用，比如后台管理应用等）
+在里面添加一个参数：'blog'
+
+3.3、自己创建的应用中的文件（blog应用中的文件介绍）：
+目录中包含_init_.py的就说明这是一个模块
+（1）、migrations：数据移植（迁移）模块。涉及到数据库的操作，暂时不管
+（1）、views.py:执响应的代码所在的模块。
+每接收一个请求都要进行响应，那具体响应什么东西，怎么响应，都是在这个模块中完成的。
+是代码逻辑处理的主要地点。
+项目中大部分代码均在这里编写。
+（2）、models.py：数据模块，因为Django涉及到一个ORM框架，详细介绍放到涉及到数据的时候再讲
+（3）、admin.py：该应用的后台管理系统配置。是当前应用的后台管理系统的配置文件，Django有一个特点是自带一个后台管理系统，所以每个应用下都有各自的配置文件
+
+（4）、test.py：自动化测试模块
+（5）、apps.py:当前应用的一些配置
+
+四、使用Django创建一个完整的博客系统：
+4.1、用hello来走一下整个流程：
+在Django中每一个请求都有一个函数来处理，所以在views.py中要创建一个函数
+首先要引入res：from django.http import HttpResponse
+然后定义一个函数：
+因为函数要处理请求，所以在函数中我们应该先接收到请求（定义一个参数，发起请求的时候通过给参数赋值来达到接受请求的目的）
+def index(request):
+      return HttpResponse('Hello world')
+      
+然后配置URL，打开urls.py：
+根据注释里面的说明：
+Add a URL to urlpatterns:  path('', views.home, name='home')
+
+path('url本身',响应函数,该url的名称)
+因为要引用响应函数，所以首先应该把函数import到该文件：
+import blog.views as bv
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('hello/', bv.hello),
+]
+
+4.2、配置URL
+为了合理清晰的处理大量的URL，将原始的在urls.py中进行配置的方法分离出去是个不错的解决办法。
+具体代码：
+from django.contrib import admin
+from django.urls import path, include#将include方法引入到文件中
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('blog/', include('blog.urls')),#注意，这要加引号
+#含义就是将blog.urls里面的view挂载到了路径为8000/blog的路由上，通常情况下我们会通过修改blog.urls里面的URL来满足需求（避免出现index/index这种路径），因为我们同一个网站可能会有不同的应用，这样在根目录那块便于区分。
+繁杂的URL路径匹配的逻辑代码都转移到了blog.urls里面，而不是在跟目录的urls.py里面
+因此需要在应用的根目录中（与views.py同级目录）新建一个urls.py文件来处理URL逻辑代码，因为都是处理url的文件，因此blog.urls里面的代码编写规则应该符合根目录中urls.py的规则。
+
+]
+blog.urls.py中的代码：
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.hello),
+]
+此时只有访问http://localhost:8000/blog/   才能正确返回hello world，
+
+4.3、开始编写template
+（1）、Django自带一个模板引擎：DTL，因此一般开发我们直接用这个模板就行，如果想改用其他模板，需要在settings.py下修改TEMPLATES中BACKEND的值就行
+第一步在应用的根目录下（与apps.py同级目录）下创建一个templates的文件
+第二步在templates文件下创建所需要的html文件
+第三步在views.py中返回render()函数render函数有很多参数，我们一般情况下传递三个参数就行，前两个是必须的，第一个参数是req，第二个参数是html模板，第三个参数是我们传递到前端的数据
+
+（2）、DTL模板引擎中的render()函数中支持一个dict（字典，键值对形式）类型的参数，在模板中使用{{参数名}}来直接使用：
+传值：def hello(req):
+    return render(req, 'hello.html',{'msg':'直接从后台传递过来的值'})
+取值：
+<h1>hello blog{{ msg }}</h1>
+
+（3）、注意：因为Django查找templates的规则原因，在不同应用下templates目录中的同名.html会造成冲突
+解决方法：在应用的templates目录下创建一个以应用名为名称的目录，然后把HTML文件放到新创建的目录下
+然后把views中的HTML模板改成：
+return render(req, 'blog/hello.html',{'msg':'直接从后台传递过来的值'})
+
+4.4、module.py
+
+
+
+
+
+
+
+
+
+一次web访问的实质：就是客户发送HTTP请求到web服务器，然后web服务器返回HTML页面给客户
+4.1、URL配置：搭建路由系统
+建立URL与响应函数之间的关系
+
+4.2、视图views：
+响应客户HTTP请求，进行逻辑处理，返回给用户HTML页面
+
+4.3、模型models：
+我们访问的每一个博客实际是存储在数据库当中的，每次取也是从数据库中取出来返回给用户。
+描述我们服务器存储的数据（实际就是对应的数据库的表）
+我们来看一下：
+我们存一篇博客：
+要存他的题目（title）、内容（content）、访问数量（counter）、发布日期（pubDate）、作者（author）。dui
+4.4、模板templates：
+用来生成HTML页面，返回给用户的HTML是由数据（模型）和模板渲染出来的
