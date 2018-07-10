@@ -1,0 +1,233 @@
+一、react开发环境搭建
+1.1、通过脚手架工具来编码（只要学会使用就可以了。前端开发过程中的辅助工具，方便项目管理）脚手架工具编译出来的代码才能正常运行。
+在这使用官方推荐的脚手架工具：create-react-app（官方提供的比较健壮，稳妥）
+打开react官方文档：https://reactjs.org/docs/getting-started.html
+在右侧导航栏找到create a new react app：
+npx create-react-app my-app （npx是npm>5.2里面的一个包转发工具）
+cd my-app
+npm start（安装yarn：npm install -g yarn.安装完成之后可以直接使用yarn start启动项目）
+
+1.2、工程目录简介：
+package.json文件（实际是一个node的包文件，主要是一些关于node的内容，这个文件可以让我们的项目变成一个node的包，一般情况下我们也不会修改里面的内容）：项目的介绍、还有一些命令（"start": "react-scripts start",这句话的执行逻辑是：当我们在命令行输入npm  start的时候实际是npm找到此处的start，然后执行react-scripts start来启动我们的项目（通过react-scripts这个工具来start我们的服务器））
+
+public目录：
+
+src目录：里面存放的是我们项目的所有源代码 
+    index.js：是整个程序运行的入口文件，整个程序从index.js开始逐行执行。在index中为什么能直接引入react呢（import React from 'react';）？是因为我们在package.json文件中（"dependencies": {
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "react-scripts": "1.1.4"
+  },）的依赖包里面已经有了react,所以在index里面可以直接引入react和react-dom
+同时我们看到在index.js还是用import引入了一个css文件：import './index.css';这是因为react的设计理念中包含很重要的一条就是:all in js
+import 是es6
+import App from './App';这句话实际引用的是./App.js文件，他会默认有限寻找APP.js，载入进来。
+
+项目的入口文件是index文件，index文件里面引入了App.js文件——App.js文件里面引入了App.css文件
+
+我们在index.js文件里面有一个registerServiceWorker ：import registerServiceWorker from './registerServiceWorker';
+registerServiceWorker 是什么呢？首先我们来解释一下pwa：
+PWA（Progressive Web App）是一种理念，使用多种技术来增强web app的功能，可以让网站的体验变得更好，能够模拟一些原生功能，比如通知推送。在移动端利用标准化框架，让网页应用呈现和原生应用相似的体验。
+registerServiceWorker 就是为了方便我们借助网页去写手机APP应用的一个功能，他能做到什么效果呢？可以把我们访问过的一个网页缓存到web中，在下次访问的时候即使不联网也能看到访问过的网页。
+pwa+serviceworker：可以允许我们已经访问过的网页当做一个app来使用，即使没有网络也可以使用，也就是允许用户可以在桌面上创建一个快捷方式，来离线使用app。在public文件夹下有一个manifest.json文件，该文件里面定义了当我们在创建app的时候图标是什么，名称是什么，快捷方式的网址是什么，颜色是什么，主题是什么等等
+
+
+1.3、react中的组件
+import App from './App';
+在react中APP就是一个组件，我们打开app.js来查看react组件是如何被定义的：
+import React, { Component } from 'react';
+class App extends Component {}
+这是es6的一个解构赋值，等价于React.Component
+import React from 'react';
+class App extends React.Component {}
+
+首先我们通过es6的语法定义了一个class：APP。这个class继承了 React.Component这个类。换句话说：当一个类继承了 React.Component这个类的时候他就是一个react的组件了：
+class App extends React.Component {}
+
+在Component 这个类中有一个render()方法，这个方法需要返回一个内容，render()函数返回什么，这个组件就显示什么内容。也就是返回的内容就是html语句：
+class App extends Component {
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <h1 className="App-title">Welcome to React</h1>
+        </header>
+        <p className="App-intro">
+          To get started, edit <code>src/App.js</code> and save to reload.
+        </p>
+      </div>
+    );
+  }
+}
+
+然后我们再通过export default App;
+这个语法，把App暴露出去，使别的文件能引用到App这个class
+
+import React, { Component } from 'react';这是es6解构赋值的写法，这种写法等价于：
+import React from 'react';
+const Component = React.Component
+
+到此我们创建完成了一个组件，我们如何把组件导入到我们的项目中？打开index.js我们会发现：
+import ReactDOM from 'react-dom';
+ReactDOM.render(<App />, document.getElementById('root'));
+引入了一个react-dom，ReactDOM有一个render()方法，这个方法可以把我们的组件挂载到DOM的一个节点上，比如：我们把<App />组件挂载到了id为root的这个DOM节点上
+ReactDOM存在的意义就是把我们编写的组件挂载到我们的DOM节点上
+
+但是为什么我们的index.js里面还需要引入import React from 'react';呢？我们的业务逻辑并没有用到React。这是因为我们把组件挂载到DOM节点的时候组件的写法是：<App />这种写法是jsx语法，如果我们在项目中使用了jsx语法那么就需要在对应的文件当中引入React，如果不引入就没办法对jsx语法进行编译，就会报错。
+
+我们回到app.js，我们在这个文件里面也引入了react，这是因为在我们component这个类里面的render函数里面编写的语法都是属于jsx语法，而不是html的dom标签，<div></div>这种写在render函数中的语法也是jsx，虽然看着像DOM标签，但实际上不是。只要是jsx语法，要想正常运行，就一定要引入react，这样代码才能正常编译运行。
+
+1.4、最基础的jsx语法：
+在以js为结尾的文件中编写html语法。我们还可以自己创建标签。
+引入组件必须以大写字母开头。如App <App/>，不能使用app <app/>
+
+
+二、使用react编写todolist功能
+2.1、注意，jsx语法要求，render返回的内容必须整体被包含在一个大的元素之中。
+我们在进行flex布局的时候有的时候不希望外边再套一层标签，在react16版本之后，多了一个Fragment占位符，这样的话我们就可以把最外层元素包裹在Fragment里面而且在审查元素的时候并不显示，不会影响页面布局相当于一个透明的外壳。：
+import React, { Component, Fragment } from 'react'
+
+class TodoList extends Component{
+    render(){
+        return (
+            <Fragment>
+                <div>
+                    
+                </div>
+                <span>
+                    
+                </span>
+            </Fragment>
+        )
+    }
+}
+
+
+2.2、react中的响应式设计思想和事件绑定
+我们常规的思维是通过操作dom来实现：给input绑定事件，获取input这个dom中的内容然后操作dom把内容添加到ul中去。
+但是react的设计思想和直接操作dom是完全不同的，react是响应式的框架，在编程的时候强调的是不要直接操作dom，而是需要操作数据，通过数据的变化，react会感知到数据的变化，自动的帮我们生成dom，所以在写react代码的时候我们再也不需要关注dom的相关操作了，我们通过数据层的操作就可以了。
+在这个todolist中我们通过分析可以得出只需要两组值，一组用来存储input中的值，一组用来存储ul中的每一项。
+
+在react中如何定义数据？
+在es6中，每一个类都有一个constructor构造函数。而我们的TodoList就是一类，因此我们把数据定义在他的constructor()中
+在es6的类中，constructor函数是优于其他函数优先并且自动执行的
+constructor有固定的写法，他接收一个props参数，在这个函数数里面有一个方法，叫做super，他接收props参数：super(props)。super(props)的意思是什么？TodoList继承了Component这个组件，所以在创建TodoList这个组件的时候，super指的是父类，也就是Component这个类，我们要调用父类的构造函数一次，这是js中继承要做的一件事。在写react类的时候一般必写两个东西，一个是constructor需要传递props这个参数，另外一个就是继承用的super(props)：
+class TodoList extends Component{
+    constructor(props){
+        super(props)
+    }
+    
+    render(){}
+}
+
+react我们定义数据要把数据定义在状态里面：this.state就是这个组件（TodoList类）的状态，在这个状态里面我们就可以存很多东西。我们根据案例需求存两组数据：
+    constructor(props){
+        super(props);
+        this.state = {
+            inputValue : '',
+            list:[]
+        }
+    }
+
+如何把状态中的数据和dom的元素进行绑定呢。对于input可以直接使用value进行绑定：
+如果想在jsx的语法中使用js的变量，该变量需要使用大括号包裹起来：
+<input type="text" value={this.state.inputValue}/>
+此时如果 inputValue : 'sada',有一个初始值，那么input框里面就会有默认值sada，此时我们尝试修改input里面的值，会发现不能更改，这是因为input的value值是由state里面的值决定的，当里面的值没有改变的时候input里面值也不会发生任何改变
+如何让input框中的值按照我们输入的发生改变呢？需要通过事件绑定，通过监测键盘事件来动态的修改state的值。
+react的事件绑定和原生的事件绑定有差别：就是如果是两个单词组成的事件的话需要使用驼峰法：传统：onchange react：onChange
+onChange = {this.handleInputChange}
+handleInputChange这个函数写在TodoList这个类里面，与render()方法并列：
+ <div>
+            <input type="text" value={this.state.inputValue} onChange={this.handleInputChange}/>
+            <button>提交</button>
+ </div>
+
+handleInputChange(e){
+        console.log(e)
+    }
+
+onChange={this.handleInputChange}此时handleInputChange这个函数的this指向是undefined（可以通过在handleInputChange这个函数中console this来判断出）
+我们可以通过es6的bind方法来改变this的指向：
+<input type="text" value={this.state.inputValue} onChange={this.handleInputChange.bind(this)}/>
+此时的this则指向的是TodoList这个类，然后我们再通过：
+ this.state.inputValue = e.target.value;来完成我们的需求。
+但是此时并没有达到我们预想的效果。这是因为在react中，如果我们想state中值的状态，不能直接通过this.state这种引用的形式来改变state的值。react组件提供了一个方法setState(),如果想改变state中的数据必须使用setState这个方法：
+handleInputChange(e){
+       this.setState({
+           inputValue: e.target.value
+       })
+    }
+
+TodoList的新增删除列表内容：
+首先我们把ul的列表改成jsx函数表达式形式,调用数组的map方法，将数据进行渲染：
+ <ul>
+                    {
+                        this.state.list.map((item, index) =>{
+                            return <li key = {index}>{item}</li>
+                            // jsx规定在循环渲染的时候元素必须要有一个不同的key值，在这我们暂时先用index，不过这种方式很不好，后边再解释
+                        })
+                    }
+                </ul>
+
+然后就是通过点击button按钮来触发一个函数，该函数能改变list列表中的值：
+handleBtnClick(e){
+        this.setState({
+            list:[...this.state.list, this.state.inputValue],
+            // ...this.state.list这种写法是es6中的展开运算符。this.state.list指的是原始的list中的内容而...则表示的是
+            // 将原始的list中的内容展开
+            // const lists = [1,2,3];
+            // const a = [...lists,5];
+            // const b = [...[11,12,13],15];
+            // console.log(a); // [1,2,3,5]
+            // console.log(b); // [11,12,13,15]
+            inputValue: ''
+            // 修改完list的值后清空input
+        });
+       
+    }
+
+点击每个元素的时候删除该元素：
+在循环渲染的时候给每个渲染出来的元素再绑定一个事件:
+ this.state.list.map((item, index) =>{
+                            return <li key = {index} onClick={this.handleItemDelete.bind(this, index)}>{item}</li>
+                            // jsx规定li元素必须要有一个不同的key值，在这我们暂时先用index，不过这种方式很不好，后边再解释
+                        })
+handleItemDelete(index){
+        // 因为我们要删除数组中的某个值，我们可以通过下标来删除数组中的某个值，如何获取到下标呢？
+        // 我们可以通过在bind中传入第二个参数index：this.handleItemDelete.bind(this, index),也就是我们给handleItemDelete
+        // 这个函数传入了一个参数，我们需要在定义handleItemDelete这个函数的时候接收这个参数：handleItemDelete(index).
+        // 这样的话我们就能获取到被点击的元素的下标了。然后通过数组的split方法删除掉这个元素。
+        // 在react中有一个很重要的理念immutable（state不允许我们做任何改变）：在操作数组的时候不要去修改原数组，
+        // 而是通过修改原数组的备份，然后再赋值的方式来改变state中的数据，如果直接修改原数组的话会对后面的性能优化
+        // 造成很大的影响。不可取的方法：
+        // const list = this.state.list;
+        // list.splice(index,1);  这种方法不可取，因为list=  this.state.list不是原数组的拷贝而是直接引用。这段代码的意思
+        // 是直接在原数组上使用split方法。违背了immutable的原则。因此需要使用下面的方法：
+        const list = [...this.state.list];  // 这段代码的意思是对原数组进行拷贝，然后对拷贝的数组进行操作，
+        // 所有操作和原数组并没有任何关系
+        list.splice(index,1)
+        this.setState({
+            list:list
+        })
+    }
+
+
+2.3、jsx细节语法补充
+（1）、jsx里面的注释{/*a*/}或者
+{
+// a
+}
+（2）、在组件中引入css文件，并生效
+首先引入css文件：import './TodoList.css'
+
+在jsx中我们不能直接给一个元素直接添加class属性：<input class ='input' />此时会有warn提示。因为在jsx中，class是定义类时用的一个关键字，因此在定义class样式名的时候使用className这个关键字，也就是：<input className='input'/>
+
+（3）、如果我们不需要input对我们输入的内容进行转义，也就是我们输入代码的时候执行，而不是按照字符串处理（这种做法很危险，可能会导致xss攻击，只能是在特殊场景下使用），就需要用到标签的一个属性 dangerouslySetInnerHTML={}，写法是：
+<li key = {index} 
+ dangerouslySetInnerHTML={{__html:item}}
+</li>
+这句话表达的意思是把item里面的内容当做html来解析而不是字符串。
+
+（4）、
+
+2.4、拆分组件与组件之间的传值
