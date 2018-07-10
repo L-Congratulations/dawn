@@ -1,0 +1,1596 @@
+一、搭建虚拟环境、开发环境
+
+二、搭建项目
+2.1、使用django创建一个工程：
+（1）、django-admin startproject RestfulDemo
+（2）、因为我们使用mysql数据库，因此我们需要先使用Navicat新建一个和工程名称一样的数据库：
+名称：restfuldemo
+字符集：utf8
+排序规则：utf8_general_ci
+（3）、新建好数据库后我们需要将项目与数据库建立连接。
+在settings中配置mysql数据库：
+DATABASES = {
+    'default': {       
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'restfuldemo',
+        'USER': 'root',
+        'PASSWORD': 'root',
+        'HOST': '127.0.0.1',
+        'PORT': '3308',
+        'OPTIONS': {'init_command': 'SET default_storage_engine=INNODB;'}
+        # 后边有一个用于第三方登录的库的时候如果不设置成innodb会报错
+    }
+}
+设置完成后启动项目检查是否有报错：python manage.py runserver 8000
+注意因为我们使用的是mysql，所以在运行项目的时候会提示我们缺少mysql驱动，解决办法：
+pip install mysqlclient    #mysqlclient 是用来替代mysqlpython的。运行一下程序看是否报错
+（如果安装mysqlclient出错的话可以去这个网址（https://www.lfd.uci.edu/~gohlke/pythonlibs/）找对应的包就好，安装好后pip install 文件名称就能安装成功）
+
+（4）安装一个pillow包：他是用来做图片处理的，电商的网站会涉及到大量的图片需要处理
+pip install pillow
+
+
+
+2.2、整理项目结构：
+为了让项目更方便管理和结构看起来更清晰，我们需要整理一下项目结构：
+（1）、在manage.py同级目录下新建：
+python package：apps  用来保存我们创建的所有app，放到里面进行集中管理
+python package：extra_apps   用来保存第三方的包，方便修改第三方的包的源码（xadmin等）
+文件夹：media  用来保存用户上传的图片等
+文件夹：templates  用来保存一些静态html文件
+文件夹：db_tools  用来处理一些数据库的脚本，我们在处理数据的时候可能需要一些脚本对数据进行处理
+
+（2）、将apps、extra_apps两个package右键mark成sources root
+这样的话在我们import的时候会给我们带来很大的方便，同时我们还需要把两个package注册到根目录中去，这样才能使程序在运行的时候不报错，在settings中进行配置：
+import os
+import sys
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+sys.path.insert(0, os.path.join(BASE_DIR, 'extra_apps'))
+
+设置完成后运行一下看是否报错
+
+这样做的用处是我们在import的时候，如果我们把这个apps加进来的时候我们就可以直接
+from users import*** 如果我们不这样做在import的时候就会from apps .users import***
+extra_apps同理
+
+2.3、根据项目需求分析创建对应的app
+在django开发前我们首先要定义我们的app（说白了就是根据功能来划分代码模块，一个功能作为一个应用来处理。），然后定义每个app中的model
+app设计的思想：根据经验，，，
+首先users是每一个工程都包含的，是必要的一个app
+第二个是goods，第三个是trade（交易相关的）、第四个user_operation
+然后针对app来设计我们的model
+
+在设计app的model之前我们一定要理清我的逻辑，我们第一个要设计的model是什么（是哪个app的什么model）
+我们在设计系统的时候第一步要设计好我们用户的model
+
+（1）、users的model设计
+因为django有一个默认的user的model—AbstractUser，但是这个自带的model并不能满足我们的要求，我们需要在他的基础上扩展。
+首先引入AbstractUser：
+from django.contrib.auth.models import AbstractUser
+
+然后定义class来创建自己的model：
+（我们的每一条记录都应该有几个必须存在的字段：add_time（添加时间， 注意在这直接使用default=datetime.now()有问题，有括号表示的时间默认的是代码编译的时间，而不是字段生成的时间，因此去掉括号才是字段生成的时间）、update_time（更新这条记录的时间）、deleted（是否被删除，很多时候在做数据库删除的时候，并没有把数据真正的删除，而是做了一个标记））
+（这注意对于可以计算并且会随着时间发生改变的数据，要留意，如年龄，会随着时间推迟而发生变化，如果写死的话到时候会出问题，但是年龄可以通过出生日期推算出来，生日是不会发生改变的）
+（ # 在这需要定义name字段可以为null，因为不设置的话如果用户是用手机号直接注册的，此时是没有用户名的，这种情况下就会报错
+ #  我们限定用户注册的时候必须填写手机号或者就是用手机验证码注册的，所以这一项就不能为空，是必填项）
+（我们在发送验证码的时候，需要把验证码保存到数据库，为什么要保存起来？因为我们需要把用户输入的验证码和数据库中的验证码进行比对（什么手机发送了什么验证码），通过之后才允许用户注册成功。因此我们需要建立一个验证码的model，而这个model是相对独立的和其他模块交集很少）
+（class Meta:
+            #  meta就是表的名字 后台管理系统的表的名字是在这定义的
+            verbose_name = '首页轮播图',
+            verbose_name_plural = verbose_name
+）
+（因为系统默认有一个user的model，因此我们在这自定义的这个UserProfile这个model并不能直接替换掉系统中的那个model，需要我们在settings中进行设置之后才能替换掉原来的model，如果系统没有默认的model，那就不需要在settings中重新声明：
+ALLOWED_HOSTS = []
+
+AUTH_USER_MODEL = 'users.UserProfile'
+）
+完整的users的model：
+from datetime import datetime
+
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+# Create your models here.
+
+
+class UserProfile(AbstractUser):
+    """"用户信息"""
+    name = models.CharField(max_length=30, null=True, blank=True, verbose_name='姓名')
+    # 在这需要定义name字段可以为null，因为不设置的话如果用户是用手机号直接注册的，此时是没有用户名的，这种情况下就会报错
+    birthday = models.DateField(null=True, blank=True, verbose_name='出生年月')
+    gender = models.CharField(choices=(('male', '男'), ('female', '女')), default='female', max_length=7,
+                              verbose_name='性别')  # 性别
+    mobile = models.CharField(max_length=11, verbose_name='手机号')
+    #  我们限定用户注册的时候必须填写手机号或者就是用手机验证码注册的，所以这一项就不能为空，是必填项
+    email = models.EmailField(max_length=100, null=True, blank=True, verbose_name='邮箱')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '用户'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class VerifyCode(models.Model):
+    """"短信验证码"""
+    code = models.CharField(max_length=10, verbose_name='验证码')
+    mobile = models.CharField(max_length=11, verbose_name='手机号')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+    # 注意这是datetime.now而不是datetime.now()
+
+    class Meta:
+        verbose_name = '短信验证码'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.code
+    
+
+
+
+（2）、goods的model设计
+首先我们要通过需求来分析出我们的商品model中需要哪些表，每个表中有哪些字段。
+
+（商品类别类有三类，类之间有从属关系（以前的从属关系是通过外键形式来实现的，建立三个model，然后通过外键形式引入到对应的字段中去，但是当时的情景是三个model之间是三个完全不同的model，并没有相似的功能或结构），在这个情境中，三个类结构基本一样，就是层级不同，而且如果要做无限分类，或者灵活的可以用户自定义（三级、五级），所以在这我们通过一个类来完成从属关系（类似的目录树等都可以通过这种模式来定义）
+）
+（根据目录树的模式来定义商品类别这个类：
+需要定义一个category_type这个变量来区分这个类是属于那个级别（一级、二级、三级）:
+CATEGORY_TYPE = (
+        (1, '一级类目'),
+        (2, '二级类目'),
+        (3, '三级类目')
+    )
+category_type = models.IntegerField(choices=CATEGORY_TYPE, verbose_name='类目级别', help_text='类目级别')
+）
+（分析需求可以知道，在商品类别
+ parent_category = models.ForeignKey('self', null=True, blank=True, verbose_name='父类目级', help_text='父类目级',
+                                        related_name='sub_cat')
+    #  因为所有商品类都用同一个表，此时假如这个表代表的是第二级的表，那么他肯定需要指向父级的那个表，
+    # 但是如何自己指向自己呢，需要通过self这个参数，当然他可以为null，因为，如果他就是第一级的话那么
+    # 他是没有父级的：models.ForeignKey('self', null=True, blank=True, verbose_name='父类别')
+）
+
+（通过分析知道，总商品列表的下拉列表和首页横向的商品分类都是来自于一个表，那么如何区分哪些字段在首页横向显示，哪些不显示呢？需要定义一个变量，来决定是否显示在tab上：
+）
+
+（
+help_text：会在form表单控件中显示help文本。
+）
+（
+类别介绍完了就是商品Goods，在商品的model中有一个使用富文本编辑器的，我们把项目中的使用DjangoUeditor直接拷贝到项目中的extra_apps中，然后在settings中进行注册，
+然后在需要使用djangoUeditor的model中引入：
+from DjangoUeditor.models import UEditorField
+然后直接使用：
+ goods_desc = UEditorField(verbose_name=u'内容', imagePath='goods/images/', width=1000, height=300,
+                              filePath='goods/files/', default='')
+）
+（
+因为首页顶部的轮播图和产品详情的轮播图大小差距很大，所以定义一个首页轮播图的model更合理
+）
+goods完整model：
+from datetime import datetime
+
+
+from django.db import models
+from DjangoUeditor.models import UEditorField
+
+
+# Create your models here.
+
+
+class GoodsCategory(models.Model):
+    """商品类别"""
+    CATEGORY_TYPE = (
+        (1, '一级类目'),
+        (2, '二级类目'),
+        (3, '三级类目')
+    )
+    name = models.CharField(max_length=30, null=True, blank=True, verbose_name='类别名称', help_text='类别名称')
+    code = models.CharField(max_length=30, null=True, blank=True, verbose_name='类别code', help_text='类别code')
+    desc = models.TextField(null=True, blank=True, verbose_name='类别描述', help_text='类别描述')
+    category_type = models.IntegerField(choices=CATEGORY_TYPE, verbose_name='类目级别', help_text='类目级别')
+    #  用来标记该表是属于那个级别
+    parent_category = models.ForeignKey('self', null=True, blank=True, verbose_name='父类目级', help_text='父类目级',
+                                        related_name='sub_cat')
+    #  因为所有商品类都用同一个表，此时假如这个表代表的是第二级的表，那么他肯定需要指向父级的那个表，
+    # 但是如何自己指向自己呢，需要通过self这个参数，当然他可以为null，因为，如果他就是第一级的话那么
+    # 他是没有父级的：models.ForeignKey('self', null=True, blank=True, verbose_name='父类别')
+    is_tab = models.BooleanField(default=False, verbose_name='是否导航', help_text='是否导航')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '商品类别'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class GoodsCategoryBrand(models.Model):
+    """品牌名"""
+ category = models.ForeignKey(GoodsCategory, null=True, blank=True, verbose_name='商品类目', on_delete=models.CASCADE)
+    name = models.CharField(default='', max_length=30, verbose_name='品牌名', help_text='品牌名')
+    desc = models.TextField(default='', max_length=200, verbose_name='品牌描述', help_text='品牌描述')
+    image = models.ImageField(max_length=200, upload_to='brand/images/')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '品牌名'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class Goods(models.Model):
+    """商品信息"""
+    category = models.ForeignKey(GoodsCategory, null=True, blank=True, verbose_name='商品类目')
+    #  商品肯定是属于一个商品类的
+    goods_sn = models.CharField(max_length=50, default='', verbose_name='商品唯一货号')
+    #  商品编码，指的是该商品自己的属性编码
+    name = models.CharField(max_length=300, verbose_name='商品名')
+    click_num = models.IntegerField(default=0, verbose_name='点击数')
+    sold_num = models.IntegerField(default=0, verbose_name='商品销售量')
+    fav_num = models.IntegerField(default=0, verbose_name='收藏数')
+    goods_num = models.IntegerField(default=0, verbose_name='库存数')
+    #  商品库存数量
+    market_price = models.FloatField(default=0, verbose_name='商品市场价格')
+    # 商品市场价格
+    shop_price = models.FloatField(default=0, verbose_name='本店价格')
+    # 商品出售价格
+    goods_brief = models.TextField(max_length=500, verbose_name='商品简介')
+    # 商品简介，可能比较长，用textField
+    goods_desc = UEditorField(verbose_name=u'内容', imagePath='goods/images/', width=1000, height=300,
+                              filePath='goods/files/', default='')
+    # 商品的富文本描述，使用DjangoUeditor
+    ship_free = models.BooleanField(default=True, verbose_name='是否免费配送')
+    # 是否免费配送
+
+    # 商品轮播图，因为轮播图不止一张图片，是一个一对多的关系，所以我们要新建一个表GoodsImage
+    goods_front_image = models.ImageField(upload_to='', null=True, blank=True, verbose_name='封面图')
+    # 商品展示列表中显示的封面图
+    is_new = models.BooleanField(default=False, verbose_name='是否新品')
+    # 通过一个字段来说明该商品是否是新品
+    is_hot = models.BooleanField(default=False, verbose_name='是否热销')
+    # 通过一个字段来说明商品是否是热卖商品
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '商品信息'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class GoodsImage(models.Model):
+    """商品详情页轮播图"""
+    goods = models.ForeignKey(Goods, verbose_name='商品', related_name='images')
+    image = models.ImageField(upload_to='', verbose_name='图片', null=True, blank=True)
+    image_url = models.CharField(max_length=300, null=True, blank=True, verbose_name='图片url')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '商品详情页轮播图'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.goods.name
+
+
+class Banner(models.Model):
+    """首页轮播图"""
+    goods = models.ForeignKey(Goods, verbose_name='商品')
+    image = models.ImageField(upload_to='banner', verbose_name='轮播图片')
+    index = models.IntegerField(default=0, verbose_name='轮播顺序')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '首页轮播图'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.goods.name
+
+
+
+（3）、trade的model设计：
+首先在电商网站中有两个概念是非常重要的，一个是订单一个是购物车
+购物车的特点：
+
+
+完整trade的model：
+
+from datetime import datetime
+
+from django.db import models
+from django.contrib.auth import get_user_model
+
+
+from goods.models import Goods
+# Create your models here.
+
+User = get_user_model()
+
+
+class ShoppingCart(models.Model):
+    """购物车"""
+    user = models.ForeignKey(User, verbose_name='用户')
+    # 肯定是有一个user的，在这提供一个更加灵活获取user的model的方法，是使用django给提供的一个函数，
+    # 这个函数会直接给我们返回user的model（因为django已经默认创建过了user的model，所以这个方法能顺利的指向）
+    # 首先导入方法：from django.contrib.auth import get_user_model  然后定义一个变量存储执行方法之后返回的结果：
+    # User = get_user_model()  此时的User指向的就是user的model，这样即使我们不知道定义的user的model具体名字也能正常引用
+    goods = models.ForeignKey(Goods, verbose_name='商品')
+    goods_num = models.IntegerField(default=0, verbose_name='购买数量')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '购物车'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return '%s(%d)'.format(self.goods.name, self.goods_num)
+
+
+class OrderInfo(models.Model):
+    """订单"""
+    ORDER_STATUS = (
+        ('success', '成功'),
+        ('cancel', '取消'),
+        ('cancel', '待支付'),
+    )
+
+    PAY_TYPE = (
+        ('alipay', '支付宝'),
+        ('wechat', '微信')
+    )
+    user = models.ForeignKey(User, verbose_name='用户')
+    order_sn = models.CharField(max_length=30, unique=True, verbose_name='订单号')
+    # 订单编号
+    trade_no = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name='支付编号')
+    # 支付编号，在用支付宝进行支付的时候会生成一个订单编号，返回给我们，我们需要他与本地的一个系统订单做一个关联
+    pay_status = models.CharField(choices=ORDER_STATUS, max_length=10, verbose_name='订单状态')
+    # 支付状态，用户有可能支付了一半就不支付了，这个支付状态很有用
+    post_script = models.CharField(max_length=200, verbose_name='订单留言')
+    # 订单留言
+    order_mount = models.FloatField(default=0.0, verbose_name='订单金额')
+    # 订单金额
+    pay_time = models.DateTimeField(null=True, blank=True, verbose_name='支付时间')
+    # 支付时间
+
+    """邮寄用户信息"""
+    address = models.CharField(max_length=100, default='', verbose_name='收货地址')
+    # 邮寄地址
+    signer_name = models.CharField(max_length=20, default='', verbose_name='签收人')
+    # 签收人姓名
+    signer_mobile = models.CharField(max_length=11, default='联系电话')
+    # 签收人电话
+
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '订单'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return str(self.order_sn)
+
+
+class OrderGoods(models.Model):
+    """订单的商品详情"""
+    order = models.ForeignKey(OrderInfo, verbose_name='订单信息')
+    goods = models.ForeignKey(Goods, verbose_name='商品')
+    goods_num = models.IntegerField(default=0, verbose_name='商品数量')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '订单的商品详情'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return str(self.order.order_sn)
+
+
+（4）、用户操作的model设计：
+用户对商品可以进行收藏操作、我们可以在用户里面添加收货地址操作，用户的留言信息操作
+完整的model：
+from datetime import datetime
+
+
+from django.db import models
+from django.contrib.auth import get_user_model
+
+
+from goods.models import Goods
+
+# Create your models here.
+
+User = get_user_model()
+
+
+class UserFav(models.Model):
+    """用户收藏"""
+    user = models.ForeignKey(User, verbose_name='用户')
+    goods = models.ForeignKey(Goods, verbose_name='商品')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '用户收藏'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.user.name
+
+
+class UserLeavingMessage(models.Model):
+    """用户留言"""
+    MESSAGE_CHOICES = (
+        (1, '留言'),
+        (2, '投诉'),
+        (3, '询问'),
+        (4, '售后'),
+        (5, '求购'),
+    )
+    user = models.ForeignKey(User, verbose_name='用户')
+    msg_type = models.IntegerField(default=1, choices=MESSAGE_CHOICES, verbose_name='留言类型', help_text='留言类型：1')
+    msg = models.TextField(default='', verbose_name='留言内存', help_text='留言内容')
+    file = models.FileField(verbose_name='上传的文件', help_text='上传的文件')
+    # 需要上传的文件
+    subject = models.CharField(max_length=100, default='', verbose_name='主题')
+    # 主题
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '用户留言'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.user.name
+
+
+class UserAddress(models.Model):
+    """用户收货地址"""
+    user = models.ForeignKey(User, verbose_name='用户')
+    district = models.CharField(max_length=100, default='', verbose_name='区域')
+    address = models.CharField(max_length=100, default='', verbose_name='详细地址')
+    signer_name = models.CharField(max_length=100, default='', verbose_name='签收人')
+    signer_mobile = models.CharField(max_length=11, default='', verbose_name='电话')
+    add_time = models.DateTimeField(default=datetime.now, verbose_name='添加时间')
+
+    class Meta:
+        verbose_name = '用户收货地址'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.address
+    
+    
+
+注意：在django2.0后，定义外键和一对一关系的时候需要加on_delete选项，此参数为了避免两个表里的数据不一致问题，不然会报错：
+TypeError: __init__() missing 1 required positional argument: 'on_delete'
+在外键里面加上一个参数就好了： on_delete=models.CASCADE
+    parent_category = models.ForeignKey('self', null=True, blank=True, verbose_name='父类目级', help_text='父类目级',
+                                        related_name='sub_cat', on_delete=models.CASCADE)
+
+
+给所有的外键添加完on_delete=models.CASCADE之后执行
+python manage.py makemigrations
+python manage.py migrate
+然后运行程序看是否报错
+
+注意，这里有一些坑：
+《1》、我们在修改了某个model里面的字段之后，我们需要重新makemigrations，
+此时就会在对应的app下面的migrations重新生成一个py脚本，里面写的是哪里发生了改变，然后再执行migrate，此时才会将变动同步到数据库中的表
+如果我们的某个app的表当初设计的很烂，要重新生成，我们需要在数据库的表中把对应的app的表全部删除，然后再打开django_migrations这个表，把里面关于这个app的记录都删除。回到命令行直接执行migrate就可以
+注意我们在添加修改字段的时候要尽量使用在model中修改然后通过migrations生成更新。而不是操作navigate与migrations混用，这样很容易出错
+
+
+
+三、快速搭建一个可用的后台管理系统
+
+3.1、后台管理系统的特点：
+（1）、权限管理
+（2）、少前端样式
+（3）、快速开发
+修改完成后重启
+
+我们重新登录会发现变成了中文。django默认为我们创建了一个组，这个组就是对应的数据表中的auth_group这个表。
+我们可以吧数据库中的任何一张表都添加进来，添加进来后我们就可以进行正删改查操作
+
+打开pycharm，我们可以找到每个app下都有一个admin.py这个文件，该文件就是用来注册后台系统的
+打开admin.py，我们首先要将数据表引入进来：
+from .models import UserProfile
+然后为我们的model写一个管理器（后面详解）：
+class UserProfileAdmin(admin.ModelAdmin):
+    pass
+然后把admi和model进行关联注册：
+admin.site.register(UserProfile, UserProfileAdmin)
+
+后面将开放一个基于admin更强大的xadmin后台管理系统
+
+3.2、xadmin
+django自动创建的后台我们要登录进去首先要先通过命令行创建超级管理员的账号和密码：
+python manage.py createsuperuser
+（1）、安装xadmin：
+推荐大家用源码安装（到GitHub仓库直接下载源码到本地），因为我们需要修改他的部分源码来满足我们的要求。
+https://github.com/sshwsfc/xadmin/tree/django2
+
+下载到本地之后解压，将解压文件中的xadmin文件夹拷贝到我们项目的根目录中（apps同级目录）
+
+然后将下载下来的包安装到程序中去：pip install D:\downloads\xadmin-django2
+
+将教程中的xadmin拷贝到extra_apps中去（官网的xadmin有一些小bug）
+
+
+然后注册app：
+    'xadmin',
+    'crispy_forms'
+
+然后修改urls：
+import xadmin
+urlpatterns = [
+    path('xadmin/', xadmin.site.urls),
+]
+
+创建好密码之后我们直接登录会报错，是因为我们还没有为xadmin生成所需要的数据库，在命令行执行：
+python manage.py makemigrations
+python manage.py migrate
+然后运行程序，进入到xadmin界面看是否报错
+
+然后在命令行中卸载xadmin：pip uninstall xadmin
+为什么要安装下载下来的包，是因为里面除了xadmin还包含一些其他的包和app，作为依赖。为什么我们要卸载掉xadmin，因为我们已经把xadmin这个包放到了我们的项目当中（我们需要修改源文件），在安装的那些文件里面就可以直接卸载掉xadmin，这样我们在使用的时候就会去我们的项目文件中找xadmin，
+
+
+然后就是把model注册到我们的后台管理系统中去
+
+登录到后台管理系统后我们发现，默认的是英文界面，我们需要在settings中进行配置，使其显示为中文界面：
+LANGUAGE_CODE = 'zh-hans'
+TIME_ZONE = 'Asia/Shanghai'（时区改为上海）
+USE_TZ = False（如果使用默认的TRUE就会在数据库中写入的时候使用国际时间而不是本地时间）
+
+3.3、将model注册到后台管理系统中去并使用
+xadmin会自动搜寻app下的adminx.py文件，adminx.py和admin.py的功能类似，因此我们要先创建一个adminx.py文件，然后编辑
+（在这要想新建的模板里面有一些固定字段，可以通过pycharm进行设置模板：
+settings——搜索template——找到file and code templates——然后找到需要添加字段的模板，百度搜索pycharm自己的变量都有什么按照自己需求填写：
+__date__ = '$DATE $TIME'）
+
+在后台中添加数据表：
+因为要使用xadmin的命令，所以要先引入xadmin
+import xadmin
+from .models import EmailRecord
+class EmailRecordAdmin(object):
+    pass
+xadmin.site.register(EmailRecord, EmailRecordAdmin)
+这样就完成了EmailRecord这张数据表在后台的注册
+重启系统查看是否正常
+在model中的
+ class Meta:
+        verbose_name = '用户信息'  # 对应的就是后台管理系统中的数据表的名字
+        verbose_name_plural = verbose_name# 对应的是后台管理系统中数据表名字的复数形式，如果不这样写那么在后台管理系统中数据表的名字就会变成：'用户信息s'
+
+ code = models.CharField(max_length=20, verbose_name=u'验证码')
+verbose_name=u'验证码'对应的就是后台系统中每个选项前的名字，如果不写，默认会以变量的形式展现：code
+
+
+（1）、xadmin实际上就是对我们在数据库中创建的每个表进行增删改查的操作，而不是像有些后台是按功能来划分的（比如可以在后台管理系统更改首页显示的内容）
+
+但是我们可以在对某个表进行增删改查的时候增加我们的业务逻辑，他的优势在于所有后台系统都是由数据表组成的，但是在xadmin中他既不依赖于业务逻辑但是可以添加业务逻辑满足我们的需求，灵活性大大提高
+要想让邮箱显示的格式是：admin(ss@ss.com)
+        def __str__(self):
+        return '%s(%d)'.format(self.goods.name, self.goods_num)
+
+
+（2）、如何在后台管理系统的表中自定义列显示的内容：
+在adminx.py中，在我们定义的表的model管理器当中，有一个变量叫list_display
+class EmailRecordAdmin(object):
+    list_display = ['code', 'email', 'send_type', 'send_time']
+这样的话在默认显示的时候就会把表中的这些信息都显示在列上面
+
+
+（3）、搜索功能：
+在我们的model管理器当中有一个变量叫做search_fields
+class EmailRecordAdmin(object):
+    list_display = ['code', 'email', 'send_type', 'send_time']
+    search_fields = ['code', 'email', 'send_type', 'send_time'] #数组里面的内容指定了我们的搜索范围
+此外还有一个变量：list_filter
+添加这个变量之后会在后台多一个过滤器，这个过滤器可以配合search共同来完成搜索任务：
+
+class EmailRecordAdmin(object):
+    list_display = ['code', 'email', 'send_type', 'send_time']
+    search_fields = ['code', 'email', 'send_type', 'send_time']
+    list_filter = ['code', 'email', 'send_type', 'send_time']
+
+（4）、对各个model进行注册，都添加搜索和自定义显示的内容
+from .models import EmailRecord, Banner
+。。。
+xadmin.site.register(Banner, BannerAdmin)
+
+
+（5）、我们通过后台管理系统添加一个课程，然后添加一个章节，在添加章节的时候会发现课程选项下拉菜单显示的是一个：course object(1).
+这是因为我们没有重载课程的__str__方法（我们只需要重载他的__str__方法就可以了。
+找到课程（Course）的model：
+    def __str__(self):
+        return self.name
+此时就能在课程的下拉菜单里选取我们创建过的课程的名字了。
+
+然后创建一个章节：第一节
+
+此时我们在查看章节的过滤器的时候只有两个选项：章节名称和添加时间并没有把我们的课程选项显示出来（课程是外键）。这是因为我们并没有指定我们要搜索的课程列表的哪个字段。比如我们想要通过课程的名称来作为搜索字段，那么我们在写章节后台管理器的时候需要这样写：
+class LessonAdmin(object):
+    list_display = ['course', 'name', 'add_time']
+    search_fields = ['course', 'name', 'add_time']
+    list_filter = ['course__name', 'name', 'add_time']
+
+
+ list_filter = ['course__name', 'name', 'add_time']
+
+
+（6）、xadmin全局配置
+我们把全局的配置放在user的adminx.py下面
+
+《1》、修改主题：定义一个calss叫：BaseSetting
+这个类里面有两个重要的参数，一个是enable_themes主题功能（xadmin默认是关闭的，我们把它设置为TRUE）
+第二个是use_boosWatch（xadmin也是默认关闭的，我们把它设置为TRUE）：
+class BaseSetting(object):
+    enable_themes = True
+    use_bootswatch = True
+    
+然后把BaseSetting在xadmin进行注册，这个BaseSetting是和xadmin里面的view绑定的，我们首先要引入xadmin中的view：
+from xadmin import views
+然后：
+xadmin.site.register(views.BaseAdminView, BaseSetting)
+
+《2》、修改全局样式：
+同样在user的adminx下定义一个类：GlobalSettings
+这里有两个变量：site_title = '后台管理系统'
+site_footer = '双飞翼网'：
+
+class GlobalSettings(object):
+    site_title = '后台管理系统'
+    site_footer = '双飞翼在线'
+
+然后把GlobalSettings注册到views的某个类里面：
+xadmin.site.register(views.CommAdminView, GlobalSettings)
+
+《3》、如果想让左侧的导航栏能收起来，可以给GlobalSettings再加个变量：
+class GlobalSettings(object):
+    site_title = '后台管理系统'
+    site_footer = '双飞翼在线'
+    menu_style = 'accordion'
+
+《4》、让app的名称变成中文
+我们只需要修改每个app下面的apps.py中进行配置，添加一个verbose_name变量：
+class UsersConfig(AppConfig):
+    name = 'users'
+    verbose_name = '用户'
+
+然后将settings中app的引入方式改成：
+'users.apps.UsersConfig',
+    'goods.apps.GoodsConfig',
+    'trade.apps.TradeConfig',
+    'user_operation.apps.UserOperationConfig',
+
+
+重启刷新系统看是否报错
+
+
+
+3.4、导入数据：
+我们如果在后台一项一项的添加数据那会非常麻烦，因此导入已经现有的数据更方便
+（1）、导入图片文件：
+直接将教程中的goods和brands两个文件夹拷贝到我们项目的media文件夹下
+这里需要注意的一点是model的image上传路径要与我们的文件路径保持一致
+image = models.ImageField(max_length=200, upload_to='brands/')
+
+（2）、将教程中的category_data.py和product_data.py两个data文件拷贝到db_tools下的data文件夹中
+然后编写脚本，用来读取data.py中的数据并导入到对应的数据表
+（没有采用sql文件直接导入的方式是为了可以更方便的修改数据，第二就是教大家如何单独的使用model，将model独立出来使用）
+
+独立使用django的model：
+
+
+（3）、当数据导入到数据库之后我们点击查看商品详情的时候，可以看到图片是加载不出来的，这是我们还需要在settings中进行配置：
+
+STATIC_URL = '/static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+然后再到urls中进行配置
+配置一个当我们在访问media这个路径的时候我们的图片该如何取
+from django.urls import path, include, re_path
+import xadmin
+import ckeditor_uploader
+
+
+from RestfulDemo.settings import MEDIA_ROOT
+# 专门处理静态文件的server
+from django.views.static import serve
+
+urlpatterns = [
+    path('xadmin/', xadmin.site.urls),
+    # path('ckeditor/', ckeditor_uploader.urls),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': MEDIA_ROOT})
+]
+
+使用富文本编辑器：
+http://www.opython.com/1257.html
+资源下载地址：https://github.com/django-ckeditor/django-ckeditor
+
+富文本编辑器图片上传失败bug需要修复
+
+
+
+四、restful API
+优势：多端适配（pc、app、pad）、开发进度相互独立、开发与语言高度耦合，依赖严重。
+缺点：SEO难度增加
+
+restfulAPI是面向资源、
+路径+版本+资源（https://api.example.com/v1/zoos）
+
+简单的介绍：阮一峰的restfulapi简介
+
+vue简单介绍：
+数据驱动、
+
+
+4.1、使用restful api写一个简单的商品列表页的demo，用来熟悉：
+（1）、既然是商品的列表页面，那么我们首先需要配置一个url（请求url才会返回对应的数据）
+path('goods/',)
+path里面返回的是一个view，为了区分django自带的views，我们在对应的app下新建一个views_base.py
+
+在写views的时候我们需要继承django的view：
+from django.views.generic.base import View
+__date__ = '2018/6/12  9:17'
+
+
+from django.views.generic.base import View
+
+
+from goods.models import Goods
+
+class GoodsListView(View):
+    def get(self, req):
+        """通过django的view实现商品列表页"""
+        # 首先获取我们所有的商品,不想加载太慢，我们先获取10条
+        goods = Goods.objects.all()[:10]
+        # 获取到商品之后我们怎么才能返回json呢？首先我们拿到这些商品之后我们要将商品全部字段提取出来，
+        # 然后把这些字段转化成json然后返回给前台
+
+        # 首先提取字段，定义一个变量，因为是多个good，所以用一个list来存储
+        json_list = []
+
+        # 然后提取字段，将mysql获取过来的默认格式转化成字典样式，便于json转化
+        for good in goods:
+            json_dict = {}
+            json_dict['name'] = good.name
+            json_dict['category'] = good.category.name
+            json_dict['market_price'] = good.market_price
+
+            # 然后把字典添加到列表中去
+            json_list.append(json_dict)
+
+        # 然后将json_list返回给我们的前端，使用http模块中的HttpResponse
+        from django.http import HttpResponse
+
+        # 然后引入json
+        import json
+
+        # 调用json的dumps方法将结果返回,要注意，如果想要返回的结果不出错，必须要在HttpResponse里面指明
+        # content_type='application/json'
+
+        return HttpResponse(json.dumps(json_list), content_type='application/json')
+
+# 然后将views中的   GoodsListView方法配置到url中去 先将GoodsListViewimport到urls中去，然后添加到path中
+
+# 商品列表 因为这引入的是一个class，而不是一个函数，所以在调用的时候要 GoodsListView.as_view()这种格式调用
+# 为了方便看json，可以从谷歌应用商店里面下载jsonview这个插件，或者直接f12在network中查看
+from goods.views_base import GoodsListView
+
+
+urlpatterns = [
+    path('xadmin/', xadmin.site.urls),
+    # path('ckeditor/', ckeditor_uploader.urls),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': MEDIA_ROOT}),
+
+
+    # 商品列表
+    path('goods/', GoodsListView.as_view(), name='goods_list')
+]
+
+
+
+这是传统的接口，虽然功能实现了，但是还存在很多问题，（序列化麻烦，需要一个一个手动转化，时间字符串不能直接转化成json等等）
+
+（3）、如何将mysql返回的数据简单的转化成字典形式呢？
+django给我们提供了一个工具：model_to_dict
+ # 使用mode_to_dict将数据转化为字典形式
+        from django.forms.models import model_to_dict
+        for good in goods:
+            json_dict = model_to_dict(good)
+            json_list.append(json_dict)
+
+同样，此时的image和datatime是不能直接json序列化的，会报错。
+我们需要调用django的另外一个方法：serializers，这个专门做序列化的工作：
+使用这个方法我们可以直接将goods传入到serializers中，得出的结果就是已经序列化好的json：
+# 使用serializers这个model中的serialize函数序列化将从数据库中取出的数据直接转化成json,然后调用json的loads方法将结果返回
+        from django.core import serializers
+        json_data = serializers.serialize('json', goods)
+ # 然后引入json
+        import json
+        json_list = json.loads(json_data)
+ return HttpResponse(json.dumps(json_list), content_type='application/json')
+
+此外因为django还给我们提供了一个JsonResponse,我们直接使用JsonResponse会更加简洁：
+ return JsonResponse(json_list),不过此时的json_list必须是字典格式，否则会报错或者按照提示添加一个参数：
+return JsonResponse(json_list, safe=False)
+完整：
+ goods = Goods.objects.all()[:10]
+from django.core import serializers
+json_data = serializers.serialize('json', goods)
+from django.http import HttpResponse, JsonRespons      
+import json
+json_list = json.loads(json_data)
+return JsonResponse(json_list, safe=False)
+这样一个json格式的接口就完成了
+
+
+django已经这么简单了，那么为什么我们还是需要djangorestful呢？
+因为像图片这种，在手机端是需要加上很多前缀，才能正常访问的，这个djangorestfultwork已经为我们做好了，等还有很多不方便的地方，使用djangorestfulwork能更方便的解决我们的问题，而且给我们提供的功能非常强大（文档生成、输入检测等等）
+
+
+（3）、使用django的restframework完成商品列表接口：
+首先我们需要根据官方文档配置restframework：http://www.django-rest-framework.org/
+pip install django-guardian
+pip install coreapi  # 这个是为了支持我们的django文档需要安装的一个
+
+然后在urls.py中引入：
+
+# 引入restframework
+from rest_framework.documentation import include_docs_urls
+    # restframework
+    path('docs/', include_docs_urls(title='电商网站'))，
+
+
+然后运行程序，看是否报错，不报错的话就开始写我们的views.py，
+打开goods下面的views.py，仿照官方文档来写
+首先在settings中将rest_framework注册
+然后到urls中配置一个url，这个url是drf登录一个url，在调试api的时候会用到：
+ path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+首先仿照：http://www.django-rest-framework.org/tutorial/3-class-based-views/
+这个例子，来简单快速的写一个list
+将demo中的例子拷贝到项目的view中去：
+然后根据自己项目进行修改配置：
+from .models import Goods
+from snippets.serializers import SnippetSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+
+
+class SnippetList(APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+    def get(self, request, format=None):
+        goods = Goods.objects.all()[:10]
+        serializer = SnippetSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+此时我们注意到，这里有一个serializer ，他的功能比django提供的那个更加强大，为了让他正常使用我们需要在app下新建一个serializer.py文件，该文件如何写，我们需要参照官方文档：
+http://www.django-rest-framework.org/tutorial/1-serialization/   找到Creating a Serializer class，
+将里面的内容拷贝到我们新建的py文件内,并修改：
+
+from rest_framework import serializers
+
+
+class GoodsSerializer(serializers.Serializer):
+# GoodsSerializer就相当于django的form表单的功能，只不过他是专门用来处理json的
+    # 拿两个字段简单的讲一些
+    name = serializers.CharField(required=True, max_length=100)
+    click_num = serializers.IntegerField(default=0)
+    goods_front_image = serializers.ImageField()
+
+# 然后到views中，将GoodsSerializer导入
+
+views.py：
+from .models import Goods
+from .serializers import GoodsSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+
+
+class GoodsListView(APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+    def get(self, request, format=None):
+        goods = Goods.objects.all()[:10]
+        goods_serializer = GoodsSerializer(goods, many=True)
+        return Response(goods_serializer.data)
+
+然后将GoodsListView导入到urls并配置path
+
+ path('goods/', GoodsListView.as_view(), name='goods_list'),
+
+不过这有一个bug，需要修复：就是str返回的字符串不能为空，如果为空，django会报错的bug：
+是因为用到了user登录的str，但是str返回的name是空字符串，又因为user继承了django的user，所以可以在str中返回username，这时候返回的就是非空字符串了。
+
+在这之所以会有那个log in的按钮，是因为我们在urls中我们配置了：
+ path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+如果没配置就不会出现登录的按钮
+ 
+
+我们如何使用GoodsSerializer将字段保存到数据库当中呢？（前端传递过来的json数据是需要保存到数据库当中去的，因此我们还需要serializer拥有将字段保存到数据库当中的内容，给前端提供一个添加商品的接口）文档中也给我们写了，需要在serializer里面去覆盖create方法。
+首先导入Goods这个model
+然后重新create方法：
+
+    def create(self, validated_data):
+        return Goods.objects.create(**validated_data)
+
+然后就可以在views中写post方法（参照官方文档）：
+from rest_framework import status
+
+    def post(self, request, format=None):
+        serializer = GoodsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+在这还有一个ModelSerializer，和ModelForm一样：参考官方文档：http://www.django-rest-framework.org/tutorial/1-serialization/#using-modelserializers
+
+我们只需要这样定义就可以达到和上边一样的效果：
+from rest_framework import serializers
+from .models import Goods
+
+class GoodsSerializer(serializers.ModelSerializer):
+    #  拿两个字段简单的讲一些   
+    # 因为在这是用model做的映射，所以在这程序可以通过model自动读取Goods中对应字段的model类型，并自动转化成serializer类型
+    class Meta:
+        model = Goods
+        fields = ('name', 'click_num', 'market_price', 'add_time')
+运行程序看是否报错
+
+如果我们想把Goods中所有的字段取出来怎么办？
+只需要把fields改成：fields = '__all__'.这样不管我们在model中定义的什么类型，Modelserialzer都不会序列出错，这样就很简单的完成了所有信息的序列化。
+
+在这注意，因为在数据库中category是一个外键，所有在序列化的时候获取的是category的id的形式，那么我们如何精确的获取到category的值呢？我们可以再定义一个category的serializer：
+首先导入GoodsCate
+from .models import Goods, GoodsCategory
+然后定义CategorySerializer的类，继承的是ModelSerializer：
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GoodsCategory
+        fields = '__all__'
+
+然后将CategorySerializer嵌套到GoodsSerializer，我们在GoodsSerializer定义一个变量category，用来覆盖fields中的category
+from .models import Goods, GoodsCategory
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GoodsCategory
+        fields = '__all__'
+
+class GoodsSerializer(serializers.ModelSerializer): 
+    category = CategorySerializer()  #实例化CategorySerializer
+    class Meta:
+        model = Goods
+        fields = '__all__'
+
+这样就可以把完整的category作为一个字段，添加到goods字段中：
+{
+        "id": 1,
+        "category": {
+            "id": 20,
+            "name": "根茎类",
+            "code": "gjl",
+            "desc": null,
+            "category_type": 2,
+            "is_tab": false,
+            "add_time": "2018-06-10T17:32:05.529502",
+            "parent_category": 1
+        },
+        "goods_sn": "",
+        "name": "新鲜水果甜蜜香脆单果约800克",
+        "click_num": 0,
+        "sold_num": 0,
+        "fav_num": 0,
+        "goods_num": 0,
+        "market_price": 232.0,
+        "shop_price": 156.0,
+        "goods_brief": "食用百香果可以增加胃部饱腹感，减少余热量的摄入，还可以吸附胆固醇和胆汁之类有机分子，抑制人体对脂肪的吸收。因此，长期食用有利于改善人体营养吸收结构，降低体内脂肪，塑造健康优美体态。",
+        "goods_desc": "<p><img src=\"/media/goods/images/2_20170719161405_249.jpg\" title=\"\" alt=\"2.jpg\"/></p><p><img src=\"/media/goods/images/2_20170719161414_628.jpg\" title=\"\" alt=\"2.jpg\"/></p><p><img src=\"/media/goods/images/2_20170719161435_381.jpg\" title=\"\" alt=\"2.jpg\"/></p>",
+        "ship_free": true,
+        "goods_front_image": "/media/goods/images/1_P_1449024889889.jpg",
+        "is_new": false,
+        "is_hot": false,
+        "add_time": "2018-06-11T15:00:02.978960"
+    },
+
+
+serializer的功能很强大，远远不止这些，接下来介绍更加强大的serializer：
+
+我们在访问http://localhost:8000/goods/点击options之后会有一个接口选项，是对该接口的描述信息，在描述信息里面有一项：description，是对接口的一个简单描述，我们可以通过修改程序来自定义这个地方的描述信息：
+在views.py中修改：
+class GoodsListView(APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+注释里面的内容就是描述内容，将注释内容改成：
+  """
+    List all goods
+    """
+就会将description里面的内容修改
+
+在选项中的render是指的在我们返回给前端的时候是返回json形式还是html形式，在这展现的只是两种常用的，还有很多形式
+parses：就是我们再把数据传递到前端之后，比如我们要保存一个新的goods，我们把前端的数据传递到后端之后，后端会接受哪些类型的数据可以解析（post json过去能解析，传统的格式也能解析，文件格式也能解析）
+
+
+所谓post就是把前端传递过来的data当做参数传递到GoodsSerializer中去：
+    def post(self, request, format=None):
+        serializer = GoodsSerializer(data=request.data)
+# data=request.data是ref给我们封装好了，默认的python中是没有request.data属性的，在ref中的request.data能同时取到get、post、body中的所有数据，因为我们在取数据的时候就不用再去判断get、post、body等，直接使用统一的request.data就能取到
+        if serializer.is_valid():
+            serializer.save()
+# 在这的save就会去调用serializer里面的create方法
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+使用更加上层的view
+
+
+
+#2018.06.29
+
+如何将views.py中的逻辑写的更加简单，功能更加强大，
+
+我们将使用APIView更上层的class来重写views.py
+
+我们使用mixins和generics.GenericAPIView来重写views中的GoodsListView，
+首先import进来
+#  使用mixins和generics来重写goods模块的业务逻辑
+
+# 首先引入mixins和generics
+from .models import Goods
+from .serializers import GoodsSerializer
+from rest_framework.response import Response
+from rest_framework import mixins
+from rest_framework import generics
+
+
+# 然后在listview中继承mixins.ListModelMixin, generics.GenericAPIView
+# generics.GenericAPIView是继承了APIView重新封装的一个类
+#
+# class GoodsListView(mixins.ListModelMixin, generics.GenericAPIView):
+#     """商品列表页"""
+#     queryset = Goods.objects.all()[:10]
+#     serializer_class = GoodsSerializer
+#
+#     # 这样写了之后还要做一件事，直接这样访问会报错（get方法不被允许），如果不定义get、put、post
+#     # 就会被默认不接受这种请求，会返回一个方法错误，然后写我们的get方法
+#
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+
+    # 我们通过查看generics.py可以知道，里面给封装好了一个ListAPIView和我们写的这个一样，因此我们可以直接继承他
+    # （他已经帮我们继承好了某些类，并写好了get函数），因此直接改成(它里面还有很多已经封装好的类，可以直接继承)：
+
+class GoodsListView(generics.ListAPIView):
+    """商品列表页"""
+    queryset = Goods.objects.all()[:10]
+    serializer_class = GoodsSerializer
+
+
+通过配置，将list列表进行分页
+
+首先我们要将所有的list中的数据加载进来，然后我们需要在settings进行配置，
+class GoodsListView(generics.ListAPIView):
+    """商品列表页"""
+    # 因为需要分页，所以我们需要将goods的所有数据加载进来
+    # queryset = Goods.objects.all()[:10]
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+
+    # 然后在settings中去配置，我们需要了解restframework有一个总的配置，所有关于ref的配置都要
+    # 写在settings的一个REST_FRAMEWORK字典里面
+在settings中
+# 分页   关于分页的配置我们可以到restframework的settings中去找，因为我们这要分10页，
+# 所以就可以在restframework的settings找到PAGE_SIZE，然后value设置为10，这样分页就分好了
+# 但是因为在新版的ref的settings中DEFAULT_PAGINATION_CLASS这一项默认为none，所以要改
+# 成rest_framework.pagination.PageNumberPagination这样的话就会正常分页
+REST_FRAMEWORK = {
+    'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+}
+
+
+自定义分页选项：
+# 分页之后在展示的时候数据略有改变，新增了一个count表示的是一共有多少个数据，一个next表示下一页的访问路径，
+# 一个previous表示上一页的访问路径，然后列表中的每一项存储在了results中。这样前端在做分页的时候就能更加清晰
+# 的找到对应的接口和需要的数据，此时数据中的图片连域名都给我们加上了，我们可以直接打开
+
+# 我们如何配置自定义我们的分页呢？
+# 我们点击ref官方文档，在API Guide里面有一个Pagination。里面告诉了我们很多事，我们可以配置'PAGE_SIZE'、
+# 'DEFAULT_PAGINATION_CLASS'等值，要想知道有哪些DEFAULT_PAGINATION_CLASS可以到rest_framework.pagination
+# 这个文件夹下面去找，然后还可以我们自己修改DEFAULT_PAGINATION_CLASS中某个pagination的参数，来满足我们的需求
+#
+# 首先定义一个class：StandardResultsSetPagination，该class继承PageNumberPagination，
+# 我们通过这个类来自定义分页中的部分参数，
+class GoodsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size' # 该参数可以指定这一页有多少个
+    page_query_param = 'page'# 该参数可以指定页数，也就是哪页，如第五页
+    max_page_size = 100
+# 自定义setpagination之后我们还需要把他引入到我们views中的 GoodsListView中去才会
+# 生效：为了我们看着更清楚，将StandardResultsSetPagination该名为GoodsSetPagination
+# pagination_class = GoodsSetPagination，在这设置完成之后在settings中的设置也就没用了
+# 此时我们就可以自定义访问哪页，每页访问多少个了，如：http://localhost:8000/goods/?page=2&page_size=30
+# 表示的就是访问第二页，这一页中包含30条数据
+
+class GoodsListView(generics.ListAPIView):
+    """商品列表页"""
+    # 因为需要分页，所以我们需要将goods的所有数据加载进来
+    # queryset = Goods.objects.all()[:10]
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+
+上边是通过generics.ListAPIView完成了数据的返回和分页
+
+
+比ListAPIView更高级的view：viewSets
+他是存在于from rest_framework import viewsets
+这里面有很多view用起来更加简便好用，
+在views.py中：
+# 使用viewsets
+# GenericViewSet继承的是generics.GenericAPIView（generics.ListAPIView也是继承的GenericAPIView），但是他并没有get、post等方法，
+# 因此我们还需要继承mixins.ListModelMixin来为我们提供get、post等功能
+# 既然只是继承的GenericAPIView，就没有将两个绑定起来，viewsets将两个绑定起来有一个很关键的步骤
+# 是什么步骤呢，我们去查看官方文档，文档中给我们写的很清楚，Home——Tutorial——Viewsets&routers里面
+# viewsets和routers是配套使用的，两者结合起来非常好用。我们需要关注的是关键是如何配置url，
+# 我们需要调用as_view方法，在项目的urls中进行配置，此时我们的goods的url就会使用一个新的方法来配置，
+# 首先引入views中的GoodsListView，为了我们看着更加清楚我们将GoodsListView改名为GoodsListViewSet,然后在url中导入GoodsListViewSet
+
+
+class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """商品列表"""
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+
+from goods.views import GoodsListViewSet
+from rest_framework.routers import DefaultRouter
+#  引入GoodsListViewSet之后根据官方文档写下面内容
+# goods_list = GoodsListViewSet.as_view({'get':'list'})
+# 在这里面我们可以做更多的事，如将get请求绑定到list方法之上，类似于我们之前的
+# def get(self, request, *args, **kwargs):
+#    return self.list(request, *args, **kwargs)
+# 以前我们需要通过写函数将get请求转到list上去，现在我们直接在这配置就完成了get与list的绑定，
+# 这样配置有很大的好处，到后边我们就会体会到,然后将goods_list放到url中去：path('goods/', goods_list, name='goods_list'),
+# 此时我们重启项目，看是否能正常取到数据
+# 我们也可以不做goods_list = GoodsListViewSet.as_view({'get':'list'})这个配置，而是通过routers来进行配置，
+# 这样我们配置url会更加简单，随着系统功能越来越丰富，url也会越来越多，而我们通过配置routers可以使我们配置url更加简便。
+# 首先，我们要引入from rest_framework.routers import DefaultRouter,然后生成一个router对象：router = DefaultRouter()，
+# 然后配置goods的url:router.register(r'goods', GoodsListViewSet)在这一步我们把GoodsListViewSet注册到了router中去了.
+# 然后把router注册到path中去，因为我们在这：router.register(r'goods', GoodsListViewSet)已经把goods挂到了router上了，
+# 所以我们在配置path的时候只需要把router注册到path中去在访问goods的时候就会自动匹配到对应的GoodsListViewSet，
+# 如果对router感兴趣可以去源码查看
+
+router = DefaultRouter()
+router.register(r'goods', GoodsListViewSet)
+# 商品列表
+path('', include(router.urls))
+
+
+
+我们在下面会具体分析一下view，因为前边实际上已经接触了很多view了，可能会跟不上节奏（为什么会有这么多view，该在什么时候选用哪些view来完成）这时候需要我们对restframework整个view的一个结果有一个清晰的认识，有了认识之后在后边使用各种view还是viewset的时候自然而然就明白了
+
+从最低层的django的view开始一步步介绍到viewset最终的目的就是要介绍viewset，让大家在使用viewset的时候不至于很混乱。到现在为止我们理一下他们之间的关系。理清了之后在后续我们自己决定去用什么viewset，以及去组合mixins和viewsets的时候才能够非常清楚。这些知识非常重要！
+
+GenericViewSet是最高的一层，他继承的是viewset。   GenericViewSet(viewset)（属于drf）
+
+
+GenericViewSet继承的是generics.GenericAPIView（属于drf）
+
+
+GenericAPIView继承的是views.APIView（属于drf）
+
+APIView继承的是View（属于django）
+
+这里面他们之间差异的一个核心点是drf里面很重要的另外一个概念mixin（他们之间的差别都是通过mixin来区别的，因此mixin就是关键），我们看一下mixin有些什么东西，在drf源码的mixin.py中我们可以看到有CreateModelMixin、ListModelMixin、RetrieveModelMixin、UpdateModelMixin、DestroyModelMixin这五个类
+我们看一下ListModelMixin，如果我们不去继承ListModelMixin的话，我们就无法把get和list连接起来。list里面所做的所有功能我们都无法去完成：
+def list(self, request, *args, **kwargs):
+    queryset = self.filter_queryset(self.get_queryset())
+
+    page = self.paginate_queryset(queryset)
+    if page is not None:
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    serializer = self.get_serializer(queryset, many=True)
+    return Response(serializer.data)
+
+比如说list里面的filter_queryset（过滤）和paginate_queryset（分页）这些功能我们将都无法享受到
+RetrieveModelMixin是获取某些商品的信息会用到
+UpdateModelMixin告诉我们是部分更新还是全部更新
+DestroyModelMixin是链接delete方法的
+这些方法都是mixin帮我们做的，generic里面并没有做这些。drf是将这些结合起来，来完成强大的功能。比如我们从APIView开始：
+GenericAPIView是继承的APIView
+当GenericAPIView配合各种mixin就会生成各种高层的view如：
+CreateAPIView(mixins.CreateModelMixin, GenericAPIView)
+ListAPIView(mixins.ListModelMixin, GenericAPIView):
+RetrieveAPIView(mixins.RetrieveModelMixin, GenericAPIView):
+ListCreateAPIView(mixins.ListModelMixin,mixins.CreateModelMixin,GenericAPIView) 等等
+如果还是满足不了我们的要求，需要定制的话我们可以借鉴他的配置方式来定义自己的
+
+这些view很方便，我们可以使用，但是我们要介绍的是viewset，viewset有什么好处呢？
+Viewset实际上也是继承了generics.GenericAPIView，在各种CreateAPIView中是继承了mixins里面的各种Mixin和GenericAPIView，而在各种Viewset（GenericViewSet、）中是继承了ViewSetMixin和GenericAPIView。ViewSetMixin有什么好处？他将使用函数把get和list进行绑定这种模式：
+def get(self, request, *args, **kwargs):
+    return self.list(request, *args, **kwargs)
+改变了，我们不再通过这种形式来绑定，但是我们仍需要将get与list等进行绑定，我们如何来绑定呢？我们在url配置的时候进行绑定。在前边我们讲过我们可以通过router：
+router = DefaultRouter()
+router.register(r'goods', GoodsListViewSet)
+
+这种方式来绑定。Register之所以能实现绑定是因为viewSet他继承了ViewSetMixin，在ViewSetMixin里面定义了绑定的方法
+
+这样就把代码中那种固定形式的绑定改成了使用router这种动态形式的绑定。此外viewSet还有一个很大的好处，在ViewSetMixin中他给我们的request绑定了很多action，这些action有很大的好处，在后期进行动态serializer的时候，用起来特别的爽。因此viewSet是比CreateAPIView功能更加强大，所以后边的功能我们会尽量用ViewSet来完成。
+
+ViewSet中也有很多组合，如：
+ViewSet(ViewSetMixin, views.APIView)
+ GenericViewSet(ViewSetMixin, generics.GenericAPIView)
+ReadOnlyModelViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin,GenericViewSet)  ModelViewSet(mixins.CreateModelMixin,mixins.RetrieveModelMixin,mixins.UpdateModelMixin,
+mixins.DestroyModelMixin,mixins.ListModelMixin,GenericViewSet)                                    
+                                      
+                  
+
+以上这些就是APIView、ViewSet、router之间的关系：
+
+
+
+
+Django中两个最常用的类Request和response类：
+
+Drf又对django的request和response做了一层封装，给我们的使用带来很大的便利。我们可以在官方文档的APIGuide里面找到
+Request也就是浏览器发送请求过来之后做的一层封装
+
+
+
+如何通过drf过滤器来快速完成我们的过滤操作：
+
+实际在GenericViewSet这个类里面有一个方法叫get_queryset
+我们可以在里面添加一些逻辑,返回价格大于100的商品：return Goods.objects.filter(shop_price__gt = 100)（因为我们返回的是）：
+
+class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """商品列表"""
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+
+    def get_queryset(self):
+        queryset = Goods.objects.all()
+        #  因为我们在这调用了get_queryset方法，所以在开头的queryset = Goods.objects.all()就可以去掉，？？？但是为什么去掉之后程序会报错？？？
+        # get_queryset里面可以包含queryset = Goods.objects.all()，
+        # 而且我们在get_queryset中编写的这条语句：queryset = Goods.objects.all()注意all()这个方法实际上
+        # 并没有把数据直接取出来，实际上只是帮我们编写了一个sql脚本，并没有去执行，
+        # 因此大家不用担心，当数据库很大的时候会把数据全都取出来，只有我们在for循环的时候才是真正的把数据取出来
+        price_min = self.request.query_params.get('price_min',0)
+        # 加入从前台传来一个最小价格的请求，我们需要先把前台传递的数据通过
+        # self.request.query_params.get('price_min',0)这种方式拿到，在这第二个参数0代表的是默认值0，
+        # 然后通过queryset（这的queryset实际是Goods.objects.all()）的filter方法将数据进行过滤，并将结果返回
+
+        if price_min:
+            queryset = queryset.filter(shop_price__gt=int(price_min))
+        return queryset
+
+
+注意请求路径和参数是http://localhost:8000/goods/?price_min=120，一定要加？才代表是参数为price_min=120否则的话则是代表的是路径，一定要搞清楚！！！！
+
+上面的方法能够完成数据的过滤，但是我们还是觉得代码过多（首先判断参数是什么，然后判断参数是否存在，然后需要把参数转化成int类型等等，虽然现在看着代码不多，但是当我们需要过滤的数据有十几个的时候就会显得代码很臃肿）那drf有没有给我们提供一个更简单的方法来完成过滤呢？这就是我们前面提到过的django filter。打开官方文档在APIGuide里面有一个Filtering，他给我们带来非常大的便利，都有什么便利呢？就像xadmin中的后台管理系统中的过滤一样，我们需要做的就是把xadmin中的过滤集成到我们的接口中。
+
+我们常见的过滤就是：精确字段过滤，搜索和排序。
+按照官方文档介绍，我们先查看DjangoFilterBackend这个过滤：
+首先安装django-filter，然后把他导入到我们的settings里面去django_filters
+然后是有一个默认配置，既然是默认的，我们就不需要再去操作那个配置，接下来才是重要的，我们该如何在项目中使用：
+在我们需要使用过滤器的view.py页面引入：from django_filters.rest_framework import DjangoFilterBackend
+
+然后在：filter_backends = (DjangoFilterBackend,)中去设置。filter_backends 配置完成之后我们接下来我们就要配置fields：
+class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """商品列表"""
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+
+
+    filter_backends = (DjangoFilterBackend,)
+    # filter_backends配置完成之后我们需要配置fields，比如把我们的name和shop_price配置一下，如下
+    filter_fields = ('name', 'shop_price')
+    # 就这么点代码我们就配置完了，我们到页面中查看一下，我们可以观察到页面的右上角多了一个过滤器，
+    # 此时我们就可以自己进行测试，测试我们的顾虑器是否正常，我们搜索name为“水果”的产品，此时我们可以观察到url的参数：
+    # http://localhost:8000/goods/?name=水果&shop_price=   注意过滤和搜索是不一样的，
+    # 过滤要求字段必须完全等于（不能进行模糊过滤），比如我们的在过滤中输入：新鲜水果甜蜜香脆单果约800克就有一个结果，
+    # 而输入：新鲜水果，结果就会为空
+
+    # 虽然上面的功能还可以，但是还不能满足我们的要求，比如我们要对name进行一个模糊搜索，shop_price搜索一个区间，
+    # 那么上面的配置方法是不能满足我们的需求的，那么我们如何对filter进行一个更加精细的配置呢？
+    # 我们去django_filter的官网去看一看（http://django-filter.readthedocs.io/en/latest/ref/filters.html），步骤就是我们自定义一个filter的class，然后通过filter_class这个变量把我们自定义的那个class引入到我们的项目：
+首先我们在app下面与views.py同级目录下新建一个filters来保存我们自定义的class，然后仿照官方文档中介绍的：
+
+from django_filters import rest_framework as filters
+# 首先引入filters，注意路径，然后创建一个类，是我们自定义的过滤类
+from .models import Goods
+
+class GoodsFilter(filters.FilterSet):
+    """"商品的种类过滤类"""
+    # 我们在这可以自定义过滤规则，然后把过滤规则添加到fields中去
+    price_min = filters.NumberFilter(name='shop_price', lookup_expr='gte')
+    # 自定义了一个商品价格的过滤区间，大于等于，并且要作用于某个字段上shop_price
+    price_max = filters.NumberFilter(name='shop_price', lookup_expr='lte')
+    # 自定义了一个小于等于的价格区间，并且作用于shop_price字段上
+
+  name = filters.CharFilter(name='name', lookup_expr='contains')
+    # 使用name做查询，要使用CharFilter，此时lookup_expr里面的值是contains，
+    # 如果忽略大小写的话就在前边加一个i即：icontains，这就是模糊查询，类似sql的。。。语句
+    # 自定义规则定义好后我们还要把规则名添加到fields中去
+    class Meta:
+        model = Goods
+        fields = ['price_min', 'price_max', 'name']
+
+    # 我们自定义的过滤类就写好了，然后就是把这个类引入到我们需要使用过滤器的views中去 
+
+在views.py中：
+# 自定义过滤器引入：
+from .filters import GoodsFilter
+class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """商品列表"""
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+    filter_backends = (DjangoFilterBackend,)
+    # 虽然上面的功能还可以，但是还不能满足我们的要求，比如我们要对name进行一个模糊搜索，shop_price搜索一个区间，
+    # 那么上面的配置方法是不能满足我们的需求的，那么我们如何对filter进行一个更加精细的配置呢？
+    # 我们去django_filter的官网去看一看
+
+    # 首先引入,然后通过filter_class这个变量将过滤器引入到我们的项目中去
+    filter_class = GoodsFilter
+
+这样我们就完成了他的配置，重启看一下，我们点开右上角的过滤器，就可以看到此时的过滤内容是最小值与最大值填写框，我们输入对应的价格区间就可以筛选出对应价格的商品，此时的url是：
+http://localhost:8000/goods/?price_min=100&price_max=200
+
+接下来我们使用drf里面的searchfilter来完成模糊查询，这个是最优的方法，虽然使用上面方法也能完成：我们打开drf官网，找到SearchFilter，仿照官网例子：
+首先在views中直接引入filter：from rest_framework import filters
+然后将SearchFilter注入到backends中去：filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+然后写一个变量search_fields（注意使用直接定义过滤器的时候使用的是filter_fields），用来保存要搜索的选项：search_fields = ('name', 'goods_brief', 'goods_desc')
+重启项目查看可以发现在过滤按钮里面多了搜索选项。：
+class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """商品列表"""
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+
+
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    # filter_backends配置完成之后我们需要配置fields，比如把我们的name和shop_price配置一下，如下
+    # filter_fields = ('name', 'shop_price')
+    # 就这么点代码我们就配置完了，我们到页面中查看一下，我们可以观察到页面的右上角多了一个过滤器，
+    # 此时我们就可以自己进行测试，测试我们的顾虑器是否正常，我们搜索name为“水果”的产品，此时我们可以观察到url的参数：
+    # http://localhost:8000/goods/?name=水果&shop_price=   注意过滤和搜索是不一样的，
+    # 过滤要求字段必须完全等于（不能进行模糊过滤），比如我们的在过滤中输入：新鲜水果甜蜜香脆单果约800克就有一个结果，
+    # 而输入：新鲜水果，结果就会为空
+
+    # 虽然上面的功能还可以，但是还不能满足我们的要求，比如我们要对name进行一个模糊搜索，shop_price搜索一个区间，
+    # 那么上面的配置方法是不能满足我们的需求的，那么我们如何对filter进行一个更加精细的配置呢？
+    # 我们去django_filter的官网去看一看
+
+    # 首先引入,然后通过filter_class这个变量将过滤器引入到我们的项目中去
+    filter_class = GoodsFilter
+
+    # 定义search_fields用来存储需要搜索字段的名称
+    search_fields = ('name', 'goods_brief', 'goods_desc')
+# 此时我们搜索关键字，比如水果，就会把name、goods_brief、goods_desc中任何一个包含水果的选项都筛选出来
+我们可以查看官方文档，可以发现search_filter可以进行很灵活的配置，比如：
+search_fields = ('=username', 'email') =代表完全匹配。也就相当于过滤，百分比匹配才能搜索出来。这个语句实现的效果是，username完全匹配才能搜出来，但是不影响email里面的模糊匹配，属于并列关系
+
+
+排序：我们在官网中找到orderingFilter。
+首先我们将OrderingFilter注入到filter_backends 中：filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+然后配置ordering_fields：ordering_fields = ('sold_num', 'add_time')
+重启服务，我们会发现过滤器里面在下面多了排序的选项，此时的url是：
+http://localhost:8000/goods/?ordering=-sold_num（如果是正序，则会是sold_num）
+
+
+
+class GoodsListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """商品列表,分页、搜索、过滤、排序"""
+    queryset = Goods.objects.all()
+    serializer_class = GoodsSerializer
+    pagination_class = GoodsSetPagination
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filter_class = GoodsFilter
+    search_fields = ('=name', 'goods_brief', 'goods_desc')
+    ordering_fields = ('sold_num', 'add_time')
+
+我们用这几行代码完成了商品列表、分页、搜索、排序、过滤等功能。通过查看url就可以很清晰的看到前端需要请求的数据，我们还可以在可视化界面直接测试，权限验证等操作都可以在这进行测试
+
+
+
+六、如何将drf返回的接口和前端页面联系起来
+1、首先要解决的是商品的分类
+我们通过分析前端页面可以得出：
+（1）商品分类需要一个接口，该接口包含了一级、二级、三级所有类目的信息，以及分级
+（2）然后就是点击某个类目的时候（比如生鲜食品），就会列出该类目下的所有子类目和商品的详细信息
+
+先完善商品类别的功能对应的那个接口：
+在goods下的views.py里面创建一个类CategoryViewset():
+# 商品分类的接口
+
+class CategoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    # 在这写注释有一个注意点，因为我们在使用drf生成接口文档的时候，会自动将我们注释里面的内容提取出来，
+    # 因此我们这可以采用如下的方式
+    """"
+    list:
+        商品分类列表数据
+    """
+    # 第一我们要获取到商品的列表，因为我们要获取到商品分类的数据，因此要把GoodsCategory
+    # 从models中引入进来：from .models import Goods, GoodsCategory
+    # 然后提取里面的数据结构赋值给queryset（queryset是从父类的class中继承过来的）
+    queryset = GoodsCategory.objects.all()
+
+    # 因为我们获取的数据是商品的所有分类，所以是不需要分页的（数据量比较小，也不会把商品分类进行分页显示）
+    # 此外搜索、过滤、排序这些功能也不需要。但是我们需要serializer（将数据库中的数据转化为json格式），
+    # 也就是需要将数据库中的文件格式转化成json格式等操作，去serializers中新建class CategorySerializer(),
+    # 在这因为我们之前在配置GoodsSerializer的时候已经配置过CategorySerializer了，所以可以直接使用
+    # 然后就是将Serializer从serializers中导入到views中：from .serializers import GoodsSerializer, CategorySerializer
+    # 之后在CategoryViewSet中将CategorySerializer应用：serializer_class = CategorySerializer
+    serializer_class = CategorySerializer
+    # 此时商品分类的列表数据就有了，接下来就是在url中进行配置,router中：
+    # 配置category的url
+    # router.register(r'categorys', CategoryViewSet, base_name='categorys')， 重启项目查看
+
+
+此时我们可以看到分类的数据已经传递过来了，但是我们分析前台页面可以知道，此时返回的数据最好有一个层次结构，这样才能方便前台使用（第二级是把鼠标放到第一级上之后才会显示出来的），我们可以在CategoryViewSet对数据进行加工：我们通过对CategoryViewSet里面的CategorySerializer进行加工来满足我们的需求。对serializers里面的CategorySerializer加工：
+# 分级，也就是数据的嵌套，我们只需要把序列好的某个serializer数据
+# 添加到另外一个serializer类里面就完成了数据的嵌套，但是这里面有个关键点就是被嵌套的数据必须是外键才能嵌套成功，
+# 比如GoodsSerializer这个类中我们需要嵌套CategorySerializer这个类，而CategorySerializer这个类在model中是通过
+# 外键添加到GoodsSerializer中去的
+# ：category = models.ForeignKey(GoodsCategory, null=True, blank=True, verbose_name='商品类目', on_delete=models.CASCADE)
+# ，而且我们在GoodsSerializer中嵌套数据也是通过model中的数据名来对应起来的：category = CategorySerializer()。
+
+# 我们现在处理的这个分级因为使用的是同一张表，所以还有几个注意点：首先嵌套就是和上面的原理一样，
+# 然后就是同一张表嵌套时对应model中的数据名称和普通的数据嵌套不一样，需要根据model中的related_name的值来对应serializer数据：
+#  parent_category = models.ForeignKey('self', null=True, blank=True, verbose_name='父类目级', help_text='父类目级',
+#                                         related_name='sub_cat', on_delete=models.CASCADE)  也就是这种格式：
+# class CategorySerializer(serializers.ModelSerializer):
+#     sub_cat = CategorySerializer2(many = True)
+#     # 一定要加上参数many=True，因为CategorySerializer可能有很多的子类，如果不加会报错
+#     class Meta:
+#         model = GoodsCategory
+#         fields = '__all__'
+# 此时的意思是将使用序列化好的CategorySerializer2添加到CategorySerializer中，他俩使用的是同一张表，
+# 同理如果是三级嵌套，那么就新建一个3把他添加到2里面去,此时嵌套数据的序列化就完成了
+# 第三级
+class CategorySerializer3(serializers.ModelSerializer):
+    class Meta:
+        model = GoodsCategory
+        fields = '__all__'
+
+# 第二级
+class CategorySerializer2(serializers.ModelSerializer):
+    sub_cat = CategorySerializer3(many=True)
+    class Meta:
+        model = GoodsCategory
+        fields = '__all__'
+
+# 第一级
+class CategorySerializer(serializers.ModelSerializer):
+    sub_cat = CategorySerializer2(many=True)
+    # 一定要加上参数many=True，因为CategorySerializer可能有很多的子类，如果不加会报错
+    class Meta:
+        model = GoodsCategory
+        fields = '__all__'
+
+此时我们获取到的是所有数据，如何来获取其中某个级的详情呢？
+ # 我们如何获取某个级的详情页呢？我们只需要再继承一个mixins：mixins.RetrieveModelMixin:
+    # class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,viewsets.GenericViewSet)
+    # 这样我们就可以通过restfulAPI使用规范来获取到我们想要的级别的详情了（drf已经把内部逻辑做好了，我们连url都不需要再配置），
+    # 获取某个指定动物园的信息的写法是：GET /zoos/ID，在我们的项目中也就是：http://localhost:8000/categorys/7/
+    # 这样我们就可以获取到categorys中id为7的层级的详情了，只要我们知道了所需要获取的层级的id我们就能获取到任意层级的详情
+
+
+接口写完了我们需要调试一下，在调试的时候我们首先要解决的一个问题是跨域的问题：
+
+因为我们的vue项目是在8080端口启动，而我们django服务器是在8000端口启动，所以他们之间的通讯跨端口了，所以如果不配置就会报错，浏览器是不允许跨域的。那么我们就需要设置一下服务器跨域，我们可以在GitHub中搜索：django cors headers（https://github.com/ottoyiu/django-cors-headers）
+
+首先安装这个包：pip install django-cors-headers
+然后将corsheaders添加到settings的INSTALLED_APPS中去
+然后将corsheaders.middleware.CorsMiddleware放到settings的MIDDLEWARE开始位置
+然后在settings中新添加一个变量并设置为TRUE：CORS_ORIGIN_ALLOW_ALL = True
+此时django的跨域就完成了，重启项目再次请求数据就不会再报错。
+
+
+
+十、用户的登录注册
+如果将登录注册搞清楚需要一定的django基础，以及后边的功能当中用户收藏、下单、购买、个人中心等等功能都是需要登陆之后才能进行的。
+我们打开drf官网，找到TokenAuthentication，根据文档我们配置用户登录注册的token。
+首先，我们在settings中引入：
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    )
+}
+然后在settings中的INSTALLED_APPS 里面添加：rest_framework.authtoken
+添加完成之后因为rest_framework.authtoken里面有表，所以我们要先进行makemigrations和migrate，表生成完成之后我们需要配置url，在urls中配置：
+from rest_framework.authtoken import views
+path('api-token-auth/', views.obtain_auth_token)
+
+我们需要使用Firefox里面的httprequester插件来测试，因为最新版本的Firefox不支持这个插件我们需要在网上找到历史版本56就行，然后安装插件。
+安装完成之后我们通过访问：http://127.0.0.1:8000/api-token-auth/     content内容为：
+{
+"username":"admin",
+"password":"admin123"
+}
+使用post请求就会返回一个token值，此时刷新数据库的token表就会发现里面多了一条数据
+
+得到token之后我们带着token去请求我们的数据，请求的格式是：
+url:http://127.0.0.1:8000/goods
+header的name：Authorization，value：token 7230afe6381a602fda768f0926e328573aae70ea（注意token后边有一个空格）
+
+url和header设置好之后就可以直接使用get进行请求。通过后台debug我们可以看到，request里面的user并不是我们请求的admin这个用户而是django默认的一个用户名，这是因为，我们在settings中的REST_FRAMEWORK配置里并没有加入token的class，加上之后：
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
+此时我们再带着token请求就可以获取到发起请求的用户名
+有时间查看一篇博客，描述的是django从请求到响应的过程：http://projectsedu.com/
+一般在前后端分离的项目中我们都会用token这种形式来认证，但是drf的token还有一些问题：
+第一个问题是，我们的token是存在于某台服务器的数据库中的，如果我们采用的是分布式的，那么需要把该数据库中的token进行同步到其他的服务器中，这样很麻烦
+第二个问题是，没有一个过期时间，在数据库中是一直有效的，如果泄露了别人就可以一直拿着这个token来用。如何解决这些问题呢？不管是token认证还是其他认证都会存在的一个坑，
+
+如果我们的token写错了，那么就会返回一个401，认证令牌无效。但是商品列表页这种不需要用户登录的页面也就不能访问了，如果不写header可以直接访问这种方法是前端来解决的，但是用户带着一个过期的token访问公共页面的时候就会报错401，这样是一个很不友好的结果。如何在后端来解决这个问题呢？我们可以不再settings中进行全局配置token，而是在views中去配置，这样做的含义就是在接口当中去做token验证，如果这个接口需要token验证，或者本身需要用户登录的情况下我们在接口里面做token验证更加合理方便，我们就可以分接口来完成，在views中的具体做法是：
+先从引入TokenAuthentication：from rest_framework.authentication import TokenAuthentication，
+然后在需要token验证的接口里面把TokenAuthentication赋值给authentication_classes变量：authentication_classes = (TokenAuthentication,) 
+ 注意在这有一个逗号，是元组的标准写法，只有一个元素的时候后面加逗号
+
+因为drf的token认证方式有一些缺点，所以现在一般在前后端分离的系统当中比较常用的方式是jwt（json web token）认证方式，（可以通过这篇文章来看一下jwt的介绍：https://www.jianshu.com/p/180a870a308a）
+配置jwt：
+首先在settings中导入jwt：
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    )
+}
+然后配置urls：
+from rest_framework_jwt.views import obtain_jwt_token
+ path('jwt_auth/', obtain_jwt_token)
+
+此时我们通过火狐的插件测试一下：
+url：http://127.0.0.1:8000/jwt_auth/
+content：{
+"username":"admin",
+"password":"admin123"
+}
+此时返回的结果是：
+token	"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTMwNzczOTIzLCJlbWFpbCI6IjFAMS5jb20ifQ.HlhC3TWXqlykqPguFc8ROGnTqvS-Njt_BPuWx6VrpYU"
+
+我们如何使用他呢？访问url：http://127.0.0.1:8000/goods/，使用get方法
+在header中加：
+name：Authorization 
+value：JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTMwNzczOTIzLCJlbWFpbCI6IjFAMS5jb20ifQ.HlhC3TWXqlykqPguFc8ROGnTqvS-Njt_BPuWx6VrpYU  JWT和后面的token值要有一个空格
+
+需要
