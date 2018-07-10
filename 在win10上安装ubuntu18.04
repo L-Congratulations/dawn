@@ -1,0 +1,127 @@
+1、首先制作系统u盘
+使用软件来制作系统u盘
+在ubuntu官网下载ubuntu18.04系统
+然后
+
+
+2、在win10系统下分一块未格式化的分区来安装ubuntu系统
+我的电脑——管理——磁盘管理——
+
+
+3、重启电脑安装ubuntu
+重启的时候进入BIOS界面，点击u盘启动选项
+然后选择install ubuntu
+进入之后安照步骤进行选择
+建议：最小安装  win10与ubuntu共存
+
+
+
+
+二、在win10上安装虚拟机，因为要在Linux系统上启动服务器，然后在win10上从服务器获取数据。
+在这采用开源免费的VirtualBox
+材料：virtualBox、ubuntu系统文件（.ios）
+教程：https://www.linuxidc.com/Linux/2015-08/121807.htm
+
+三、搭建本地环境
+编辑器：pycharm、webstrom、
+数据库操作：Navicat、MySQL（在linux上安装MySQL，在win10上通过Navicat操作数据库）
+编程环境：Python2、Python3、（win10同时安装Python2和Python3：https://www.cnblogs.com/thunderLL/p/6643022.html   Linux已经自动给我们安好了Python2和Python3，直接在命令行调用python\python3就可以启动对应的Python解释器）
+
+搭建虚拟环境：好处是把程序进行隔离而不互相影响（有的程序是Python2开发的，有的程序是Python3开发的）
+
+
+三、因为要用Vue，所以需要安装node.js
+
+
+四、在linux中安装mysql-server：
+在ubuntu命令行中输入：sudo apt-get install mysql-server
+然后输入密码：root
+进入MySQL交互：service mysql start
+mysql -uroot -p
+输入密码：root
+
+这里需要注意，MySQL因为安全策略限制，默认的情况下是只能本地访问，因此需要修改它的配置文件：
+在/etc/mysql/mysql.conf.d/mysqld.cnf
+文件下有一条命令：bind-addresss  = 127.0.0.1
+为了让别的地址可以连接MySQL，需要把他改成0.0.0.0
+
+在linux中系统文件不允许点进去直接修改，需要使用管理员权限：
+sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf  #vim是一个文本编辑器，需要安装之后使用，vim有自己的编辑规则，需要用时再去查看，（https://www.cnblogs.com/crazylqy/p/5649860.html    i进入编辑界面  esc退出编辑界面        
+ :wq 写入保存退出vim编辑器）
+我们只改变了MySQL对外的绑定的ip还不够，还需要给root用户授权（这个用户在用非127.0.0.1的ip地址访问的时候允许访问，不设置的话，是除了本地localhost能访问，其他ip地址都不允许访问的）
+MySQL给我们提供了一个修改权限的命令：grant all privileges on *.* to 'root'@'%' identified by 'root'  with grant option;
+提示成功之后输如命令刷新：flush privileges
+提示成功之后完成
+
+检查MySQLserver是否启动：ps aux|grep mysqld 看看是否有mysqld进程
+
+虚拟机需要设置IP地址才能正常通过ip来连接Navicat：设置——网络——连接方式（选择桥接网卡）——高级 混杂模式（选择全部允许）
+
+此时win10上的电脑已经能通过Navicat顺利连接到ubuntu虚拟机上的MySQLserver了
+
+五、简单的使用Navicat
+上边的步骤我们实现了win10与ubuntun服务器MySQLserver的链接
+但是还没有数据库
+5.1、使用Navicat新建数据库：192.168.1.133
+右击链接名（192.168.1.133）——新建数据库——数据库的名字可以随意命名（demo1），但是字符集一定要选择utf8（因为不这样选的话我们在数据库里面输入中文的时候会出现乱码），排序规则选择utf8_general_ci
+这样的话我们的数据库就建设完成，此时在
+5.2、新建表
+点击我们刚刚创建好的数据库（demo1），点开之后可以看到，表那一项还没有子集，也就是还是空的，我们需要创建一个表
+右击demo1——新建表，创建一个表，跳出来的界面就是我们的表头
+可以通过添加字段来增加表头的长度（time，name，id）
+注意要给表添加主键，我们在这个表中把id作为主键，设置主键的方式是选中主键所在的行，然后点击上边主键按钮，之后在主键那行会出现一个钥匙作为主键的标志
+然后按ctrl+s保存，此时输入表的名字就好，我们在这命名为article
+此时表就创建完成了，在表这一项下面会出现一个表的子集（article）
+
+5.3、在表中添加数据
+打开表，点击对应的表格就可以添加内容，添加完成后按ctrl+s保存
+
+5.4、查询
+点击查询——新建查询——就可以在输入界面输入我们的sql语句进行查询
+如：SELECT * FROM article WHERE id = 1
+然后点击运行，就会在下边筛选出符合条件的数据
+
+
+##############开始系统的设计以及开发我们的应用##########################
+一、数据库的设计
+在开发系统之前，首先我们需要确认的就是我们的数据库以及数据表的结构。
+
+在安装的时候如果某个文件安装失败可以去这个网站去下载，然后安装：https://www.lfd.uci.edu/~gohlke/pythonlibs/    下载完成之后，将该文件拷贝到虚拟环境所在的根目录，然后命令行进入虚拟环：pip install 文件名 进行安装就好
+
+
+1.1、首先新建好我们的项目
+新建项目之前我们需要新建我们的虚拟环境，在这个项目中我们使用Python3.6
+虚拟环境的好处就是可以把我们的开发环境可以相互隔离而不互相影响
+为了方便创建使用virtualenv我们这里使用一个基于virtualenv的虚拟环境管理包virtualenvwrapper
+
+在win10命令行：
+pip install virtualenvwrapper 进行安装
+先看这个完整教程，只看wrapper部分就行：http://www.cnblogs.com/morries123/p/8568223.html
+
+在linux下安装Python3.6 ：https://blog.csdn.net/lzzyok/article/details/77413968
+
+在linux下查找文件：sudo find / -name virtualenvwrapper  #在/根目录下通过name查找virtualenvwrapper
+
+删除已经安装过的虚拟环境：在~/.virtualenvs目录（cd ~/.virtualenvs）下的命令行里执行rm -rf py36scrapy/
+
+退出虚拟环境：deactivate
+
+linux创建虚拟环境：mkvirtualenv --python=/usr/bin/python3 py3scrape
+
+在win10环境下安装虚拟环境：（https://blog.csdn.net/shaququ/article/details/54292043）
+pip install virtualenvwrapper-win
+我们可以看到因为virtualenvwrapper依赖于virtualenv所以会在下载的时候回默认给安装上对应的virtualenv
+然后新建系统环境变量：变量名：WOEKON_HOME 路径：D:\virtuals
+
+mkvirtualenv --python=C:\Python36\python3.exe py36VueShop
+
+虚拟环境建好之后首先我们要安装的是Django和django rest framework
+pip install djangorestframework
+然后通过pip list可以查看pip都安装了什么
+
+然后安装Django：pip install django(pip install django -i https://pypi.douban.com/simple)
+
+然后安装Markdown和django-fileter：pip install markdown django-filter
+
+
+
