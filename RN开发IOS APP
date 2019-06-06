@@ -1,0 +1,413 @@
+macOS常用命令：
+ls -a 查看所有隐藏文件
+touch .bash_profile创建文件
+source .bash_profile更新文件
+查看mac端口被占用情况： lsof -i:8081   kill 2344 杀掉占用端口的进程
+删除文件rm -f name   
+删除文件夹（文件目录） rm -rf name
+ls 查看子文件目录
+mkdir name 创建文件夹
+
+
+xcode调试常用命令：
+command + d 呼出app的调试面板
+command + r 刷新app
+app热刷新（在编辑器修改完代码之后，app自动更新）：command+d选择enable live reload
+
+
+使用webstorm打开项目，按command + ， 就跳出了setting界面
+
+在语法技术层面RN的优势
+（1）、RN是纯的js组件化，不掺和不同的语言形态（没有css、html，只有js）
+（2）、RN的技术框架，允许你很方便的介入和调用到各个平台下的API
+（3）、RN的布局是flex布局，上手成本很小
+（4）、渲染原生视图的能力（调用的是原生组件，性能有保障）
+
+
+学会react基本语法之后，可以开发网页，可以开发ios、Android。
+
+一、RN本地开发环境搭建
+不要第一遍就跟着视频走，先看一遍有个大概思路，然后看第二遍的时候再动手搭建开发环境。
+
+（1）第一点，把你的windows电脑撤掉，换成苹果电脑，用苹果系统开发。
+用windows可能会遇到各种各样的坑，用苹果系统开发是最适合的。服务器也都是linux这样过渡就会比较容易。
+
+
+（2）把苹果系统升级到最新系统（关于本机-》软件更新），因为这样系统短时间内比较稳定（升级完成之后短时间内尽量不再升级），就不用因为系统升级给我们的代码造成影响了。可以保证短时间本地系统的稳定性。
+
+（3）下载最新版的Xcode（AppStore中搜索下载），xcode是开发ios app必备武器
+
+安装完成后，在命令行里面执行一下下面这个命令：xcode-select --install
+显示
+
+如果苹果系统升级到最新的系统，xcode也安装完成了，最好重启一下系统，保证环境变量的统一
+（系统升级或者xcode重新安装之后要执行一下上面的代码，重启一下电脑，避免一些问题）
+（4）安装homebrew，用苹果电脑开发homebrew是必备利器。（打开官网，直接复制命令道命令行https://brew.sh）
+（5）安装watchman和flow等开发常用的包
+watchman是facebook的一个开源项目，用来监视文件并且记录文件的改动情况
+flow是js的静态类型检查器，用于找出js代码中的类型错误
+
+brew install watchman flow git gcc pkg-config cairo libpng jpeg gitlib mongodb
+
+（6）安装node.js，建议用另外一个node.js的版本管理工具nvm来安装。
+先找到nvm的github仓库（https://github.com/creationix/nvm），然后安装根据提示将（curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash）粘贴到命令行，回车
+然后按照提示将nvm添加到环境变量（https://www.cnblogs.com/greenteaone/p/5065981.html）
+安装好之后直接使用nvm安装node：nvm install node
+使用node -v检查node版本
+
+*关于在mac系统中已经安装完但是重启后报错command not found错误的解决办法：
+（https://www.cnblogs.com/giggle/p/7075548.html）
+《1》、首先在命令行中输入export PATH=/usr/bin:/usr/sbin:/bin:/sbin:/usr/X11R6/bin
+这一步保证mac系统中的touch等命令能正常使用。
+
+
+
+《2》、然后cd ~/  进入当前用户的home目录
+《3》、 创建bash_profile　执行命令:
+touch .bash_profile
+《4》、打开并编辑bash_profile 执行命令:
+open .bash_profile
+《5》、 这样就打开了一个记事本，会显示你之前配置过的path，修改记事本，先全部删除你觉得有用可以在桌面备份下，命令行好用后再加里。 
+source ~/.bashrc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+《6》、 command + s 保存
+《7》、 此时在命令行中输入更新命令(命令行一直不要关):
+source .bash_profile
+重启终端命令行就可以了
+
+
+
+（7）我们要检查一下本地是否开启了（python，ruby，阿帕奇等的服务，检查他们是否侵占了8081端口），一定要确保本地的服务都退出
+
+（8）google等chrom内核的浏览器要把扩展程序的插件先关掉，因为我们会用到websock，可能会和一些插件冲突，导致app调试的时候环境跑步起来。
+
+（9）RN的具体安装参照官网来安装，记录一些开发时候使用的版本，避免到时候因为版本不同造成冲突
+
+
+二、RN入门基础
+（官网：https://reactnative.cn/docs/next/getting-started.html）
+2.1、真正做项目的时候如何选择版本最合适
+为了保险起见，使用开发项目时两个月前的版本（比如最新发布到稳定版本是0.56，那么我们在做项目的时候使用0.55）这样经过大多数人的实践基本已经很稳定，而且技术也跟得上时代。
+
+2.2、react组件的生命周期
+组件初始化——组件挂载——组件更新——组件剔除
+根据react-2018.07.06来学习。
+（1）初始化开始
+*获取初始的配置参数，调用getDefaultProps，全局调用一次，严格的讲这一步不算组件生命周期的一部分，属性往往是组件内部预先设计好的（或者由父组件传递进来）
+
+（2）组件挂载
+*然后调用getInitialState方法获取初始化的状态值，从而来初始化组件的状态。在组件挂载之前调用一次。
+
+*组件在第一次渲染之前会调用一下componentWillMount方法，通知组件的调用者组件即将被渲染和装载，通知完成之后就开始组件的渲染，也就是render方法。
+
+*render方法执行完以后，组件已经挂载好了。
+
+*然后会调用componentDidMount方法，告诉我们组件已经ready了，我们一般会在这个方法里面发送一些异步的请求，来进一步的获取组件的其他数据。
+
+（3）组件更新
+
+（4）组件剔除
+componentWillUnmount
+我们在这个方法里面可以取消计时器，取消网络请求，重置本地缓存等等，做一些清理的工作。
+
+
+三、搭建项目环境
+
+3.1、安装脚手架工具：
+npm install -g yarn
+npm install -g react-native-cli
+
+react-native -v检查一下版本
+
+
+3.2、创建一个项目文件
+在本地创建一个文件夹用来保存react项目
+
+react-native init demo1 创建了一个名字为demo1的rn项目(多个单词需要用驼峰法来命名）
+react-native init MyApp --version 0.44.3（因为0.45版本需要用到一些第三方包，很难从国内下载下来，所以先用0.44跑项目，以后0.45稳定了之后再更新。0.44足够用了）
+
+
+(2)使用xcode打开项目，然后点击运行按钮
+
+
+
+
+
+
+
+（4）第二种方式打开demo2这个app，用xcode打开，
+使用xcode打开ios目录下的demo2.xcodeproj
+可以在左上角选择设备
+
+两种方式都可以使用，使用xcode的好处是可以选择设备，第一种的好处是方便
+
+
+
+尽量全部使用const（声明常量），遇到需要修改变量的地方再把const改成let
+
+五、项目结构
+工程结构eslint等如何添加？
+
+5.1、在项目根目录下
+（1）.flowconfig 是js代码类型的检查
+（2）.gitignore是在提交到git仓库的时候忽略哪些东西不要提交上去
+（3）.watchmanconfig是监听哪些文件改动
+
+此外还可以自己配置eslint等配置文件
+
+（5）大部分情况下我们只需要修改入口文件和相应的配置文件就好了，其他的工具先不去研究。
+index.ios.js文件：
+导入模块-》extends继承调用render方法-》style编写-》将代码注册挂载到app，当app启动的时候这是入口
+
+四、RN知识串讲
+4.1、mvc：
+用户根view（外观）层有了交互以后会激活控制层control，然后控制层和数据层module进行交互，module数据改变之后再由控制层改变view层
+
+在RN里面我们只需要关注属性、配置方法、行为这些基本的用法就行，而不用关心内部的实现逻辑。
+
+4.2、 
+在GitHub上面将（https://github.com/facebook/react-native）将整个rn克隆下来，然后进入到项目里面：cd react-native
+然后通过git checkout 0.55-stable（是指nodemodules里面rn的版本，如果有问题那么可以切换到最新的版本，然后将nodemodules删除，在npm install： rm -rf node_modules && npm install） 将版本切换到0.55这个版本下面
+然后执行npm install（要把本地跑的任何rn的服务都关闭掉，否则有可能报错）
+
+进入到文件夹下：open .打开文件夹
+在里面找到一个examples文件夹（里面有一些官方的小案例）——UIExplorer（我们使用这个app来学习）——UIExplorer.xcodeproj这个工程目录，双击代开，然后点击右上角的开始按钮，把这个app跑起来，在这个app里面可以看到每一个组件属性和功能的演示
+
+
+<view>我们一般情况不会在view上直接添加事件，而是外面包裹一个可触摸的组件把view包起来。
+<Text> 里面有个比较好用的属性numberOfLines可以控制显示字数的行数，超过的话显示...
+<textinput>可以定义自动大小写，是否是多行的，自动修正，键盘类型等等，几个事件的回调函数
+<image>可以设置图片的高清倍数，图片加载进度
+alertios弹窗
+<modal>浮窗（如视频评论功能）
+<ActivityIndicatorIOS>菊花loading图
+ProgressViewIOS进度条
+<ListView>列表组件（上拉刷新，下拉刷新等）
+<PickerIOS>选择性组件
+日历组件
+switch组件
+滑动条组件（控制声音和屏幕亮度等，而且支持图片作为滑动条）
+map组件（地图组件）
+navigator导航组件
+tabBarIOS（tab组件，tab切换）
+segmentedControlIOS组件（内容分段，分块组件）
+touchable组件（触摸组件）
+webview组件（在app中内嵌一个网页）
+
+4.3、RN的flexbox布局
+当页面适配不同长度，不同宽度的时候，能以一种合适的方式来实现。
+
+*在RN里面全部是驼峰标示
+
+RN中的flexbox是css3中flexbox的一个子集
+
+*flex:1
+表示的是该元素撑满父元素（如整个view），如果没写，则和div一样只占一行。
+同时如果在子元素上写：flex:1
+则子元素会占满整行（如父元素设置space-between，如果子元素比较小，此时子元素之间会有空隙。当给子元素设置flex:1之后，子元素之间的空隙会消失，将父元素长度均分，占满整个父元素）
+均分的算法就是所有子元素flex后面的值求和，然后按子元素值占总和的比例进行划分。
+
+*alignSelf： （是子元素的属性）
+子元素有一个属性alignSelf，这个属性是规定子元素自己是如何对齐的（如果不给子元素添加这个属性，则会按照父元素的规定方式对齐（alignItems:"center"）），如果加了这个属性，则会覆盖掉父容器的属性。
+如在没有给子元素添加alignSelf属性的时候，因为父元素设置的center，所以三个元素会在父元素的中间位置（垂直方向上）显示。
+当我们给三个子元素分别加上alignSelf:'flex-start',alignSelf:'center',alignSelf:'flex-end'之后则三个子元素会在垂直方向上：第一个元素在顶部，第二个元素在中间，第三个元素在底部分布
+
+*alignItems:'stretch'（父元素和子元素都有效）
+alignItems他还有一个属性：stretch，是拉伸属性。
+效果就是在高度上占满整个父元素，宽度还是原始的宽度
+
+4.4、挑选第三方组件
+直接从网上找推荐的和star更多的，其他都是起辅助作用。要注意一个组件支持的版本，可以看一下package.json中作者使用的版本，另外一个注意点是是否支持跨平台，还是只支持某个平台。
+
+或者直接找到感觉还可以的就clone下来，在本地用自己的运行环境跑一下看效果。
+
+（1）看star个数
+（2）看fork次数
+（3）看pull requests 他的数值越大，里面close的问题越多说明这个组件越活跃，越完善
+（4）issues个数和里面close的个数，越多说明维护团队越用心
+（5）用stack overflow上面查找，看
+
+
+4.5、数据存储
+在开发RN app的时候数据存储是必然会遇到的一个场景。
+RN官方为我们提供了AsyncStorage这个异步持久化方案，它采用的是键值对存储系统，根浏览器的localstorage本地存储有相似之处。
+官方建议我们对AsyncStorage进行抽象封装之后再使用，而不是直接使用它，因为AsyncStorage是全局操作的
+针对AsyncStorage也有很多成熟的第三方封装模块。
+
+（1）原生AsyncStorage存储和取值操作：
+查看官方文档（https://reactnative.cn/docs/next/asyncstorage.html）
+import {AsyncStorage} from 'react-native'
+
+存储：
+_storeData = async () => {
+  try {
+    await AsyncStorage.setItem('@MySuperStore:key', 'I like to save it.');
+  } catch (error) {
+    // Error saving data
+  }
+}
+
+读取：
+_retrieveData = async () => {
+  try {
+    const value = await AsyncStorage.getItem('TASKS');
+    if (value !== null) {
+      // We have data!!
+      console.log(value);
+    }
+   } catch (error) {
+     // Error retrieving data
+   }
+}
+
+六、分析App的功能
+重点是开发的流程、经验以及将知识点串起来。
+模块如何划分、开发的进度控制等等
+
+6.1、启动画面+首次加载时的轮播图+轮播图的最后一张有一个马上体验btn+点击之后进入到注册登录页面（手机号+验证码登录）+点击登录后进入到app的首页+首页底部有几个图标
+
+6.2、开发流程
+先搭建大的框架，从大往小做，不要死扣细节的地方
+一开始不要纠结样式，功能这些琐碎的小细节，先把几个主要的视图页面拎出来组合一下
+
+6.3、首先搞定主页面（轮播这些是皮壳，主页面才是app的主体内容）
+主页面之间首先需要切换，所以先编写tab组件，页面先用div占位一下
+
+我们使用rn的组件，首先去官方的组件去选，当官方的组件不能满足我们的需求的时候，我们再考虑第三方组件的封装。
+
+在这我们使用官方的TabBarIOS组件
+
+
+
+十一、App上线准备
+
+11.1、
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+在mac下搭建rn开发环境：
+（1）run-ios报CBF错误，我们需要再重新执行一遍，因为第一遍的时候要下载第三方插件，插件没下载完所有启动不成功，第二遍的时候已经下载完，所有启动后就不会再报这个错误。
+报错：error: bundling failed: Error: Unable to resolve module `@babel/runtime/helpers/interopRequireDefault` from `/Users/dawn/Desktop/reactProject/rn/News/index.js`: Module `@babel/runtime/helpers/interopRequireDefault` does not exist in the Haste module map
+
+错误解决办法：npm add @babel/runtime
+
+然后退出模拟器和命令行重启run-ios就会成功。
+
+
+（2）导入icon：
+react-native link react-native-vector-icons
+
+然后在xcode中找到projectName文件夹，右键add files to 。。将modules中的vector-icons下面的Fonts添加进来，重启项目
+
+在项目中引入Icon：import Icon from 'react-native-vector-icons/Ionicons'（需要不同库只需要改引入的库就行，然后根据库中icon不同的名字修改下面的名字就能正常使用，意思是Icon是所有的库都封装了的，而不是Ionicons独有）
+
+使用vector-icons的图标：（在ios下使用必须要加ios前缀）
+<TabBarIOS
+            tintColor='#4977f0'
+            barTintColor='#E6E6E6'
+          >
+              <Icon.TabBarItem
+                title='首页'
+                iconName='ios-home'
+                selectedIconName='ios-home'
+              >
+              </Icon.TabBarItem>
+              <Icon.TabBarItem
+                  title='热点'
+                  iconName='ios-flame'
+                  selectedIconName='ios-flame'
+              >
+              </Icon.TabBarItem>   
+          </TabBarIOS>
+
+（3）接下来是编写样式、跳转逻辑
+首先完成点击不同按钮之后按钮样式改变功能，包括背景色、样式、字体等的变化
+
+修改按钮样式：
+ <Icon.TabBarItem
+                title='首页'
+                iconName='logo-freebsd-devil'
+                selectedIconName='logo-freebsd-devil'
+                selected={this.state.selectedTab === 'freebsd'}
+                onPress={()=>{
+                    this.setState({
+                        selectedTab:'freebsd'
+                    })
+                }}
+
+              >
+                  <Text>aaaa</Text>
+              </Icon.TabBarItem>
+
+首先要有<Text>aaaa</Text>，
+然后通过修改state中的值来切换选中的是哪个按钮：
+constructor(props){
+        super(props)
+        this.state={
+            selectedTab: 'freebsd'
+        }
+    }
+
+为了优化，我们将setstate改成函数：
+onPress={()=>{
+                      this.setState(() =>({
+                          selectedTab:'flame'
+                      }))
+                  }}
+
+
+（4）用页面来代替tab下面的Text组件
+新建一个文件夹，用来存放我们使用的demo组件
+import React,{Component} from 'react'
+import {
+    Platform,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
+
+class Demo1 extends Component{
+    render(){
+        return(
+            <View>
+                <Text>
+                    demo1首页
+                </Text>
+            </View>
+        )
+    }
+}
+
+export default Demo1
+
+然后在app中引入：将icon的Text替换成<Demo1/>
+这样就能直接将页面渲染到对应的tab中
+
+
