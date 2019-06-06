@@ -1,0 +1,3710 @@
+自己封装各种样式的react组件库，方便自己直接拿过来使用
+自己封装登录注册等常规页面的业务逻辑库，方便自己调用
+先从小的做起，然后做大的，可能会自己浪一段时间，然后再去弄个总监当当
+专精一个方面，贪多嚼不烂，把自己的定位给定好了。
+
+精力有限，花大量精力祛除糟粕真的有意义吗？还是养精蓄锐去攻克真正的精华更合算。
+把精力用在核心的事情上，而不是广撒网。
+
+
+
+
+mac上获取文件路径，找到文件之后，打开一个txt，直接把文件拖拽到text中就能可以了。
+
+在centos中查找文件：whereis pm2
+
+从0使用webpack搭建完整项目：
+代码打包、服务端渲染、favicon配置、开发环境下客户端和服务端热更新、开发环境下服务端渲染、eslint规则使用airbnb等严格的规则来规范客户端代码、配置editor-config消除编辑器系统之间的这些差异、在git到仓库之前先进性语法规范检查通过才能提交、react-router-dom配置、mobx配置使用规范、服务端代理和登录验证、rap2+mockjs真实接口规则定义、集成routerstoremateriUI开发和线上完整版服务端渲染、materiUI集成前端页面架构、文件分发打包、Nginx反向代理，pm2打包
+
+
+
+
+要用到七牛云存储等技术，使用rap2+mockjs获取数据，部署到真实的服务器上，通过域名可以访问。
+
+就做电商网站了，不尝试永远不知道自己的极限在哪
+
+从原型+UI+前端+后台+部署，先做简单的功能，然后再丰富
+
+包括登录一次之后可以在一段时间内免登陆也做出来，就按照完整的一个网站来做
+
+就用materialUI了，因为这还解决了一个css命名的问题
+
+以okay官网为模型，搭一个框架
+
+很细节的ui等问题先不考究
+
+根据自己的认知对他的网站进行优化，在网站内容不变的前提下进行优化
+
+使用rap2+mockjs完成的真实API
+
+开发流程总结：
+一、搭建简单的react项目作为骨架
+1.1、npm init 创建npm工程
+1.2、搭建基本的react项目结构（client、server、build、dist）
+
+二、客户端项目骨架编写和客户端webpack打包
+2.1、客户端骨架编写
+安装react、react-dom创建一个react项目
+在client下新建index.js作为整个客户端的入口
+在client下新建views，在views下新建App.jsx，作为app的入口
+
+2.2、客户端webpack打包配置
+（1）安装webpack：npm i webpack -D
+
+（2）在build文件夹内新建webpack.config.client.js编写webpack配置项（属于node配置文件）
+const path = require('path')
+const config={    
+}
+module.exports = config
+
+（3）配置文件写好之后在package.json中添加打包命令
+"build:client": "webpack --mode production --config build/webpack.config.client.js"
+
+（4）、在命令行启动，第一次会提示全局安装webpack-cli，安装提示操作就好
+
+（5）配置babel解析器
+因为webpack不识别jsx语法，所以会报错，我们要配置解析器
+首先安装：npm i babel-loader@7 -D、npm i babel-core -D
+然后在项目根目录下创建.babelrc并编写配置
+{
+  "presets":[
+    ["es2015",{"loose":true}],
+    "react"
+  ]
+}
+presets项是表示babel支持的语法，现在把很多语法（jsx等等）都拆分出去了，所以需要在这指定需要被编译的语法
+然后安装需要被编译的语法：
+npm i babel-preset-es2015 babel-preset-es2015-loose babel-preset-react -D
+
+（6）然后在config文件中使用babel解析器
+module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader:'babel-loader'
+            },
+            {
+                test:/.js$/,
+                loader:"babel-loader",
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    }
+ resolve: {
+        extensions: ['.js','.jsx']
+    }
+此时项目打包成功
+
+2.3、添加html，让我们可以在浏览器查看调试代码
+（1）安装npm i html-webpack-plugin -S
+（2）因为是插件，所以我们需要导入const HTMLPlugin = require('html-webpack-plugin')
+（3）导入之后在webpack中配置：
+与entry同级新建plugin配置项
+ plugins:[
+        new HTMLPlugin()
+    ]
+
+
+三、服务端渲染和服务端webpack打包
+3.1、创建基本的服务器
+（1）安装express：npm i express -S
+
+（2）在server文件夹下创建server.js作为服务器入口文件
+const path = require('path')
+const express = require('express')
+const app = express()
+app.get('*',(res,req)=>{
+    req.send('aaaa')
+})
+app.listen(9000,()=>{
+    console.log('server is started in 9000')
+})
+
+（3）在package.json中添加服务器启动命令
+"start":"node server/server.js"
+
+启动命令，访问http://192.168.183.129:9000/
+
+3.2、对客户端内容中需要被渲染的代码进行打包
+因为客户端和服务端渲染的内容虽然相同，但是运行环境和配置有区别，所以需要进行单独打包配置
+（1）在client下新建render_entry.js作为客户端需要被渲染的代码打包的入口
+import React from 'react'
+import App from './views/App'
+export default <App/>
+
+（2）对需要被渲染的代码进行打包配置
+build下新建webpack.config.render.js
+
+const config = {
+    target: "node",
+    entry:{
+        app: path.resolve(__dirname,'../client/render_entry.js')
+    },
+    output: {
+        filename: "render_entry.js",
+        path: path.resolve(__dirname,'../dist'),
+        publicPath: "",
+        libraryTarget: "commonjs2"
+    },
+    module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader:"babel-loader"
+            },
+            {
+                test:/.js$/,
+                loader:"babel-loader",
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    }，
+resolve:{
+  extensions:['.js','.jsx']
+}
+}
+
+（3）在package.json中编写渲染文件打包的命令
+ "build:render": "webpack --mode production --config build/webpack.config.render.js",
+
+
+（4）到这客户端和需要渲染的代码打包就结束了，优化一下：
+首先优化打包命令：
+npm i rimraf -D
+"clear": "rimraf dist",
+"build": "npm run clear && npm run build:client && npm run build:render",
+
+然后将配置文件中的公共文件提取出来
+npm i webpack-merge -D
+新建webpack.config.base.js，将公共的部分提取到这个文件中
+const path = require('path')
+module.exports ={
+    output: {        
+        path: path.resolve(__dirname,'../dist'),
+        publicPath: ""
+    },
+    module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader:'babel-loader'
+            },
+            {
+                test:/.js$/,
+                loader:"babel-loader",
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    },
+    resolve: {
+        extensions: ['.js','.jsx']
+    },
+}
+
+在client配置文件中，使用webpack-merage将两个配置文件合并，第一个参数是公共配置，第二个参数是client配置，这样当client文件中有和公共配置重复的配置项时就会补充或覆盖：
+const path = require('path')
+const WebpackMerge = require('webpack-merge')
+const base = require('./webpack.config.base')
+
+const HTMLPlugin = require('html-webpack-plugin')
+
+const config={
+    entry:{
+        app: path.resolve(__dirname,'../client/index.js')
+    },
+    output: {
+        filename: `[name].[hash].js`,        
+    },
+    
+    plugins: [
+        new HTMLPlugin()
+    ]
+}
+module.exports = WebpackMerge(base,config)
+
+（5）执行npm run build 看是否报错，到这，打包的基本配置完成。
+
+
+3.3、创建客户端的html文件，并配置
+（1）服务端渲染的时候需要读取客户端的html文件和js文件，js文件我们已经打包好了
+在client下创建template.html文件，写入：<div id="root"><!--App--></div>
+
+（2）在client配置文件中使用template.html
+plugins: [
+        new HTMLPlugin({
+            template:path.resolve(__dirname,'../client/template.html')
+        })
+    ]
+
+（3）在index.js中将<App/>,挂在到html的#root节点
+ReactDom.render(<App/>,document.getElementById('root'))
+
+
+3.4、服务端渲染业务逻辑编写
+（1）导入需要渲染用的材料（dist下的render_entry.js和index.html）
+const fs = require('fs')
+const renderEntry = require('../dist/render_entry').default
+const renderHtml = fs.readFileSync(path.resolve(__dirname,'../dist/index.html'),'utf8')
+
+（2）导入reactDOM在服务器中解析jsx的方法
+const ReactSSR = require('react-dom/server')
+
+（3）使用ReactSSR 解析renderEntry.js，然后将结果插入到renderHtml中
+const renderJs = ReactSSR.renderToString(renderEntry)
+const template = renderHtml.replace("<!--App-->",renderJs)
+
+（4）将template返回给浏览器
+app.get('*',(res,req)=>{
+    req.send(template)
+})
+
+（5）使用静态文件解决返回内容不匹配的问题
+同时app.hash.js返回的也是html那个渲染好的结果，这是因为服务器对所有的请求返回的都是template，app.hash.js也不列外，我们使用指定静态文件来解决这个问题
+
+在app.get之前写入代码：
+app.use('/public',express.static(path.resolve(__dirname,'../dist')))
+当请求路径是/public的时候，返回的内容是dist文件夹下面的内容
+
+然后修改base配置文件中output配置项下的publicPath：
+publicPath: "/public/"
+
+这样就能返回正确的信息了
+
+到这基础的服务端渲染完成
+
+
+四、给服务端配置favicon
+（1）npm i serve-favicon -S
+（2）制作favicon：（https://tool.lu/favicon/），直接放在项目根目录下就行
+
+（3）然后导入到server.js中：const favicon = require('serve-favicon')
+
+（4）将favicon挂在到服务器上app.use(favicon(path.resolve(__dirname,'../favicon.ico')))
+（注意我们一定要在服务端渲染之前使用，因为服务端get方法默认是对所有路径都返回template，所以我们要在他之前就使用，使favicon的请求get不到。）
+
+
+
+
+五、开发环境下客户端热更新
+webpack-dev-server配置
+5.1、首先安装npm i webpack-dev-server -D
+
+5.2、在client配置文件中区分开发环境和生产环境
+（1）定义一个变量，用来判断是开发环境还是生产环境
+const isDev = process.env.NODE_ENV === 'development'
+我们需要在启动命令的时候传递‘development’变量
+
+（2）配置webpack-dev-server（https://www.webpackjs.com/configuration/dev-server/）
+本就是webpack的配置项，被分离出去了，所以开始的时候需要安装一下
+
+if(isDev){
+    config.devServer={
+        host:'0.0.0.0',
+        port:'9999',
+        contentBase:path.resolve(__dirname,'../dist'),
+        overlay:{errors:true},
+        publicPath:'/public/',
+        historyApiFallback:{
+            index:'/public/index.html'
+        }
+    }
+}
+
+（3）编写启动命令
+我们需要在webpack-dev-server启动时传入‘development’变量
+
+为了保证在不同操作系统下不出问题，我们使用cross-env这个包来完成：
+npm i cross-env -D
+
+然后使用cross-env将参数传递进去：cross-env NODE_ENV=development
+
+"dev:client": "cross-env NODE_ENV=development webpack-dev-server --mode development --config build/webpack.config.client.js",
+
+删掉项目中的dist目录，运行：npm run dev:client
+
+
+六、开发环境下服务端热更新
+6.1、安装nodemon：npm i nodemon -D
+这个工具是让我们写一个配置文件，当这个服务下面的任何文件有改动，就会自动重启服务
+
+6.2、在服务器中区分开发环境还是生产环境
+const isDev = process.env.NODE_ENV === 'development'
+然后将之前写的生产环境独有的代码放到if(!isDev){}中：
+
+if(!isDev){
+    const ReactSSR = require('react-dom/server')
+
+    const renderEntry = require('../dist/render_entry').default
+    const renderHtml = fs.readFileSync(path.resolve(__dirname,'../dist/index.html'),'utf8')
+
+    const renderJs = ReactSSR.renderToString(renderEntry)
+    const template = renderHtml.replace("<!--App-->",renderJs)
+
+    app.get('*',(res,req)=>{
+        req.send(template)
+    })
+}
+
+6.3、编写nodemon配置文件
+在项目根目录下创建nodemon.json文件
+{
+  "restartable":"rs",
+  "ignore":[
+    ".git",
+    "node_modules/**/node_modules",
+    ".eslint",
+    "build",
+    "cilent"
+  ],
+  "verbose":true,
+  "ext":"js",
+  "env":{
+    "NODE_ENV":"development"
+  }
+}
+
+6.3、在package.json中编写启动命令
+"dev:server": "nodemon server/server.js",
+（因为我们在nodemon.json中配置了env，所以在这之间将cross的去掉就行）
+
+
+
+
+七、开发时服务端渲染
+因为开发时我们的项目代码中并没有dist文件夹，所以不能获取到里面的js和html，而且我们在开发时需要修改源代码，已经打包好的dist文件也不能满足实时更新的需求。
+
+想办法获取到最新的html和js包
+
+7.1、在server文件夹下新建util文件夹，用来存储一些固定功能的模块
+在util文件夹下新建dev_render.js用来存放开发环境下服务器渲染代码的编写
+
+我们在dev_render.js中暴露出去一个函数，该函数接收一个app参数，这个app就是express的实例
+module.exports = function (app) {
+    
+}
+
+也就是我们在server.js中定义了一个函数用来处理服务器渲染的逻辑，然后为了结构清晰，我们把这个函数分离出来了。
+
+然后在server.js中使用这个函数：
+else {
+    const devRender = require('./util/dev_render')
+    devRender(app)
+}
+
+
+7.2、dev_render.js中的代码
+因为逻辑通用，所以使用时直接复制就好
+（1）安装依赖包：
+npm i axios -S
+npm i memory-fs -D
+npm i http-proxy-middleware -D
+
+（2）完整代码：
+const path = require('path')
+
+const axios = require('axios')
+const ReactSSR = require('react-dom/server')
+
+const webpack = require('webpack')
+const proxyMiddle = require('http-proxy-middleware')
+const MemoryFs = require('memory-fs')
+
+const configServer = require('../../build/webpack.config.server')
+
+
+const mfs = new MemoryFs
+
+let serverBundle
+// 定义一个全局变量将函数里面的值拿出来
+
+const webpackCompiler = webpack(configServer)
+// 创建一个webpack服务用来获取里面的bundle
+
+
+webpackCompiler.outputFileSystem = mfs
+// 使用memory-fs将weback服务限制在服务器内，而不是写到硬盘上
+
+
+webpackCompiler.watch({},(err,stats) =>{
+    if(err) throw err
+
+    const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+
+    const bundle = mfs.readFileSync(bundlePath,'utf-8')
+    // 根据文件路径，使用mfs读取内存中的bundle，格式是utf-8（默认内存中的数据格式是二进制）
+
+    const Module =module.constructor
+    const m = new Module()
+
+    m._compile(bundle,'server_entry.js')
+
+    serverBundle = m.exports.default
+    // 使用module构造函数，将获取到的字符串转化成我们能直接使用的模块
+
+})
+
+const getHtml = ()=>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:8888/public/index.html')
+            .then(res =>{
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+// 使用axios获取到本地webpack服务器中的html
+
+
+module.exports = function (app) {
+    app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+    // 使用http代理，将'/public'路径转发到8888端口
+
+    app.get('*',(req,res)=>{
+        getHtml().then(template=>{
+            const serverEntry = ReactSSR.renderToString(serverBundle)
+            const serverTemplate = template.replace("<!--App-->",serverEntry)
+            console.log('开发环境')
+            res.send(serverTemplate)
+        })
+    })
+}
+
+这一块到时候直接复制，然后修改一下文件名那些就可以了
+
+7.3、首先启动client，然后再启动server
+因为开发环境下的server依赖于client启动后的webpack服务器
+npm run dev:client
+npm run dev:server
+
+
+
+八、editor-config和eslint配置
+配置文件写法比较固定，直接复制就好，使用规则总结一下
+
+8.1、eslint使用规则
+（1）关于webstorm代码格式化的问题：
+快捷键：ctrl+alt+l
+我们可以在（command+，进入设置界面）settings——editor——code style ——JavaScript里面可以对格式化代码时候的操作进行修改（在这把within中的es6 import那一项勾选上，就可以在格式化代码的时候按照es6的语法导入文件）
+
+（2）单行注释 ：
+// eslint-disable-line  
+
+（3）多行注释：
+/* eslint-disable */
+alert('foo');
+/* eslint-enable */
+
+（4）禁用eslint的规则：
+还一个错误提示不让我们使用js的引用规则来引用jsx（import App from './App.jsx'会这个提示信息），这个是不必要的提示，我们就可以把这个规则给去掉：
+在client里面的.eslintrc中的rules配置项中添加配置：
+"react/jsx-filename-extension": [0]
+这就表示我们的eslint在检查代码的时候将不再使用该规则
+
+
+（5）函数传参或者对象里面换行写的时候末尾要添加,
+
+（6）如果我们想先开发业务逻辑，最后在对代码进行eslint检查，那么可以直接在config中将eslint的rule配置项注释掉
+
+
+
+8.2、editor-config配置
+不同编辑器对文本格式化会有一定的区别，如果不统一这些规范，消除编辑器，系统之间的这些差异，会导致根别人合作的时候每次更新下来别人的代码就会报一大堆错误。
+如*关于‘LF’的报错，这个就是因为不同操作系统格式上造成的问题，这个我们用eslint是没办法修复这个错误的，所以我们就需要使用editorconfig来解决问题了
+
+editorconfig是一个插件，webstorm默认已经集成了。
+（1）在项目根目录下新建一个文件.editorconfig（txt文件就行）：
+root = true
+[*]
+charset=utf-8
+end_of_line=lf
+insert_final_newline=true
+indent_style=space
+indent_size=2
+trim_trailing_whitespace = true
+
+root = true  代表项目的根目录
+[*]  所有文件都应用这个规则
+charset = utf-8  编码模式
+indent_style = space  制表符是space
+indent_size = 2  制表符的步数，也就是按tab键的时候表示两个空格
+end_of_line = lf 行位结束的时候使用什么方式
+insert_final_newline = true 代码最后保存的时候默认最后一行是空行
+trim_trailing_whitespace = true  每行代码结束后面只留一个空格
+
+写完之后我们可以随意在一个文件中测试一下ctrl+alt+l格式化一下代码查看效果
+
+然后再根据错误提示逐个修改报错信息：
+因为我们使用了airbnb公司的react代码检查规则，所以也会为我们检查react代码语法的优化、精简等等（比如如果是傻瓜式组件，那么就会提示我们不要使用class方式来创建）
+
+
+8.3、eslint配置
+是随着ECMAScript版本一直更新的js lint工具，插件丰富，并且能够套用规范，规则非常丰富，能够满足大部分团队的需求。
+eslint可以配合git：为了最大程度控制每个人的规范，我们在git commit代码的时候使用git hook调用eslint进行代码规范验证，不规范的代码无法提交到仓库。
+
+（1）安装eslint：npm i eslint -D
+安装依赖包：
+npm i eslint-loader -D
+npm i babel-eslint -D
+npm i eslint-config-standard -D
+npm i eslint-config-airbnb eslint-plugin-import eslint-plugin-jsx-a11y eslint-plugin-node eslint-plugin-promise eslint-plugin-react eslint-plugin-standard -D
+
+（2）在项目根目录下配置.eslintrc（json格式）
+添加配置项：
+"extends":"standard"  这个配置项表示的是整个项目都是用standard代码规范（extends是继承的意思）
+standard是标准js使用的一些规则，相对比较宽松，能够适用我们项目中的所有代码。
+
+（3）在client文件夹下配置client的eslint规则：
+*我们在client新建.eslintrc文件，用来规范客户端代码，因为客户端是用jsx语法来写的，和js规则不一样，我们需要定制更加详细和严格的规则来规范客户端代码。
+{
+  "extends":"airbnb",
+  "rules": {
+    "semi":[0]
+  },
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  }
+}
+
+ "extends": "airbnb"：在client里面使用的是airbnb坚持规则，airbnb是美国一个公司在使用的jsx检查规则，里面规范非常详细好用。
+
+ "rules": {  "semi":[0] }   // "semi":[0]    表示的意思是在末尾不检查，表示的是我们写不写都不会报错，如果想强制用户不写，那么可以赋值为false
+然后我们还可以在airbnb的基础之上定制更加符合我们要求的检查规则，在配置项rules中添加，我们在rules中编写自定义的规则
+
+"parser": "babel-eslint"：这个配置项是来指定eslint用什么工具解析js代码的（eslint默认有一个工具来解析，但是我们在这使用babel-eslint来解析，配合整个项目打包编译的时候使用）
+
+"env": { "browser": true,    "es6": true，    "node": true  }：这个配置项是高速eslint我们代码的运行环境，这样在eslint检查代码的时候就会把对应环境的语法包含进去而不会报错。因为webpack中可能会使用一些node的变量，所以我们把node也加进去。
+
+"parserOptions": {    "ecmaVersion":6，    "sourceType": "module"  }：这个配置项中ecmaVersion是js的版本。sourceType是引用js文件的模式
+
+其他配置可以去eslint官网查看文档。
+
+
+（4）配置代码每次在编译之前先使用eslint进行检查，逻辑也是先进行eslint检查，在进行jsx和js编译
+在base配置文件中进行配置：
+{
+            enforce: "pre",
+            test:/.(js|jsx)$/,
+            loader:'eslint-loader',
+            exclude:[
+              path.resolve(__dirname,'../node_modules')
+            ]
+          },
+在真正的执行编译打包之前先进行eslint检查
+
+
+（5）然后启动项目，看eslint是否生效：npm run dev:client
+此时我们可以看到命令行中：
+D:\project\webpackDemo\project1\client\index.js
+。。。
+✖ 42 problems (42 errors, 0 warnings)
+  38 errors and 0 warnings potentially fixable with the `--fix` option.
+有若干个格式差不多的报错，这就说明我们的eslint应用成功了
+
+然后我们分析eslint的这些代码格式错误：
+
+
+
+8.4、在代码提交前先进行eslint检查：
+我们要严格规定一个开发顺序，就是在git到代码仓库的时候一定要先进行eslint检查，检查通过之后才能提交到仓库。
+
+npm i husky -D
+
+（1）首先将项目变成一个git的项目
+mac系统下，在安装xcode的时候就安装好了，可以通过在命令行中输入git --version来查看版本
+
+然后在项目根目录下执行命令git init，这样的话本地项目就变成了一个git的仓库（打开文件根目录，command+shift+“.”可以查看被隐藏的文件中会发现项目下多了一个.git文件）。
+
+（2）我们要git commit去执行，那么我们应该怎么做呢？给我们的git commit去加一个hock，直接写hook（钩子）需要脚本，太复杂了。我们有一个非常好用的工具husky：npm i husky -D
+
+（3）安装完成后我们在package.json中添加执行的命令
+*precommit命令：这是一个git的钩子，写在这里husky就会在调用git commit这个命令的时候先会去执行precommit这个命令，如果这个命令执行成功，才会真正的去执行git commit
+
+因为我们在这个命令中需要调用代码检查的命令，所以我们先添加一个代码检查的命令，在precommit上面先添加lint命令
+
+*lint命令：就是检测代码的命令
+"lint":"eslint --ext .js --ext .jsx client/" 
+这个命令是使用eslint检查client文件下所有的js和jsx为扩展名的文件
+
+* "precommit":"npm run lint"
+当我们执行git commit命令的时候程序就会来命令行里面查找precommit命令，并执行lint命令，当lint执行成功之后才会真正的去提交代码。
+
+（4）我们在命令行中使用git命令提交代码：git commit -m "asdf"
+会发现命令行会首先执行husky>npm run -s precommit这个命令
+然后就会使用eslint进行代码检查，并提示错误信息（会提示那些文件的哪些内容不符合eslint要求）
+
+然后把对应的报错信息祛除之后重新commit就会发现原来的报错信息消失了。
+
+这样提交到仓库的代码就会很标准，提高团队的开发效率。
+
+
+
+
+
+
+
+项目架构
+react+react-router+mobx+materiUI
+
+九、项目目录
+在client文件夹下，创建views、store、config、components文件夹
+
+
+十、配置路由
+10.1、npm i react-router-dom -S
+因为react-router里面包含浏览器react-router-dom和react-router-native两部分
+
+10.2、在config文件夹中创建router.js
+import React from 'react'
+import { Route } from 'react-router-dom'
+
+import TopNav from '../views/top_nav'
+import FooterModule from '../views/footer_module'
+
+export default ()=>[
+    <Route path='/' component={TopNav} key='home' exact  />,
+    <Route path='/mine' component={FooterModule} key='mine' exact />
+]
+
+10.3、将路由挂在到react上
+import {BrowserRouter} from 'react-router-dom'
+ReactDom.render(<BrowserRouter><App/></BrowserRouter>,document.getElementById("root"))
+
+
+10.4、在需要的地方使用路由
+在App.jsx中使用
+import Routes from '../config/router'
+class App extends Component{
+    render(){
+        return [
+            <div key='page' >工程架构骨架</div>,
+            <Routes key='router' />
+        ] 
+    }
+}
+
+
+启动应用，看一下效果：npm run dev:client
+
+效果就是在对应的比如<Route path='/' component={Home} exact />位置render函数会生成一个新的<Home></Home>标签，里面渲染的东西就是对应的首页页面里面的内容。
+
+10.5、使用Link标签灵活进行路由跳转，NavLink比Link标签属性更多，功能也更多
+import {NavLink} from 'react-router-dom'
+<NavLink to='/'>首页</Link>        
+
+启动项目npm run dev:client查看是否报错
+
+
+10.6、重定向
+在router.js中
+import { Route, Redirect } from 'react-router-dom'
+ <Route path="/" render={() => <Redirect to="/list" />} exact />
+
+当访问/路径的时候路由会自动跳转到/list路由下
+
+*然后在需要重定向的路由上添加一个render函数，这个函数可以接受一个组件，也可以接收一个函数
+
+
+10.7、路由的嵌套和优化在编写网站的时候再研究，先把骨架搭建完整
+子路由
+
+
+
+
+
+十一、mobx配置
+mobx文档（https://cn.mobx.js.org/refguide/observable.html）
+
+11.1、mobx安装和环境配置
+（1）npm i mobx mobx-react -S
+
+（2）因为mobx不是es6标准语法，所以我们需要配置babel对其进行解析
+在.babelrc中添加一个配置项"stage-1"，在plugins首位添加"transform-decorators-legacy"
+{
+  "presets": [
+    ["es2015",{"loose":true}],
+    "react",
+    "stage-1"    
+  ],
+  "plugins": ["transform-decorators-legacy"]
+}
+
+然后安装这两个包：
+npm i babel-plugin-transform-decorators-legacy babel-preset-stage-1 -D
+
+
+重启项目看是否报错：npm run dev:client
+
+
+11.2、编写store.js
+在store下创建store.js
+
+（1）创建一个store的class
+首先引入mobx的api
+然后创建一个class，并在里面定义store的变量和方法
+然后实例化这个class 并暴露出去
+
+import {observable, action,computed} from 'mobx'
+
+class AppState{
+    @observable count=0
+    @observable name="zhangsan"
+
+    @action add(){
+        this.count +=1
+    }
+
+    @action changeName(name){
+        this.name = name
+    }
+
+    @computed get msg(){
+        return `${this.name} say ${this.count}`
+    }
+}
+
+const appState = new AppState()
+
+export default appState
+
+
+@observable来指定我们这个name是store的一个值，也就是当name更新的之后会实时的显示到视图层里面
+
+@computed这个api在mobx中负责给客户端返回一个结果，当他所依赖的值发生变化了之后，也会重新渲染页面中对应的值，而且虽然定义的是一个方法，但是在调用的时候直接是appState.msg而不是调用函数，但是实际上当我们这样调用之后他内部的逻辑就是去执行msg()这个方法
+
+@autorun它里面接收一个方法，也就是一旦我们的AppState有更新了，就会执行autorun定义的那个方法
+
+@action在AppState这个类里面定义action方法，用来修改store中的值，所有store里面值的修改我们都规定通过action方法，这样尽量去保证流程的规范
+
+
+此时我们的appState这个store就创建好了
+
+
+11.3、把store和react项目建立联系
+
+在index.js中导入mobx-react的Provider组件和需要建立联系的store
+用Provider包裹整个项目，并将store作为参数传入，在这我们使用的Provider属性名需要牢记，因为在使用的时候使用的是属性名而不是store的名
+
+import {Provider} from 'mobx-react'
+
+import appState from './store/store'
+
+ReactDom.render(
+    <Provider appState={appState}>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+
+11.4、在项目中使用store
+在需要使用store的页面首先导入mobx-react的组件observer和inject
+使用固定语法将页面和store建立联系
+获取store里面的方法在页面中使用
+
+import React,{Component} from 'react'
+
+import {observer,inject} from 'mobx-react'
+
+@inject('appState') @observer
+class TopNav extends Component{
+    constructor(props){
+        super(props)
+        this.changeName = this.changeName.bind(this)
+    }
+
+    changeName(e){
+        this.props.appState.changeName(e.target.value)
+    }
+
+    render(){
+        const {msg} = this.props.state
+        return(
+            <div>
+                头部导航模块
+                <br/>
+                <input type="text" onChange={this.changeName}/>
+                <div>
+                    {msg}
+                </div>
+            </div>
+        )
+    }
+}
+
+export default TopNav
+
+@inject('appState')将appState注入到当前页面，拿到appState这个store中的值
+再通过@observer 将当前组件和store中的数据进行同步
+
+ const {msg} = this.props.state获取store里面的数据
+
+
+发现在input中修改的内容能顺利的同步到store中并且动态渲染到msg方法中
+
+注意！！！修改数据的时候我们应该使用action去做，这样mobx会有一个数据变更的记录，我们是有办法查到的。所以标准的方法是我们用action方式去做。
+
+
+11.5、注意点
+（2）在react的开发中有一个强烈的建议就是，每一组件我们用到的props都要声明他的类型，这样做的好处是能帮助我们排除一些不必要的错误。
+
+我们首先安装prop-types（react已经把他拆分出去了）：npm i prop-types -S
+
+然后在项目中引入：import PropTypes from 'prop-types'
+然后在项目中使用：
+TopNav.propTypes ={
+    appState:PropTypes.string.isRequired
+}
+
+这个方法花时间去自习了解一些，目前这个写法报错，但是验证格式是必要的，回头去看react-2018.07.06文档中找
+
+
+
+
+十二、服务器代理
+
+但是有一些接口需要用户登录之后才能调用，在CNode的API中登录是通过一个accesstoken接口实现的。但是这个接口的参数我们不能存在客户端，因为里面保存了用户信息，客户端相对来说不安全，我们需要进行处理。将accesstoken获取到的数据存储到node.js的session里面，然后接下来的请求会去检查session里面是否有accseetoken，如果有，代表我们已经登录了，会向API发送请求，如果没有，就返回给客户端，提示需要登录之后才能发送请求。
+
+12.1、开发接口准备工作
+（1）常用工具
+npm i body-parser express-session query-string -S
+npm i axios -S
+
+body-parser是用来转化我们请求的body的，把请求的body转化成json格式的数据，便于我们使用
+express-session是express的一个插件，用来存放服务端的session
+query-string是帮助我们转化通过一个连接请求过来的url？后面的参数（a = b这种格式转化成a:b这种格式）转化成一个json格式的数据，在写业务逻辑的时候比较方便
+
+（2）使用工具进行初始化操作（将客户端传递过来的数据加工成统一的格式）
+const bodyParser = require('body-parser')
+
+app.use(bodyParser.json())  //把application中json格式的数据转化成req.body上面的数据
+app.use(bodyParser.urlencoded({extended: false}))  //对应http请求
+
+因为我们要接收客户端传递过来的请求，而请求的参数可能会存在几种形式进行传递（post请求的参数会存在application中，而数据格式可能是json也可能是formdata的格式；get请求可能会存在url中），上面两行代码的作用就是无论客户端传递到服务端是通过哪种方式传递的参数，我们都可以直接在服务端通过req.body中找到传递过来的参数。
+
+
+12.2、在服务端编写session
+（1）const session = require('express-session')
+（2）创建session：
+app.use(session({
+    maxAge:10*60*1000,
+    name:'token',
+    resave:false,
+    saveUninitialized:false,
+    secret:'token protect'
+}))
+
+过期时间在这是10分钟真正上线的项目session是存在数据库当中的，在这写服务一旦宕机session所有的数据就会消失，所有人需要重新登录一遍才能获取到这个新的session
+就是session会放一个cookie的ID到浏览器端，给这个cookie的ID设置一个名字
+ 在每次请求是否都要重新生成一个cookie的ID，如果每次都生成的话会造成资源浪费，在这不需要
+和resave差不多，在这不需要启用
+在这我们随便定义一个字符串，他会用这个字符串加密我们的cookie，来保证我们的cookie在浏览器端是没有办法被人解密的
+
+
+到这session就配置好了，这样我们就可以在服务器启动阶段之内给session设置值
+
+12.3、需要token的接口代理
+将用户登录信息保存在session中，当客户端发送需要token才能访问的接口的时候，就会去检查session是否有token，然后进行对应的处理
+（1）在util下新建login_proxy.js
+（2）将服务端的请求转发到login_proxy.js中
+login_proxy.js中：
+const router = require('express').Router() 
+router.post('/login',(req,res,next)=>{
+    axios.post(`${baseUrl}/login`,{        
+    }) .then(response=>{}).catch(err =>{})        
+})
+module.exports = router
+
+注意这要有括号,在express实际开发中推荐使用 express.Router 将不同的路由分离到不同的路由文件中，每个路由文件通过生成一个 express.Router 实例 router 并导出，通过 app.use 挂载到不同的路径。（Router的作用就是将路由文件中的内容挂载到express上，这样就可以在路由文件中编写请求处理的逻辑代码了。，当客户端发送请求之后，server.js会接受到某个请求（app.use('/api/user', require('./handle-login'))，如/api/user，然后服务器应该根据请求路径返回对应的内容，在这我们将请求的业务逻辑转发到了handel_login.js这个文件内，handle.js就会按照业务逻辑进行对url处理，并返回对应的内容，然后返回给客户端））
+
+server.js中：
+app.use('/api/login',require('./util/login_proxy'))
+
+
+（3）引入axios用来向真实接口发送请求、创建一个变量用来保存真实接口的公共路径
+const axios = require('axios') 
+const baseUrl = 'https://cnodejs.org/api/v1 '
+
+（4）编写收到客户端的请求后的业务逻辑代码
+因为我们会使用webpack配置或者svn将客户端的请求发送到指定的node服务器上，所以客户端发送的请求会首先发送到我们的服务器上，然后在服务器上再发送请求给真实的接口。而每一个请求到达服务器的时候，express框架都会为其创建一个请求对象，即为request，这个对象里面包含客户端请求里面包含的数据，包括请求头（请求主机的地址、请求方式、客户端-浏览器等一些相关信息）和请求体（也就是用户提交上来的数据）。所以我们可以在req中拿到客户端发送过来的数据。如：router.post('/login', (req, res) =>{})
+当客户端向/login这个接口发送请求之后，我们就可以在这接收到客户端的请求，可以从req中拿到客户端的数据，然后对其进行对应的处理。
+
+（5）编写登录接口
+router.post('/login',(req,res,next)=>{
+    axios.post(`${baseUrl}/login`,{
+        userName:req.body.userName,
+        password:req.body.password
+        // 向真实接口需要发送的参数
+    })
+        .then(response=>{
+            if(response.status === 200 && response.data.success){
+                req.session.user={
+                    accessToken:response.data.accessToken,
+                    loginName:response.data.loginname,
+                    avatarUrl:response.data.avatar_url,
+                    id:response.data.id
+                }
+                // 首先将请求返回的正确数据存放到服务器的session中，方便以后调用，这个session的名字叫user，是一个对象
+                res.json({
+                    success:true,
+                    data:response.data
+                })
+                // 将真实接口返回的结果返回给客户端
+            }
+        })
+        .catch(err =>{
+            if (err.response){
+                res.json({
+                    success:false,
+                    data:err.response.data
+                })
+                // err.response的意思是服务器有返回内容，不是服务器错误，
+                // 是我们的业务逻辑出现了问题，否则的话我们就将错误信息使用next方法抛给全局的错误去处理
+            }else {
+                next(err)
+            }
+        })
+        
+})
+
+
+下一次请求的时候我们就可以在服务器的session中读到这些信息，客户端只保存sessionid到cookie中，而不会保存session，session销毁只能通过invalidate或超时，关掉浏览器并不会关闭session（因为浏览器只是关闭了客户端，服务端没有关闭，而session存储在服务器的内存中）。
+
+
+然后当请求：/api/user/login这个路径的时候就是对应的handle-login里面的业务逻辑。
+
+
+12.4、不需要token的接口代理
+（1）在server文件夹下的util文件夹下创建proxy.js文件，将所有客户端发送的请求都用服务端的请求代理出去。
+（2）框架
+在server.js中文件中，我们使用：
+app.use(path,callback)中的callback既可以是router对象又可以是函数，将子路由和主路由建立连接
+因为在这的代理可能接受get，也可能接受post请求，所以采用callback（module.exports = (req, res, next) =>）。而login_proxy.js中只能使用post请求，所以使用的是router.post('/login', (req, res, next) =>）这种简写形势（callback封装好的方法）
+
+const axios = require('axios')
+const baseUrl = 'http://rap2api.taobao.org/app/mock/119140/api/list'
+
+module.exports = (req,res,next)=>{}
+
+server.js中
+app.use('/api', require('./util/proxy'))
+// 如果请求路径是/api，那么就将请求转到proxy.js处理
+
+
+（3）逻辑代码
+
+const axios = require('axios')
+const queryString = require('query-string')
+
+const baseUrl = 'http://rap2api.taobao.org/app/mock/119140/api'
+
+module.exports = (req,res,next)=>{
+    const path = req.path
+    // 我们使用的是callback方式，可以定义多个路由规则，所以我们先从req中拿到客户端请求中的url
+    const user = req.session.user || {}
+    // 我们要判断用户是否已经登录，因为这涉及到用户访问权限和当前账号的头像昵称等信息，
+    // 通过session中的数据来判断，为了防止user根本就没有而造成服务器报错，所以添加一个{}作为默认值
+
+    const needToken = req.query.needToken
+    // 定义一个变量，通过客户端来控制浏览的信息是否需要登录才能访问，
+    // 如果需要浏览才能访问则需要添加一个needToken参数，然后我们再从session中读取看是否有token，
+    // 如果有则返回对应想信息，如果没有提示用户需要登录才能访问，
+    // req.query是包含在路由中每个查询字符串参数属性的对象，如果没有默认为{}，
+    // 在这用来判断路由中是否存在needToken这个参数
+
+    if(needToken && !user.token){
+        res.status(401).send({
+            success:false,
+            msg:'需要登录才能访问'
+        })
+    }
+    // 通过判断客户端发送的信息和服务器session中的数据来确定是否给客户端返回信息
+
+    const query = Object.assign({},req.needToken,{
+        accesstoken:(needToken && req.method === 'GET') ? user.accesstoken : ''
+    })
+    if(query.needToken) delete query.needToken
+    // 因为我们不确定客户端传过来的信息是否包含query（如果是get请求是可能存在query参数的）
+    // 而且我们规定如果用户登录的信息需要登录才能访问时需要传递一个自定义的needToken参数来说明，
+    // 所以query需要传，而且我们不能直接将客户端传递过来的的参数直接发送给真实接口，
+    // 所以我们要在这对query进行加工，增加或者删除属性，也就是重新定义。先深拷贝，然后加工，
+    // 将加工好的传递.传递query的参数是通过params:query方式传递的，
+    // 如果get请求方法中需要我们传递token，那么我们就从session中取出并传递，如果不需要那么就传递一个空字符串
+    
+
+    const data =queryString.stringify(
+        Object.assign({},req.body,{
+            accesstoken:(needToken && req.method === 'POST') ? user.accesstoken : ''
+        })
+    ) 
+    // data是post的请求体，也就是post请求的请求参数，我们在这通过重新定义将参数加进去，
+    // 即使请求的接口不需要这个参数的话也没关系,使用queryString方法将json格式的数据转化成formData格式
+    // 将{'accesstoken':'xxxxxxx'}转化成了：'accesstoken=xxxxxx',通过三元语句判断，
+    // 如果请求的方法是post，并且需要传递accesstoken，那么就从session中取出token并赋值，如果不需要就传递一个空字符串
+
+    console.log(`${baseUrl}${path}`)
+
+    axios(`${baseUrl}${path}`,{
+        method:req.method,
+        params:query,
+        data:data,
+        headers:{
+            'Content-Type':'application/x-www-form-urlencoded'
+            // axios默认发送的是application格式的数据，而有的接口只能接收formData格式的数据，
+            // 为了防止出现一些问题，我们把发送的数据格式全都使用formData发送
+        }
+    })
+        .then(response =>{
+            if(response.status === 200){
+                res.send(response.data)
+            }else {
+                res.status(response.status).send(response.data)
+            }
+        })
+        .catch(err =>{
+            if(err.response){
+                res.status(500).send(err.response.data)
+            }else {
+                next(err)
+                // res.status(500).send({
+                //     sucess:false,
+                //     msg:'未知错误'
+                // })
+                // 上面两种处理报错的方法二选一
+            }
+        })
+
+}
+
+
+
+12.5、在项目中编写测试代码
+客户端中需要使用/api/*来和config配置项里面proxy中的/api匹配，这样才能将/api/*完整传递给服务器
+/api/*直接传递到服务器之后会匹配express路由/api，然后将/*传递给proxy.js，这样req.path的值就是/*
+也就是按照这种配置/api只是一个引子，真正传递到服务器里面的结果是/*
+
+（1）在HomePage.jsx中导入axios
+import axios from 'axios'
+
+（2）使用axios编写测试函数
+ getList(){
+        axios.get('/api/datalist')
+            .then(res=>{
+                if(res.status === 200 && res.data.success){
+                    console.log(res.data)
+                    this.setState({
+                        list:res.data.data
+                    })
+                }
+            })
+            .catch(err =>{
+                console.log(err)
+            })
+    }
+（3）在client的配置文件中添加接口代理
+ config.devServer={
+        。。。
+        proxy:{
+            '/api':'http://192.168.183.129:9000/'
+        }
+    }
+重启成功
+
+我们使用chrome的postman或者firefox的httprequester测试一下，输入：http://localhost:3000/api/topics，点击get请求，就会发现正确返回了数据。我们就可以使用这些数据来开发我们的应用了。（如果是get请求，在浏览器直接输入请求地址也行的通：http://localhost:3000/api/topics）
+因为我们使用了服务器代理，所以在本地请求的时候能正确的返回API的数据就说明我们写的代理没问题。这样我们就可以使用CNode的接口来开发自己的应用了。
+
+
+
+
+十三、服务端渲染
+包括router、路由跳转，store同步，title等SEO标签插入
+
+13.1、首先改造render_entry.js入口文件
+将store、router传入到入口文件中
+
+源码：
+import React from 'react'
+
+import {StaticRouter} from 'react-router-dom'
+import {Provider,useStaticRendering} from 'mobx-react'
+import App from './views/App.jsx'
+
+import {createStoreMap} from './store/store'
+// 在这导入stores并暴露出去，是为了在服务端方便获取和操作
+
+useStaticRendering(true)
+//让mobx在服务器渲染的时候不会重复数据变换
+
+export default (stores,routerContext,url)=>{
+   return(
+       <Provider {...stores}>
+           {/*因为我们可能会传入多个store，而且接收的格式是appState：AppStore，所以在这使用解构方式传入*/}
+           <StaticRouter context={routerContext} location={url}>
+               {/*context这个参数是进行服务端渲染的时候传入给router的一个对象，会在静态渲染的时候进行一些操作，
+               然后返回给我们一些有用的信息（比如让我们判断在客户端的router中是否包含redirect）*/}
+               {/*location是当前路由的一个url，我们可以通过req.url拿到*/}
+               <App/>
+           </StaticRouter>
+       </Provider>
+   )
+}
+
+export { createStoreMap }
+
+13.2、创建store.js
+作为管理store的入口文件，用来处理客户端和服务器渲染对应的store不同格式
+
+
+1.2、修改store
+（1）store.js
+import AppStateClass from './app_state'
+
+export const AppState = AppStateClass
+
+export default {
+    AppState,
+}
+
+export const createStoreMap =() =>{
+    return{
+        appState:new AppState()
+    }
+}
+// 这个方法是专门为服务端渲染用的
+然后因为需要在不同的环境中使用（客户端，服务器），所有需要多种暴露出去的方式
+
+（2）修改app_state.js
+import {observable, action,computed} from 'mobx'
+
+class AppState{
+    constructor({count,name}={count:0,name:'zhangsan'}){
+        this.count = count
+        this.name = name
+
+    }
+    // 这的这个constructor方法是我们用来将服务器渲染时服务器中的store里面的值和客户端的store中的值进行同步用的
+    @observable count
+    @observable name
+    // 因为我们在constructor中给count和name规定了初始值，所以在这只需要将这两个变量绑定到view就行了
+    
+    @action add(){
+        this.count +=1
+    }
+
+    @action changeName(name){
+        this.name = name
+    }
+
+    @computed get msg(){
+        return `${this.name} say ${this.count}`
+    }
+
+    toJson(){
+        return{
+            count:this.count,
+            name:this.name
+        }
+    }
+    // 这个方法是为了在客户端使用store的时候方便获取到store中的值，在客户端用不到
+}
+export default AppState
+
+
+13.3、修改index.js
+因为我们修改了store，所以在index中改变一下strore的注入方式：
+index.js:
+
+import { AppState } from './store/store'
+
+const initialState = window.__INITIAL__STATE__ || {}
+
+ReactDom.render(
+    <Provider appState={new AppState(initialState.appState)}>
+// 注意传入的是initialState.appState而不是initialState
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+13.4、服务端渲染修改
+（1）将开发阶段和线上阶段服务端渲染公共代码抽离，在util中新建render_public.js
+这样在开发时和线上渲染代码的时候只需要引用公共文件直接使用，就不需要重新编写逻辑了
+
+
+安装工具：
+npm i react-async-bootstrapper -S
+npm i serialize-javascript -S
+npm i ejs -S
+npm i react-helmet -S
+
+源码：
+const ejs = require('ejs')
+const serialize = require('serialize-javascript')
+// 将JavaScript对象序列化，配合ejs模板引擎使用的
+const Helmet = require('react-helmet').default
+// 这个组件是用来将组件中定义的title灯内容在服务端渲染的时候就渲染到页面上
+const asyncBootstrap = require('react-async-bootstrapper')
+// 用来异步操作修改store中的数据，在组件里面调用asyncBoostrap方法，
+// 会优先执行该方法里面的内容，我们可以在组件的这个方法里面修改服务器里面store的变量的值
+// ，然后才会执行then里面的内容
+const ReactDomServer = require('react-dom/server')
+
+
+const getStoreState = (stores)=>{
+    return Object.keys(stores).reduce((result,storeName)=>{
+        result[storeName] = stores[storeName].toJson()
+        return result
+    },{})
+}
+// 这个方法是拿到是服务端store实例中的变量值，因为我们先调用的asyncBootstrap方法，
+// 所以此时拿到的结果是已经改变的store，是服务器的store变量的最终结果，
+// 直接把这个数据传递到客户端，利用这个数据去修改客户端的store达到数据的统一
+
+
+module.exports = (bundle,template,req,res) =>{
+    return new Promise((resolve,reject)=>{
+
+        const createStoreMap = bundle.createStoreMap
+        // 从bundle中拿到createStoreMap方法
+
+        const createApp = bundle.default
+        // 创建app的方法
+        const routerContext ={}
+        const stores = createStoreMap()
+        const app = createApp(stores,routerContext,req.url)
+
+        asyncBootstrap(app).then(()=>{
+            const helmet = Helmet.rewind()
+            // 将title等SEO标签从客户端获取到并在服务器渲染的时候就渲染进去的工具
+            const state = getStoreState(stores)
+            // 调用上面的方法，将stores获取到，并在后面的方法中传递到客户端，
+            // 以便客户端拿到store之后进行数据同步
+            const content = ReactDomServer.renderToString(app)
+            // 在renderToString之后才会拿到routerContext.url
+
+            if (routerContext.url){
+                // 当客户端的路由有redirect的时候，在服务器渲染的时候会在staticRouter
+                // 的context上增加一个url属性
+                res.status(302).setHeader("Location",routerContext.url)
+                // 302是重定向的头，方便我们查看调试，通过设置header的Location属性，
+                // 让浏览器自动跳转到url上
+                res.end()
+                // 结束请求
+                return
+                // 到这程序终止0，因为我们已经进行了路由跳转，会重新发一个请求到客户端，
+                // 新的路由中就不会再包含redirect，就可以直接执行后面的代码，
+                // 如果不return，在路由跳转之后还继续渲染的是没跳转前的页面，就会报错
+            }
+            // 判断客户端的代码中是否有redirect，如果有的话在服务渲染的时候就进行跳转
+
+
+            console.log(stores.appState.name)
+            const html = ejs.render(template,{
+                appString:content,
+                initialState:serialize(state),
+                meta:helmet.meta.toString(),
+                title:helmet.title.toString(),
+                link:helmet.link.toString(),
+                style:helmet.style.toString(),
+
+            })
+
+            res.send(html)
+            resolve()
+        }).catch(reject)
+    })
+}
+
+
+
+（2）因为我们使用了helmet，所以我们还需要在项目中添加上想要展示的SEO标签：
+在页面中：import Helmet from 'react-helmet'
+render(){
+        return(
+            <div>
+                <Helmet>
+                    <title>this is topic list</title>
+                    <meta name='description' content='this is description'/>
+// 如果app.jsx中也有title，那么当跳转到该页面的时候会被该页面规定的title替代，如果该页面没有自定义的title，那么就会显示app.jsx里面的title内容
+                </Helmet>
+                头部导航模块                
+            </div>
+        )
+}
+
+
+
+（3）开发时的服务端渲染
+util下的dev_render.js中：
+
+首先安装：
+npm i axios -S
+npm i http-proxy-middleware -D
+npm i memory-fs -D
+
+源码：
+const path = require('path')
+
+const axios = require('axios')
+
+const serverRender = require('./server_render')
+
+const proxyMiddle = require('http-proxy-middleware')
+// 这个工具是服务器代理，将某个url转到另外一个url路径下
+
+
+const webpack = require('webpack')
+const configRender = require('../../build/webpack.config.render')
+// 将config.server.js导入进来，因为我们要使用webpack在服务器中重启动一个webpack的服务，
+// 然后通过读取webpack打包的结果获取到实时的server包
+const MemoryFs = require('memory-fs')
+// memory-fs这个工具能帮助我们在内存中直接读取文件，也可以通过webpack的配置项将其服务限制在内存中
+
+
+const webpackCompiler = webpack(configRender)
+// 使用webpack启动一个server的汇编程序，这个程序会监听他所以来的文件的变化，
+// 一旦有变化会重新打包，然后通过watch方法拿到打包好的内容
+
+
+const mfs = new MemoryFs
+webpackCompiler.outputFileSystem = mfs
+// 因为我们只是为了拿到webpack在内存中打包好的文件，而不需要其他操作，
+// 所以我们使用memory-fs将weback服务限制在服务器内，而不是写到硬盘上，
+// 从而提高我们的工作效率（内存读取文件速度比硬盘快很多，而且还不用占硬盘空间）
+
+let serverBundle
+// 定义一个全局变量将函数里面的值拿出来
+
+const NativeModule = require('module')
+const vm = require('vm')
+const getModuleFromString = (bundle,filename)=>{
+    const m = {exports:{}}
+    const wrapper = NativeModule.wrap(bundle)
+    const script = new vm.Script(wrapper,{
+        filename:filename,
+        displayErrors:true,
+    })
+
+    const result = script.runInThisContext()
+    result.call(m.exports,m.exports,require,m)
+    return m
+}
+// 这一块代码作用是将webpack服务器中的导出来的代码转换成我们
+// 能在node服务器中顺利使用的代码，内部的逻辑比较乱，
+// 在这个情景下直接用就行了
+
+
+webpackCompiler.watch({},(err,stats) =>{
+    if(err) throw err
+
+    const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+    // 获取server_entry.js在webpack服务器中的位置
+    const bundle = mfs.readFileSync(bundlePath,'utf-8')
+    // 根据文件路径，使用mfs读取内存中的bundle，格式是utf-8（默认内存中的数据格式是二进制）
+
+    const m =getModuleFromString(bundle,'server_entry.js')
+    // getModuleFromString这个方法是将已经导出来的内存中的代码转化成
+    // 可以直接在node服务器中顺利使用的代码
+    serverBundle = m.exports
+})
+
+
+const getTemplate = ()=>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:9999/public/server.ejs')
+            .then(res =>{
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+// 使用axios获取到本地webpack服务器中的template，Promise是使用异步的方法获取，
+// 这样我们就能拿到最新的template
+
+
+module.exports = function (app) {
+    app.use('/public', proxyMiddle({
+        target:'http://localhost:9999'
+    }))
+    // 使用http代理，将'/public'路径转发到8888端口
+
+    app.get('*',(req,res,next)=>{
+        getTemplate().then(template=>{
+            return serverRender(serverBundle,template,req,res)
+            // serverRender的结果是一个promise，所以我们要想catch到必须要return
+        }).catch(next)
+    })
+}
+
+
+
+
+（4）添加template.ejs和相关配置
+在client根目录下新建server.template.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <%%- meta %>
+    <%%- title %>
+    <%%- link %>
+    <%%- style %>
+</head>
+<body>
+<div id="root"><%%- appString %></div>
+<script>
+    window.__INITIAL__STATE__ = <%%- initialState %>    
+</script>
+</body>
+</html>
+
+
+在config.client.js中修改plugins配置项
+首先安装工具：npm i ejs-compiled-loader -S
+
+plugins: [
+        new HTMLPlugin({
+            template:path.resolve(__dirname,"../client/template.html")
+        }),
+        new HTMLPlugin({
+            template: '!!ejs-compiled-loader!' + path.resolve(__dirname,'../client/server.template.ejs'),
+            // 使用ejs-compiled-loader解析器解析我们的ejs模板，因为我们在ejs中使用的并不是标准语法，
+            // 为的是使webpack编译出来的还是一个标准的ejs模板，在我们需要的时候才会去渲染里面的结果，
+            // 而不是直接把某一个固定的值在编译的时候就传递进去
+            filename: 'server.ejs'
+            // 在这重新制定以下打包好的文件的名字，方便在服务器中引用
+        })
+    ],
+
+因为我们修改了webpack.config，所以我们要重启一下服务npm run dev:client
+
+
+（5）、线上服务端渲染的代码
+
+在server.js中：
+*const serverRender = require('./util/server_render')
+
+if(!isDev){
+    app.use('/public',express.static(path.resolve(__dirname,'../dist')))
+
+    const serverEntry = require('../dist/server_entry')
+// 注意在这没有default
+    const template = fs.readFileSync(path.resolve(__dirname,'../dist/server.ejs'),'utf8')   
+// 注意，在这获取的是server.ejs而不是index.html
+    app.get('*',(req,res,next)=>{
+        serverRender(serverEntry,template,req,res).catch(next)
+    })
+}
+
+*我们在服务器中catch出来的错误如何处理呢
+express有一个处理机制，可以在全局上定义一个error处理的中间件，这个中间件有些特殊，照着下面写就行了：
+app.use(function (error,req,res,next) {
+    console.log(err)
+    res.status(500).send(error)
+})
+
+*然后验证一下在正式环境下服务端渲染是否成功
+停掉之前的服务
+执行npm run build
+然后在package.json中添加一个命令用来启动线上的服务器：
+"start": "cross-env NODE_ENV=production node server/server.js",
+
+然后启动服务器npm start
+
+（6）webpack重复打包mobx等类库导致报错解决方案
+每次更新后，webpack都会重新打包，每次打包都会将mobx等类库再打包一份，导致会出现多个mobx实例
+
+在config.server.js中增加一个配置项
+externals:Object.keys(require('../package.json').dependencies)
+    // 这个配置项的意思是在这指定的包，不打包到最终输出的js里面，
+    // 因为dependencies下面的包已经安装到了打包好的node_modules里面，
+    // 而服务器的代码只是运行在node环境中，还是可以直接从node_modules中
+    // 直接通过require引用对应的包的，就不需要再重新打包一份了
+
+因为我们修改了config文件，我们重新启动一下npm run dev:client
+
+
+
+13.4、补充
+服务端渲染完成，数据也返回给客户端了，然后就是将服务器返回给客户端的数据同步到客户端的store中去
+
+（1）、打开index.js
+首先读取服务端传递过来的值
+然后把值传递给store实例
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx'
+
+import {BrowserRouter} from 'react-router-dom'
+import {Provider} from 'mobx-react'
+
+import { AppState } from './store/store'
+
+const initialState = window.__INITIAL__STATE__ || {}
+// 获取到服务端传递过来的store
+ReactDom.render(
+    <Provider appState={new AppState(initialState.appState)}>
+        {/*在初始化的时候将服务端的store传递给客户端进行数据同步*/}
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+
+
+
+
+
+
+
+13.5、在客户端异步修改服务端渲染store中的数据
+（1）因为我们需要拿到一些异步的数据（想要改变store中的某个值，但是改变的过程是异步的）来修改需要返回的页面中的内容，react本身没有给我们提供这种能力：在组件中写一个方法，然后异步调用，但是在服务端渲染里面去异步调用。
+然后通过asyncBootstrap(app)这种方式来执行app，然后在.then中处理异步的结果
+
+（2）然后我们在top_nav组件中创建一个方法：
+asyncBootstrap(){}
+在这个方法中，我们就可以异步的操作我们想要的数据，然后我们在dev_render.js（开发时服务端渲染的组件（server_render.js是一个方法，在调用的时候才会起作用）中调用asyncBootstrap(app).then()的时候，就会先执行top_nav组件中我们定义的asyncBootstrap方法，等这个方法执行完了之后才会继续渲染的工作，也就相当于在组件渲染之前添加了一个方法，用来同步store中的数据，从而使服务端渲染出来的内容和store中的结果保持一致）
+
+
+（3）编写top_nav组件中的asyncBootstrap方法：
+在这个方法中拿到appState中拿到store中的changeName方法，修改name的初始值
+
+asyncBootstrap(){
+        new Promise((resolve)=>{
+            this.props.appState.changeName('wangwu')
+            resolve(true)
+        })
+    }
+
+注意要resolve(true)因为asyncBootstrap会根据resolve的结果来判断是否继续执行后面的内容
+
+这样的话我们就能在客户端里面通过这个方法来修改服务器渲染中的数据
+
+有问题google找不到就去官网找
+
+
+因为我们在客户端传入的是一个appState的实例，在服务器传入的是appState的一个新的实例，这两个store虽然结构完全一样，但是是两个完全不同的实例，所以要想数据同步，需要将在服务器中修改的内容传递给客户端，然后在客户端重新操作客户端的store进行数据同步
+
+
+十四、materiUI服务端渲染配置
+（官网：https://material-ui.com/getting-started/installation/）
+交互的效果和移动端的很类似，兼容性IE10+
+关于服务端渲染，我们需要做一些设置
+因为这个组件库是使用自己的一套东西，我们写的所有样式都是在js中编写的，没有css文件，我们写的css最终会被编译然后生成一个style标签插入到组件的heade中，这样有一个好处就是样式表的className是自动生成的，可以有效避免重名的问题，而且还会对className进行压缩（如果我们在写css的时候className比较长，则再编译的时候会被压缩）
+
+导入方式必须使用使用import Tab from '@material-ui/core/Tab'这种方式，以保证导入的内容最精简，避免导致app.hash.js过大，
+当然一些其他第三方包或者第三方包里面的文件，也可以通过打包分发里面的vender将其打包到vender中去，如：'@material-ui/core/styles/MuiThemeProvider',
+
+
+
+14.1、UI客户端使用环境配置
+（1）
+npm i @material-ui/core -S
+npm i @material-ui/icons -S
+
+（2）在客户端中使用
+import Button from '@material-ui/core/Button'
+我们使用哪个组件就导入哪个组件，按需打包，这样可以减小文件的体积
+<Button color="primary">这个是material的按钮</Button>
+<Button  color="primary" variant="contained">这个是material的按钮</Button>
+根据文档修改button的样式
+
+（3）使用自定义样式：
+首先定义一个样式变量：
+const styles ={
+    list:{
+        margin:20
+    }
+}
+
+然后导入withStyles：import withStyles from '@material-ui/core/styles/withStyles'
+
+然后使用withStyles，将样式变量和组件建立联系：
+export default withStyles(styles)(HomePage)
+
+然后将样式导入到render函数中，并使用：
+const {classes} = this.props
+className={classes.list}
+同时引入多个class样式：
+classes={{
+                                    root: classes.inputRoot,
+                                    input: classes.inputInput,
+                                }}
+
+14.2、使用主题
+material可以配置主题，可以先不对主题配置样式，但是框架需要搭建，方便以后在使用them
+
+直接参照官网编写（https://material-ui.com/guides/server-rendering/）
+
+在index.js中
+首先导入设置主题的组件和颜色
+然后根据导入进来的工具创建一个主题配置项
+然后将组件包含在主题组件内部
+
+import {MuiThemeProvider,createMuiTheme} from '@material-ui/core/styles'
+import {pink,blueGrey} from '@material-ui/core/colors'
+
+const theme = createMuiTheme({
+    palette:{
+        primary:blueGrey,
+        accent:pink,
+        type:'light'
+    },
+    // 主题样式primary主色调，accent辅助色调，type风格，查看官网
+    typography: {
+        useNextVariants: true,
+    }
+    // 最新的字体变体设置，使用旧版本有警告
+})
+
+<Provider appState={new AppState(initialState.appState)}>
+        {/*在初始化的时候将服务端的store传递给客户端进行数据同步*/}
+        <BrowserRouter>
+            <MuiThemeProvider theme={theme}>
+                <App/>
+            </MuiThemeProvider>
+        </BrowserRouter>
+    </Provider>
+
+到现在主题已经应用到了项目中
+
+
+14.3、在服务端渲染中使用UI组件
+现在页面加载的逻辑是先加载dom结构，然后加载style，到这才能将样式显示出来，如果样式文件加载速度比较慢，用户看到的就是原始的button按钮，我们要修复这个问题：
+在服务端渲染的时候做一些配置，能够在服务端渲染的内容里面就包含样式
+
+（1）首先安装工具：
+npm i react-jss jss jss-preset-default -S
+
+（2）然后在server_entry.js中：
+首先导入工具
+import {JssProvider} from 'react-jss'
+import {MuiThemeProvider} from '@material-ui/core'
+
+然后用这两个工具包裹App：
+道理就不解释了，看看注释，能看懂就理解，看不懂直接用（就是根据官方文档写的）
+
+export default (stores,routerContext,sheetRegistry,generateClassName,theme,sheetsManager,url)=>{
+   return(
+       <Provider {...stores}>
+           {/*因为我们可能会传入多个store，而且接收的格式是appState：AppStore，所以在这使用解构方式传入*/}
+           <StaticRouter context={routerContext} location={url}>
+               {/*context这个参数是进行服务端渲染的时候传入给router的一个对象，会在静态渲染的时候进行一些操作，
+               然后返回给我们一些有用的信息（比如让我们判断在客户端的router中是否包含redirect）*/}
+               {/*location是当前路由的一个url，我们可以通过req.url拿到*/}
+               <JssProvider registry={sheetRegistry} generateClassName={generateClassName}>
+                   {/*从外面引入registry和jss的参数*/}
+                   <MuiThemeProvider theme={theme} sheetsManager={sheetsManager}>
+                        <App />
+                   </MuiThemeProvider>
+               </JssProvider>
+           </StaticRouter>
+       </Provider>
+   )
+}
+
+
+（3）在server_render.js中：
+const SheetsRegistry=require('jss').SheetsRegistry
+const createMuiTheme = require('@material-ui/core/styles').createMuiTheme
+const createGenerateClassName = require('@material-ui/core/styles/createGenerateClassName').default
+const colors = require('@material-ui/core/colors')
+// 上面这一块是materialUI在服务端渲染需要用到的工具
+
+然后
+        const sheetsRegistry = new SheetsRegistry()
+        const sheetsManager = new Map()
+        const theme = createMuiTheme({
+            palette:{
+                primary:colors.blueGrey,
+                accent:colors.pink,
+                type:'light'
+            },
+            typography:{
+                useNextVariants:true
+            }
+        })
+        const generateClassName = createGenerateClassName()
+        // 上面这一块代码是服务端渲染中使用material的参数
+
+然后
+const app = createApp(stores,routerContext,sheetsRegistry,generateClassName,theme,sheetsManager,req.url)
+
+（4）服务端的app渲染完成了，我们要把样式放到template中去
+我们给ejs模板加一个变量：
+ const html = ejs.render(template,{
+                appString:content,
+                initialState:serialize(state),
+                meta:helmet.meta.toString(),
+                title:helmet.title.toString(),
+                link:helmet.link.toString(),
+                style:helmet.style.toString(),
+                materialCss:sheetsRegistry.toString()
+
+            })
+
+然后修改server.template.ejs文件：
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <%%- meta %>
+    <%%- title %>
+    <%%- link %>
+    <%%- style %>
+    <style>
+        <%%- materialCss %>
+    </style>
+</head>
+
+然后重启项目，查看网页源代码，发现服务器渲染的css已经加载进去了
+
+（5）这还存在一个问题，因为服务端渲染的时候已经把css加载进去了，但是客户端可能还会加载一次，这样会导致冲突，出现一些问题
+这样解决：
+
+首先改造server.template.ejs：
+<style id="jss-server-side">
+        <%%- materialCss %>
+    </style>
+
+然后在index.js中：
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx'
+
+import {BrowserRouter} from 'react-router-dom'
+import {Provider} from 'mobx-react'
+
+import { AppState } from './store/store'
+
+
+import {MuiThemeProvider,createMuiTheme} from '@material-ui/core/styles'
+import {pink,blueGrey} from '@material-ui/core/colors'
+
+const theme = createMuiTheme({
+    palette:{
+        primary:pink,
+        accent:blueGrey,
+        type:'light'
+    },
+    // 主题样式primary主色调，accent辅助色调，type风格，查看官网
+    typography: {
+        useNextVariants: true,
+    }
+    // 最新的字体变体设置，使用旧版本有警告
+})
+
+const initialState = window.__INITIAL__STATE__ || {}
+// 获取到服务端传递过来的store
+
+
+const createApp = (TheApp) =>{
+    class Main extends React.Component {
+        // Remove the server-side injected CSS.
+        componentDidMount() {
+            const jssStyles = document.getElementById('jss-server-side');
+            if (jssStyles && jssStyles.parentNode) {
+                jssStyles.parentNode.removeChild(jssStyles);
+            }
+        }
+
+        render() {
+            return <TheApp />
+        }
+    }
+
+    return Main
+
+}
+
+const NewApp = createApp(App)
+
+ReactDom.render(
+    <Provider appState={new AppState(initialState.appState)}>
+        {/*在初始化的时候将服务端的store传递给客户端进行数据同步*/}
+        <BrowserRouter>
+            <MuiThemeProvider theme={theme}>
+                <NewApp/>
+            </MuiThemeProvider>
+        </BrowserRouter>
+    </Provider>,
+    document.getEleme
+
+
+如果我们不添加createApp这个函数会发现在渲染出来的header中有    <style id="jss-server-side">
+标签，当我们添加了这个方法之后就没这个标签了。
+
+
+
+到这materialUI已经顺利的应用到了我们的项目中了
+
+
+14.4、使用react组件要检查传入的变量的属性：
+import PropTypes from 'prop-types'
+
+MainAppBar.propTypes={
+    classes:PropTypes.object.isRequired,
+}
+
+export default withStyles(styles)(MainAppBar)
+
+
+14.5、bug处理
+
+
+
+
+
+十五、UI页面架构
+精华：
+*相关的项目代码放到一起（入口文件、辅助组件、styles.js样式等）
+*傻瓜式组件样式渲染要一个组件渲染完成之后才能再嵌套到别的组件中去
+*这个项目还得先按照cnode的api来写，先走完一遍流程，然后再自己开发一个全新的，很多东西需要熟悉理解，并不是想象中的那么简单。完成之后能拿20k吗？先做做梦吧，不过肯定要把整套流程熟记于心，才能碰到问题迎刃而解，不惧别人怼。
+*异步请求我们使用Promise来封装axios
+*针对服务器和客户端的不同状况我们用判断语句来处理各自对应的情况：
+const baseUrl = process.env.API_BASE || ''
+
+组件化：
+功能相关联的组件放在一起、功能独立的组件抽离、布局和功能组件分离、
+
+
+
+页面的主框架是如何定义的？应该拆分的更彻底
+主框架上面只包括一个AppBar，和Route，以及bottom
+而container应该归属到Route下面的子页面里面去，这样在主页面切换内容的时候会更加干净方便，不用来回切来切去，处理各种复杂的路由，也可以更方便的自由定义子页面的内容，而不用考虑主页面的影响（主页面就一个头，一个尾，中间是空白）
+
+而主页面的wrapper我们可以通过定义一个container来让所有子页面的保持格式上的统一，所有子页面都用一个container标签包裹
+
+
+
+
+
+views里面新建一个layout文件夹，用来存放页面布局的组件
+
+布局的时候灵活使用div进行分组
+
+
+15.1、新建一个app_bar.jsx组件
+为了调试方便，我们在这增加一个配置选项，这样我们就可以在页面调试的时候直接在浏览器里面进行调试，而不是编译之后再调试（编译之后的内容我们看不到源码结构，已经转化了）
+
+render(){
+        const {classes} = this.props
+        return(
+            <div>
+                <AppBar position='fixed' color='secondary'>
+                    {/*fixed是将该元素固定在页面顶部，页面会根据flex值的大小进行比例分配，将页面占满*/}
+                    <Toolbar>
+                        <IconButton color='inherit' onClick={this.homeClick}>
+                            {/*icon的点击事件需要添加在iconButton上，这样的话在点击的时候会自动带有点击效果*/}
+                            <HomeIcon/>
+                        </IconButton>
+                        <Typography type='title' color='inherit' className={classes.flex}>
+                            {/*使用typography可以给文字设置字体样式*/}
+                            {/*flex:1是让该元素撑满整个容器*/}
+                            OKOI
+                        </Typography>
+                        <Button variant='contained' color='secondary' onClick={this.createButton}>
+                            新建话题
+                        </Button>
+                        <Button color='inherit' onClick={this.loginButton}>
+                            登录
+                        </Button>
+                    </Toolbar>
+                </AppBar>
+            </div>
+        )
+    }
+
+15.2、入口页面css样式初始化，因为我们整个react项目都是挂在到了root节点上面，所以应该以root节点为初始页面，让root保持最原始的样式（占满整个页面，没有margin、padding等），然后在root节点里面进行布局
+
+打开template.html，添加style标签，进行样式初始化设置：
+<style type="text/css">
+        html{
+            height: 100%;
+        }
+        body{
+            height: 100%;
+            margin: 0;
+        }
+        #root{
+            height: 100%;
+        }
+    </style>
+此时root节点已经占满整个页面，没有了margin等属性
+
+然后在App.jsx中，因为这里面定义的就是root节点，我们在root节点里面再定义一个div容器，用来包含整个页面，方便我们对root节点进行属性设置，这样就不需要动root节点上的任何东西了，只需要修改这个容器就可以了
+
+因为App.jsx只是作为一个入口文件，是一个容器，业务逻辑在子页面中，所以我们需要把他定义成一个傻瓜式组件：
+const App =({ classes })=>(
+    <div id="wrapper" className={classes.root}>
+        <Helmet>
+            <title>首页seo</title>
+            <meta name='首页' content='首页SEO'/>
+        </Helmet>
+        <div>
+            <Routes />
+            <div>
+                <ul>
+                    <li>
+                        <NavLink to='/'>home</NavLink>
+                    </li>
+                    <li>
+                        <NavLink to='/login'>login</NavLink>
+                    </li>
+                    <li>
+                        <NavLink to='/about'>about</NavLink>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </div>
+)
+
+const styles = {
+    root:{
+       height:'100%',
+    }
+}
+
+这里注意一个问题，就是所有页面显示出来的内容都是包含在BrowserRouter里面的，而route标签就是显示内容的外壳，所以控制样式的核心是每个route里面的内容，因为每个route显示的组件都是一个全新的组件在页面中进行的渲染，包括App组件也只是对应一个router,核心还是在route对应的那个组件上（暂时先这样，先写后面的内容）
+
+
+
+
+
+
+15.3、创建一个container.jsx，用来作为内容区域的容器
+自己定义一个组件，用来做内容区域的容器，因为这个组件不需要处理业务逻辑，所以就是傻瓜式组件
+const Container = ({children,classes})=>(
+    // 因为这个组件比较简单，只是一个容器，把内容放进去就可以了
+    // ，内容的业务逻辑在内容中进行编辑，没有逻辑和事件，
+    // 这个傻瓜式组件接收的参数就是props，我们可以通过解构的方式直接拿到props里面的参数
+    <Paper elevation={4} className={classes.root}>
+        {/*elevation参数是这个组件漂浮的高度，让页面看起来有层次感*/}
+        {children}
+        {/*我们直接用这个组件来包含传递过来的内容就可以了，
+        其实在这分离出来，主要是我们需要给他定义一些样式(app_bar距离顶部有一个高度，我们需要在内容组件中把高度留出来），
+        这样的话在别的地方需要引用的时候就不用多次定义样式了，
+        而直接写在home页面的话别的地方需要引用的时候还要重新定义，
+        所以封装成一个组件灵活调用*/}
+    </Paper>
+)
+
+const styles = {
+    root:{
+        margin:24,
+        marginTop:80,
+    }
+}
+
+15.4、新建一个topic_list.jsx，用来存放话题列表的相关内容
+import React,{Component} from 'react'
+import PropTypes from 'prop-types'
+
+import withStyles from '@material-ui/core/styles/withStyles'
+
+import Container from '../../layout_components/container'
+import TopicListItem from './list_item'
+
+
+import Tabs from '@material-ui/core/Tabs'
+import Tab from '@material-ui/core/Tab'
+
+class TopicList extends Component{
+    constructor(props) {
+        super(props);
+        this.state={
+            tabIndex:0
+        }
+        this.changeTab = this.changeTab.bind(this)
+        this.listItemClick = this.listItemClick.bind(this)
+    }
+
+    changeTab(e,index){
+        this.setState({
+            tabIndex:index,
+        })
+    }
+
+    listItemClick(){
+
+    }
+
+    render(){
+        const {classes} = this.props
+        const topic={
+            tab:'aaaa',
+            title:'haha',
+            username:'dawn',
+            reply_count:20,
+            visit_count:30,
+            create_time:'2019/01/02',
+            img:'https://images.unsplash.com/photo-1512341689857-198e7e2f3ca8?auto=format&fit=crop&w=400&h=250&q=60'
+        }
+        return(
+            <Container>
+                <Tabs value={this.state.tabIndex} onChange={this.changeTab}>
+                    {/*value属性用来确定哪个Tab是被选中的,该属性的值就是下面tab的序号,每次点击tab会触发一个事件，
+                    用来修改value中的值,这个方法接收两个参数，e和index，虽然不知道是如何传值的，但是照着例子写就没问题*/}
+                    <Tab label='全部'/>
+                    <Tab label='分享'/>
+                    <Tab label='工作'/>
+                    <Tab label='问答'/>
+                    <Tab label='精品'/>
+                    <Tab label='测试'/>
+                </Tabs>
+                <TopicListItem onClick={this.listItemClick} topic={topic}/>
+                {/*在这我们还没数据列表，所以先在state中定义一个，
+                因为在定义组件的时候接收了onclick事件和topic数据，所以我们要在调用的时候传递进去*/}
+            </Container>
+        )
+    }
+}
+
+const styles = {
+    root:{
+
+    }
+}
+
+export default withStyles(styles)(TopicList)
+
+
+
+
+
+15.5、创建一个列表组件list_item.jsx，因为我们要把数据循环渲染出来，所以我们在这封装一个组件，方便调用
+
+这就涉及到一个组织架构的问题，我们要尽量把相关联的内容放到一起，比如首页的信息列表是单独的一块，那么我们就新建一个topic_list文件夹，然后在里面写一个index.jsx作为这个组件的入口文件，而list.item是为了topic_list组件服务的，所以我们在topic_list文件夹下新建一个list_item.jsx，用来辅助topic_list组件进行开发，这样的话相关的代码就会集中在一起方便管理
+
+如果需要给傻瓜式组件传递styles样式，要注意一个问题就是一个组件一结（不能嵌套完成之后再使用withStyles一起渲染，要每个子组件先使用const StyledPrimary = withStyles(PrimaryStyles)(Primary)然后再将StyledPrimary 作为子组件嵌套进父组件）
+
+话题列表样式：
+import React,{Component} from 'react'
+import PropTypes from 'prop-types'
+import withStyles from '@material-ui/core/styles/withStyles'
+
+import ListItem from '@material-ui/core/ListItem'
+import ListItemAvatar from '@material-ui/core/ListItemAvatar'
+import ListItemText from '@material-ui/core/ListItemText'
+import Avatar from '@material-ui/core/Avatar'
+
+import IconHome from '@material-ui/icons/Home'
+
+import {PrimaryStyles,SecondaryStyles} from './style'
+
+const Primary=({topic,classes})=>(
+    // 因为这个组件其实也需要从topic中获取到数据，所以我们需要在这将topic参数传递进来
+        <span className={classes.root}>
+            <span className={classes.tab}>{topic.tab}</span>
+            <span className={classes.title}>{topic.title}</span>
+        </span>
+    // 其实也就是返回一个固定结构的dom组件，把他作为一个整体来使用,
+    // 把这个组件直接传递给primary属性，注意我们还需要给Primary
+    // 定义一个topic属性用来接收父组件中的topic数据{<Primary topic={topic}/>}
+
+)
+
+const Secondary =({topic,classes})=>(
+    <span className={classes.root}>
+        {/*在这最外层不能用div，否则会报warning，可能是jsx解析之后标签嵌套有问题，都用span没问题*/}
+        <span className={classes.username}>{topic.username}</span>
+        <span className={classes.count}>
+            <span className={classes.accentColor}>{topic.reply_count}</span>
+            <span>/</span>
+            <span>{topic.visit_count}</span>
+        </span>
+        <span>
+        创建时间：{topic.create_time}
+        </span>
+    </span>
+)
+
+
+const StyledPrimary = withStyles(PrimaryStyles)(Primary)
+const StyledSecondary = withStyles(SecondaryStyles)(Secondary)
+// withStyles作为装饰器的时候必须要用在class上，不能直接用在function上，
+// 所以我们需要进行处理,其实也就是每个组件都需要渲染完steyles之后才能引用，不能先传到父组件中再统一渲染
+
+const TopicListItem = ({onClick,topic}) =>(
+    // 因为个组件是一个纯渲染的组件，所以我们直接使用傻瓜式组件
+    <ListItem button={true} onClick={onClick}>
+        {/*button属性的值是一个布尔值，当为true的时候这个组件是可以点击的，
+        点击之后我们还需要触发一个事件，因为我们点击该选项之后需要跳转到详情页，
+        触发的事件我们通过外部调用的时候传递进来*/}
+        <ListItemAvatar>
+            {/*列表组件里面我们根据ui放在第一个位置的就是头像*/}
+            <Avatar src={topic.img}/>
+            {/*我们通过avatar来存放头像，src属性是头像的位置，因为这只是一个单纯的组件，
+            所有的数据都是在调用的时候传递进来的,好像在ListItemAvatar标签中只能使用avatar标签，否则会dom报warning*/}
+        </ListItemAvatar>
+        <ListItemText
+            primary={<StyledPrimary topic={topic}/>}
+            secondary={<StyledSecondary topic={topic}/>}
+        />
+        {/*ListItemText接收的参数中其中两个参数primary和secondary
+        除了可以接收一个值外还可以接收一个组件，我们在这自定义两个组件，用来满足我们的ui要求*/}
+    </ListItem>
+)
+
+
+
+export default TopicListItem
+
+
+
+15.6、、上面我们已经将话题列表的大概样式写出来了，接下来就是我们拿到数据，对话题列表进行渲染。
+这里面涉及到好多细节的问题，需要消化，，，架构一个项目远没有想想中的那么简单啊
+
+（1）在client下新建一个util文件夹（用来存放一些公共的第三方或者自己封装好的包）
+在util下新建一个http.js，我们在这对axios进行封装，这样我们在使用api进行请求的时候会方便一些。
+
+（2）一般情况下我们请求api数据的时候直接使用绝对路径就可以了（/api/...），业务逻辑是在客户端发送请求，请求转发到服务器，然后服务器向真实api发送请求，真实数据返回给服务器，服务器把数据返回给客户端。
+
+但是因为我们编写的项目有服务器渲染功能，也就是除了客户端发送请求外，服务器在渲染的时候也需要发送请求，那么服务器就需要调用他自身的axios，没有转发到服务器这一步操作，因此我们要进行一项配置，让服务端能顺利调用到他自己的api函数
+
+在config.render配置文件中，我们添加一个配置项：
+
+const webpack = require('webpack')
+ plugin:[
+        new webpack.DefinePlugin({
+            // 我们在这可以定义一些变量，这样我们就可以在打包好的项目中获取到这里定义的变量，并使用
+            'process.env.API_BASE':'"http://127.0.0.1:3000"'
+            // 注意我们在这个方法中定义变量的时候如果值是一个字符串，我们要标明出来，否则识别出来的会是一个变量而不是字符串
+        })
+    ]
+
+配置项写好之后重启服务，使配置项生效
+
+（3）编写http.js
+import axios from 'axios'
+
+const baseUrl = process.env.API_BASE || ''
+// 我们首先判断是否有process.env.API_BASE，这样在客户端和服务端都能顺利调用到axios方法
+
+
+
+// 然后就是封装axios，在这我们只封装get和post方法，其他的请求根据实际情况进行封装
+export const get =(url, params)=>{
+    // get请求一般只接受两个参数请求路径url和请求路径上的？后面的参数params
+    return new Promise((resolve,reject) =>{
+        // 因为我们的请求可能是异步请求，所以我们使用Promise
+        const path = `${baseUrl}${url}`
+        //console.log(path)在这要检查一下path路径是否是/api/...模式的，以及该函数是否执行
+        // 因为我们可能需要在服务器里面添加baseurl，所以我们在这对get请求的url进行一步操作
+        axios.get(path,{
+            params:params
+            //    在这get请求可以接收一个完整的带有params的url也可以将url和params分开传入，get传递params的时候是作为一个对象的一项传入
+            //    params的格式是一个对象格式params: {firstName: 'Fred',lastName: 'Flintstone'}
+        })            
+            .then(res =>{
+                const data = res.data
+                // 我们先将我们想要的数据从res中拿到，这样方便后面的操作
+                if(data && data.success === true){
+                    resolve(data)
+                    // 如果成功拿到了数据，那么我们使用resolve将数据作为get方法的最后结果返回。
+                }else {
+                    reject(data)
+                    // 如果我们拿到了api返回的结果，但是没有获取到我们想要的数据，那么也将这个结果作为get方法的最后结果返回
+                }
+            })
+            // .catch(err=>{
+            //     if(err.response){
+            //         reject(err.response.data)
+            //     }else {
+            //         reject({
+            //             success:false,
+            //             err_msg:err.message
+            //         })
+            //     }                
+            // })
+            // 如果我们没有获取到api返回的数据，那么我们将根据错误情况返回对应的错误信息,
+            // 我们还可使用更简单的方法，将所有错误信息都直接reject掉
+            .catch(reject)
+    })
+    
+}
+
+export const post = (url,data)=>{
+    new Promise((resolve,reject)=>{
+        const path = `${baseUrl}${url}`
+        axios.post(path,data)
+        // post请求可以直接接受两个参数，path和data，而get请求的params必须作为一个对象的一项传入，
+        // data的格式{firstName: 'Fred',lastName: 'Flintstone'}
+            .then(res=>{
+                const data = res.data
+                if(data && data.success === true){
+                    resolve(data)
+                }else {
+                    reject(data)
+                }
+            })
+            .catch(reject)
+    })
+}
+
+// 到这get和post请求我们就已经封装好了，然后就是在store中使用。
+// 因为我们所有的数据都是通过store传递给页面的，这样我们可以很好的控制数据的流向
+
+
+（4）在store文件夹下我们创建一个新的文件topic_store.js，用来管理topic的数据。
+
+import {observable,action,computed,extendObservable} from 'mobx'
+
+import {topicSchema} from '../util/variable_define'
+
+import {get} from '../util/http'
+
+const createTopic =(topic)=>{
+    return Object.assign({},topicSchema,topic)
+    // assign将多个数据整合到目标对象上，重名属性会被后面的数据源覆盖
+}
+
+
+class Topic{
+    constructor(data){
+        // 我们首先要定义一个初始函数，将topics的真实数据传递进去，
+        // 这样我们就可以方便的调用这个类的相关属性，我们需要在mobx中引入extendObservable来帮助我们完成
+        extendObservable(this,data)
+        // 我们把data赋值到this上面，因为mobx的特性，
+        // 在这如果不使用extendObservable会导致data并没有数据绑定
+        // 的效果（只有通过@observable声明的数据才有数据绑定的效果），
+        // 这个方法的作用就是把一个对象的所有属性都添加到observable上，在这还有一个隐患，
+        // 就是data中声明的值不见得是每次传递过来的都包含所有的数据，而data对象只会初始化一次，
+        // 当有数据添加的时候就会报错，所以我们在这需要定义一个data数据的模板，将包含的所有数据的字段以及默认值填充好，
+        // 从而第一次初始化的时候就是一个完整的模板
+
+        // 在util文件夹下新建一个文件variable_define.js，用来存储所有数据的初始值,export const topicSchema = {}，
+        // 然后我们将那个数据模板传递进来,然后我们创建一个方法，将数据模板、真实数据结合生成一个新的对象createTopic
+        
+    }
+    @observable syncing = false
+    // 这的意思是我们在处理data的过程中给syncing一个初始值，便于我们进行加载loading等处理
+}
+
+class TopicStore {
+    @observable topics
+    @observable syncing
+    // 首先定义两个变量，一个用来存放数据对象，一个用来判断是否数据正在请求,
+    // 我们把这个变量作为一个对象来对待，而不是定义多个变量对待
+
+    constructor({syncing, topics}={syncing:false,topics:[]}){
+        // constructor接收两个变量，方便在数据渲染的时候初始化数据
+        this.syncing = syncing
+        // this.topics = topics
+        // 为了让以后扩展更容易，我们定义一个topic的类，
+        // 这样每个topic都是一个类的实例，这样我们可以在这个类里面检测控制更多的东西,首先创建Topic这个类
+        // 然后把已经加工好的topic传递给topics
+        this.topics = topics.map(topic => new Topic(createTopic(topic)))
+    }
+
+
+// 添加toJson方法，便于数据渲染的时候获取数据   
+toJson(){
+        return{
+            syncing:this.syncing,
+            topics:this.topics
+        }
+    }
+
+
+    // 然后定义获取数据的方法，因为所有的数据加工都需要我们通过mobx来操作，这样才能很好的把握数据流，来保证有据可循
+    // 首先定义一个方法，然后把我们定义好的get请求导入进来
+    @action fetchTopics(){
+        // 首先我们要定义一个promise方法，因为这是一个异步请求
+        return new Promise((resolve,reject)=>{
+            this.syncing = true
+            // 因为我们需要判断数据是否还在请求,所以我们在这先丁意思一个变量，然后在数据获取完成之后再修改
+            get('/topic',params,{
+                mdrender:false
+                // 这个query参数是告诉api是否把markdawn字符串渲染成html字符串
+            })
+                .then(res=>{
+                    if(res.success){
+                        // 将获取的数据赋值给topics变量
+                        res.data.forEach(topic =>{
+                            this.topics.push(new Topic(createTopic(topic)))
+                        })                        
+                        resolve()
+                        // 如果数据没问则直接返回resolve，如果有问题则返回reject
+                    }else {
+                        reject()
+                    }
+                    this.syncing = false
+                    // 无论数据请求是否成功数据请求完成都需要把syncing状态改成false
+                })
+                .catch(err=>{
+                    reject(err)
+                    this.syncing = false
+                })
+            // 到这数据获取的方法就写好了，然后就是在需要的页面调用这个方法
+        })
+    }
+}
+// 然后将这个class类暴露出去，在store.js中进行整合，并传入到reactdom中去，然后在需要的地方调用
+
+（5）在页面中调用store中定义的方法
+首先在store.js中：
+import State from './state'
+import TopicStore from './topic_store'
+
+
+export {State,TopicStore}
+
+export default {
+    State,
+    TopicStore
+}
+
+export const createStoreMap =()=>{
+    return{
+        state:new State(),
+        topicStore: new TopicStore()
+    }
+}
+
+
+然后在项目入口文件index.js中：
+import {State,TopicStore} from './store/store'
+
+const state = new State(initialState.state)
+const topicStore = new TopicStore(initialState.topicStore)
+
+<Provider state={state} topicStore={topicStore}>
+
+
+然后在需要引入数据的文件topic_list中：
+import {inject,observer} from 'mobx-react'
+
+
+@inject(stores => {
+    // stores是一个方法，mobx上的属性都可以直接在stores上面拿到
+    return{
+        state:stores.state,
+        topicStore:stores.topicStore
+    }
+}) @observer
+
+render(){
+        const {classes,topicStore} = this.props
+        
+        const topicList = topicStore.topics
+
+
+
+然后将数据渲染到页面中，首先引入List组件
+ <List>
+                    {/*listItem是需要包含在List里面的*/}
+                    {topicList.map(topic=>(<TopicListItem onClick={this.listItemClick} topic={topic}/>))}
+                </List>
+
+然后我们还要获取一下数据，因为现在的数据是空的，我们需要在componentDidMount生命周期函数中调用mobx中的fetchTopics方法：
+componentDidMount() {
+        this.props.topicStore.fetchTopics()
+    }
+
+
+然后我们还要编写一个loading效果，在数据请求的时候有一个加载提示：
+{
+                    syncingTopics ? (
+                        <div>
+                            <CircularProgress color='inherit' size={100}/>
+                        </div>
+                        // 因为loading需要居中，所以用div包裹
+                    ) : null
+                        // 使用三元运算符来判断loading是否显示
+                }
+
+
+15.7、我们修改服务端代理，将cnode的接口代理过来进行测试
+（1）在proxy.js中将baseUrl 改成：
+const baseUrl = 'https://cnodejs.org/api/v1'
+
+
+15.8、问题处理
+根据返回的数据格式，重新将数据字段的名称改一下，使数据能正常渲染到页面
+数据请求出现问题的时候可以先通过在页面中编写axios直接请求来判断问题出现在哪里。
+
+
+
+
+15.9、使用路由跳转的方式来进行tab切换
+这样的好处是可以使用浏览器的返回按钮返回上一个浏览的页面，然而并没有起作用，tab倒是加上去了，但是router里面配置的确可以回退，所以应该还是哪里有问题，后面再解决。
+
+原理就是在list路由后面跟上一个？tab=xxx来告诉我们现在正在访问的是那个tab
+
+（1）首先在topic_list的index.jsx里面获取到路由里面的query也就是获取到tab=xxx
+static contextTypes={
+        router:PropTypes.object.isRequired,
+    }
+    // 要想拿到该页面路由上面的参数必须先在页面中通过上面的方式注入路由，然后通过
+    // this.context.router获取到路由queryString.parse可以把?tab=xxx转化成json格式
+
+（2）封装一个函数用来提取query，方便使用
+getTab(search){
+        const searc = search || this.context.router.history.location.search
+        console.log(searc)
+        const query= queryString.parse(searc)
+        return query.tab || 'all'
+        // 因为我们需要在两个地方使用路由中的query，第一个地方是样式组件中用来修改value的值
+        // （代替了使用setState的方式，代替的原因是我们在这并不涉及到store和业务逻辑，
+        // 所以就不需要在state中重新定义了，直接通过一个函数直接改变就行），
+        // 第二个地方就是我们在加载页面的时候，tab选中不见得是在第一个，所以需要在页面第一次渲染的时候，
+        // 传入的query和axios请求的query保持一致
+    }
+
+（3）修改tabs，使用value值来控制tab跳转的样式
+<Tabs value={this.state.tab} onChange={this.changeTab}>
+                    {/*value属性用来确定哪个Tab是被选中的,该属性的值就是下面tab的序号,每次点击tab会触发一个事件，
+                    用来修改value中的值,这个方法接收两个参数，e和index，虽然不知道是如何传值的，但是照着例子写就没问题*/}
+                    {
+                       Object.keys(tabs).map(t=>(<Tab label={tabs[t]} value={t} key={t} />))
+                        // Object.keys(tabs)会将tabs对象的key值枚举出来形成一个数组
+                    }
+
+                </Tabs>
+
+（4）修改changeTab函数，将tab的value添加到路由上去
+changeTab(e,value){
+        this.context.router.history.push({
+            pathname:'/',
+            search:`?tab=${value}`
+        })
+        this.setState({
+            tab:value
+        })
+        // 注意在这因为我们需要调用componentWillReceiveProps生命周期，
+        // 而这个生命周期只有在store或者state发生变化的时候才会执行，
+        // 所以在这的这个setState设置是为了触发生命周期函数的钩子，
+        // 而我们使用那个生命周期函数的好处是，如果路由中的query没有发生变化，
+        // 那么就不会重新加载数据了，避免了数据重复加载，如果我们把axios放在changeTab中，
+        // 那么无论路由中的query是否发生改变都会触发axios，都会重新进行数据请求，
+        // 所以放在生命周期函数里面跟合理，又因为我们需要一个state的改变来触发生命周期函数，
+        // 所以我们将使用函数在render函数中重新获取query值的方法改成在changeTab使用setState来改变，
+        // 这样更好些，将上面的setState的改变值变成tab的value改变，
+        // 这还涉及到componentDidMount生命周期函数里面的值，所以就先采用这种方式，至少目前来说还是比较稳妥的方式。
+        // 虽然可以在changeTab中可以对比value和state，但是这个方法可能无法保持DidMount生命周期函数里面的初始值，
+        // 所以先不去考虑这种方法
+    }
+
+（5）当tab切换的时候重新发送axios获取新的数据：
+componentDidMount() {
+        const query = this.getTab()
+        const tab = {
+            tab:query
+        }
+        // console.log(tab)
+        this.props.topicStore.fetchTopics('/api/topics',tab)
+    }
+    componentWillReceiveProps(nextProps, nextContext) {
+        // 在新的react中，我们通过nextCOntex来获取router中的值
+        if(nextContext.router.route.location.search !== this.context.router.route.location.search){
+            const tabs = this.getTab(nextContext.router.route.location.search)
+            const query ={
+                tab:tabs
+            }
+            this.props.topicStore.fetchTopics('/api/topics',query)
+        }
+    }
+
+
+
+
+
+15.10、不同情况下className赋值不同
+如在一个变量是true的情况下className为red,变量是false的情况下className为blue
+（1）首先要安装一个包：npm i classnames -S
+这个包用来帮助我们生成className，我们使用这个包可以进行逻辑判断，在react中很多组件都会依赖这个包
+
+（2）在需要使用的页面引入这个包
+import classNames from 'classnames'
+
+（3）然后在render函数中新建一个className变量
+const class =classNames({
+            [classes.tab]:true,
+            [classes.top]:topic.top
+        }) 
+
+（4）然后将class传递给对应标签的className：
+const Primary=({topic,classes})=>{
+    // 因为这个组件其实也需要从topic中获取到数据，所以我们需要在这将topic参数传递进来
+        const className =classNames({
+            [classes.tab]:true,
+            [classes.top]:topic.top
+        }) 
+        return (
+            <span className={classes.root}>
+                <span className={className}>{topic.top ? '置顶' : tabs[topic.tab]}</span>
+                <span className={classes.title}>{topic.title}</span>
+            </span>
+        )
+    // 其实也就是返回一个固定结构的dom组件，把他作为一个整体来使用,
+    // 把这个组件直接传递给primary属性，注意我们还需要给Primary
+    // 定义一个topic属性用来接收父组件中的topic数据{<Primary topic={topic}/>}
+
+}
+
+（5）然后定义对应的class样式就行了
+top:{
+            backgroundColor: '#ff5332',
+        }
+
+
+
+
+15.11、话题详情页
+里面包涵几个点：
+（1）marked包的使用：将markdawn格式的内容转化成html内容的一个工具
+（2）业务逻辑：首先获取到点击的话题的content，在这个项目中content内容在加载topic_list的时候就以数组的方式传递过来了，我们通过下面方式可以直接获取到content内容：
+{topicList.map(topic=>(<TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} key={topic.id}/>))}
+
+onClick={()=>(this.listItemClick({topic}))}
+定义一个匿名函数，然后将topic传递进去，因为topic是变量，所以我们使用{topic}
+
+然后就可以直接在
+listItemClick(cont){
+        console.log(cont.topic.content)
+    }
+中获取到里面的内容了。
+
+
+（3）创建一个详情组件，我们通过store来获取到需要在详情组件中渲染的内容
+然后把获取过来的内容通过materialUI进行美化，和topic_list组件一样，把获取过来的topic进行渲染。
+
+在这我们根据实际情况分析可以知道，我们自己渲染的其实主要是一个话题的标题。话题的内容其实是已经写好的html代码，我们之间在页面中使用就行，不需要再进行样式编写了，那个样式是作者在写文章的时候就编写好的，是一个完整的网页，而不是一段没有任何样式的文字，形如下面的样式：
+<div class="markdown-text"><p>新书《Node.js开发实战》热卖，大获好评，感谢大家的支持，送几本书回馈给大家。</p>
+<p>赠书办法：</p>
+<ul>
+<li>只须在本贴留言即可。</li>
+<li>从回贴评论者中随机抽取中奖者，共计 5 本，每位中奖者 1 本。</li>
+<li>获赠名单公布在本帖，并在本贴下评论 @ 每位获赠的同学。</li>
+<li>截止时间 2019 年 1 月 12 日 22:00:00 （ UTC+8 ），以评论时间为准。</li>
+<li>由于本站不支持私信，请获奖同学在本帖回复联系方式，邮箱或者任何其它能联系到你的形式。</li>
+<li>开奖后 72 小时未能回复联系方式者视为放弃。</li>
+</ul>
+<p>试读样章：<a href="https://pan.baidu.com/s/1x3c35AmJV4rcEj_W3A1WGg">https://pan.baidu.com/s/1x3c35AmJV4rcEj_W3A1WGg</a>
+京东有售：<a href="https://item.jd.com/12460185.html">https://item.jd.com/12460185.html</a>
+<img src="//static.cnodejs.org/Finp2H7di-Equ_yMWsjJY6hxYGkh" alt="WechatIMG148 copy.jpg"></p>
+</div>
+
+如果我们再自己进行重新样式编写那么作者的原创就被打乱了，所以我们不需要重新编写样式，而是直接把返回的内容之间渲染到页面中，我们可以写个容器来存放内容。
+
+我们在这需要使用
+
+
+
+
+（6）NavLink传值：
+当使用NavLink向跳转的路由传值的时候，需要把传值的内容这样写：
+to={{pathname: '/detail',state:{id:topic.id,index:index}}
+to=对象，带参数跳转（pathname, query, hash, state(额外数据）），注意:这些参数都被存放到this.props.location中
+想要传递index，需要在map函数中传递：
+(topic,index)=>()
+
+                    {topicList.map((topic,index)=>(<NavLink to={{pathname: '/detail',state:{id:topic.id,index:index}}} key={topic.id} ><TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} /></NavLink>))}
+
+
+（7）这有一个问题，就是只有在路由组件中进行注册过的组件在使用浏览器前进后退按钮的时候才会起作用，而通过this.context.router.history.push这种方式注入的路由虽然能进行页面跳转，但是在使用浏览器前进后退按钮的时候并不会重复，所以是不是应该考虑用link做跳转，而不是history这种方式。但是使用link方式嵌套路由现在还不明所以，路由所在的是跟页面，而不是home页面，而我们切换的内容是在home页面内切换内容，而不是将home页面给替代了。
+
+
+十六、react路由详解
+16.1、路由页面的出口就是Route标签：一个页面如果想要有一个容器里面存放通过路由传递过来的内容，那么路由内容的出口就是Route标签，而一个Route标签对应一个路由匹配规则，如果想在该页面中存放多个路由规则，那么就需要定义多个Route标签。
+
+一个Route标签对应一个路由匹配规则，同时也对应一个组件，该组件中包含新的路由规则那就是属于子路由，子路由想在子组件中显示，需要在子组件中定义对应的Route匹配规则
+Route标签里面的path可以指向任何一个路由，如path='/about'就会跳转到首页的Route出口显示about组件，而path={`${match.path}/about`}就会在对应的子路由Route出口显示about组件。
+如果路由有子路由，那么久不能使用exact属性，因为这是严格匹配，子路由将不会被匹配到，所以子路由就会失效。
+
+<Route path={`${match.path}/list`} component={TopicList}/>
+
+（2）同一个路由匹配规则下定义两个Route会同时显示：
+<Route path={`${match.path}`} component={TopicList}/>
+<Route path={`${match.path}/login`} component={Login} exact/>
+此时TopicList页面和Login页面会同时显示在页面中，要想只显示一个，那么就需要不同的路由匹配规则：
+<Route path={`${match.path}/list`} component={TopicList}/>
+<Route path={`${match.path}/login`} component={Login} exact/>
+这样在匹配到list的时候就不会显示Login，匹配到login的时候就不会显示TopicList组件
+
+
+16.2、路由重新架构：
+（1）路由的默认入口就是“/”，当我们想要路由匹配到“/”的时候自动跳到另外一个路由下面的时候，我们就需要使用路由重定向。
+实际需求如：我们在访问一个网站的时候首次加载出来的是home页面。
+因为我们访问网站的时候不会在网站后面再加上/home进行访问，但是我们又想用户首先看到的是home路径下的页面，虽然我们可以在“/”路径直接匹配Home组件，但是我们在“/”路径下用{match}匹配路由的时候就是匹配到的“/”，这样我们在home下面做子路由的时候就会比较麻烦，导致子路由的路由匹配混淆，而如果我们之接将“/”重定向到“/home”之后在home下面的子路由我们就可以通过{match}直接匹配到“/home”，这样子路由就可以方便的命名{match.path}/list.
+
+又因为我们在页面中直接使用Route直接定义多个路由的时候，因为每个路由下面都有子路由存在，所以不会使用exact属性进行严格匹配，但是“/”路径和“/home”路径都会匹配“/”这个路径，所以会使Route被多次匹配到，react会提示，所以我们使用Switch标签将所有Route都包含起来，这样经过Switch处理Route只会匹配到一次，可以避免上面遇到的问题。
+<Switch>
+              <Route path='/home' component={Home} key='home' />
+              <Route path='/about' component={About} key='about'/>
+              <Route path='/' render={()=><Redirect to='/home'/>} key='index' />
+</Switch>
+
+我们在App.jsx这个容器中只负责给整个App提供一个展示的出口。具体根据业务需求和UI图对页面架构进行划分，在这我们会将home页面、login页面和about页面作为三个UI逻辑上没有关联的三个页面进行展示（也就是home、login、about三个页面都是占满整个容器，而不是作为容器的一个部分进行展示）
+
+所以在App.js中就需要三个Route标签，分别对应三个页面的出口，所以进行如下路由配置：
+
+<Switch>
+       <Route path='/home' component={Home} key='home' />
+       <Route path='/login' component={Login} key='login'/>
+       <Route path='/about' component={About} key='about'/>
+       <Route path='/' render={()=><Redirect to='/home'/>} key='index' />
+       {/*要将redirect放到最后一个位置，这样不会造成先匹配/然后再匹配/home的情况*/}
+</Switch>
+{/*经过switch处理，在Route的dom结构里面只会存留一个Route，默认情况下是四个Route都会存在于dom结构中但是显示的只是路由规则匹配到的那个*/}
+
+（2）对于Route的path，我们可以进行多层路由匹配规则，如：
+<Route path={`${match.path}/list/:topicId`} component={Test}/>
+list这个路径就是我们自己加上去的，只要匹配到这个路径，就可以将Test组件在Route这个出口中进行显示，因此我们可以花样定义路由的匹配规则。
+
+解惑：既然我们可以在path的路径下加自定义规则，那么为什么我们不在App.jsx中将“/”路径直接指向Home组件，而是需要进行路由重定向这一步操作呢？
+首先一个问题是虽然路由能跳转过去，但是浏览器的前进后退按钮会失效。
+这是因为，我们如果将“/”路径直接指向Home组件，那么Home组件显示的时候{match}匹配到的就是“/”，当我们给他添加自定义的路由匹配规则：<Route path={`${match.path}/list/:topicId`} component={Test}/>那么匹配到的路由就是：“/list/...”，但是我们在根路径下并没有“/list”这个路由，所以就会导致路由匹配不到，报错。
+
+
+（3）home页面路由编写
+home页面有一个公共的AppBar，然后可以将头部的地方定义为路由出口位置。
+
+头部AppBar是所有home页面都有的，所以直接作为一个组件导入，直接嵌套写死在home页面上，而下面的内容区域可能会根据点击的按钮不同发生变化，就需要一个可以更改的区域。
+
+我们在这根据业务需求在这规定，该页面只有一个路由出口（也就是每次更新的所有内容都在唯一的一个出口进行展示）。
+
+所以，我们将topic_list整个组件作为一个整体渲染在路由出口中，而topic_detail整个组件作为一个整体渲染在路由出口中，这样在home页面中就有两个Route进行定义
+
+根据路由匹配规则，当我们输入网址之后首先匹配到“/”然后重定向到“/home”然后加载Home组件，此时的路由是“/home”，Home组件中我们已经将AppBar组件写死在了页面中，topic_list我们需要通过路由加载进来，而默认的路由是“/home”，我们并没有触发事件将路由跳转到“/home/list”或者其他路由上，所以我们需要在“/home”默认的情况下吧topic_list组件加载进来，也就是通过下面的方式：
+<Route path={`${match.path}`} component={TopicList}/>
+这样我们就将topic_list作为默认路由加载进来了，当访问网址（“/home”）的时候自动就加载的是Home的topic_list路由。
+
+（4）进入到topic_list页面之后，需要解决的问题：
+首次页面渲染（包括网站第一次加载和刷新网页两种情况）的时候数据加载的问题：
+
+
+（5）浏览器前进后退按钮原理和处理逻辑：
+这有一个非常重要的问题，就是浏览器的前进和后退按钮相当于是组件更新操作，所以会触发componentWillUpdate函数里面的内容以及render函数里面的内容。并不会触发componentDidMount函数。这个对于使用浏览器的前进后退按钮来说非常重要。
+但是componentWillUpdate函数会在每次更新的时候都会触发，比如我们使用异步请求请求到了40个数据，那么componentWillUpdate就会执行40次，同理，如果我们在componentWillUpdate里面添加函数，那么这个函数也会执行40次，因此不能通过在componentWillUpdate中来更新store中的数据，那样会陷入死循环。
+
+又因为我们在changeTab函数中修改了state中的值，所以这会触发生命周期中的另外一个生命周期函数componentWillReceiveProps，这个周期函数在state发生改变的时候只会触发一次，而且是在render之前触发的，所以我们可以通过在这个生命周期函数中检测url的变化，componentWillReceiveProps(nextProps, nextContext) {
+        console.log(4)
+        console.log(nextProps)
+    }
+我们可以通过检测nextProps中的url和当前的url，通过对比来确定是否更新store中的数据，从而控制前进后退按钮之后数据更新。
+
+业务逻辑：页面第一次加载的时候，因为是第一次渲染，所以会在页面渲染完成之后执行componentDidMount生命周期函数，我们需要判断当前的url中的tab值（因为用户可能是第一次进入页面，也可能是已经选中了别的tab然后刷新页面，这两种情况我们都要考虑，所以在这需要判断当前url中的tab值，如果没有，就给一个默认值'all'，如果有就获取到之后作为参数传入axios进行数据请求）：
+componentDidMount() {
+        const value = queryString.parse(this.props.location.search).tab || 'all'
+        // 首先要获取到网址中的路由，因为在刷新页面的时候可能url是/home/job，
+        // 所以我们需要刷新的就是job数据，当用户第一次进入网页的时候就是all，
+        // 当用户刷新的时候就是当前url中的tab值因为我们在render函数中已经通过同样的方法
+        // const tab = queryString.parse(location.search).tab || 'all'保证了
+        // tab选中的项和url中的tab值永远一致，所以在这只专注于当前的业务逻辑就行
+
+        const query = {
+            tab:value
+        }        
+        this.props.topicStore.fetchTopics('/api/topics',query)
+    }
+
+当页面首次加载的时候数据已经展现在了页面上，
+当我们点击tab之后，会执行
+changeTab(e,value){
+        this.props.history.push(`${this.props.match.url}/?tab=${value}`)
+        // 在这我们通过js来修改当前的路由，如`${this.props.match.url}/?tab=${value}`
+        // 这种路由匹配规则就是给当前路由添加上一个search参数，形如/home/?tab=share,
+        // 获取这个参数的方法是this.location.search就会得到?tab=share这个字符串，
+        // 我们可以通过queryString.parse()方法将这个字符串解析成json对象，
+        // js传参和路由匹配的规则很多，我们在这使用这个方式是因为简单便捷，
+        // 我们可以轻松的获取tab的值，而且还不会造成路由匹配规则混乱（
+        // 如使用${this.props.match.url}/${value}这种方式的时候，
+        // 虽然我们也可以通过字符串截取的方式获取到tab的值，但是因为我们还可能会在/home下面有其他的子路由，
+        // 这时候如果出现/home/detail这个路由的时候，那么截取的字符串就会是detail，
+        // 而我们的axios参数里面并没有这个字段，而且tab的value中也没有这个字段从而造成错误，
+        // 所以当我们针对一个独立的页面，需要通过某种参数来区分该页面中不同数据的时候用/?tab=${value}
+         // 这种方式是最好的选择，既简单而且还能保证准确获取到正确的数据，但是这有一个bug，就是有的时候math.url会多出一个/来，所以为了避免不出错，我们改成：
+this.props.history.push(`${this.props.match.url}/list?tab=${value}`)
+    }
+
+在这个函数里面我们通过push方法，修改了props中的history属性，而componentWillReceiveProps生命周期触发的条件就是state或者props发生改变，所以上面的方法会触发componentWillReceiveProps生命周期，因为执行changeTab会触发componentWillReceiveProps，而且在我们按浏览器的前进后退按钮的时候其实本质也是改变this.props.history中的值，和上面的changeTab里面的函数本质一样。所以我们要满足浏览器可以进行前进后退，同时点击tab按钮的时候需要刷新对应的数据这两个要求，那么在componentWillReceiveProps这个生命周期里面进行数据请求的操作是最合适的：
+
+componentWillReceiveProps(nextProps, nextContext) {
+        // 首先这个生命周期函数只会在props或者state改变之后执行一次，
+        // 因为这个函数执行完成之后才会进行render渲染，此时的state和props已经是最新的了，所以render只需要一次渲染就可以了
+        // 不会像componentWillUpdate那样每个数据改变，都会随render重新执行一次.
+        const thisSearch = queryString.parse(this.props.location.search).tab
+        // 跳转前url中的search
+        const nextSearch = queryString.parse(nextProps.location.search).tab
+        // 跳转之后url中的search
+
+        if(thisSearch !== nextSearch){
+            // 如果两个search不同，那么就说明用户点击了不同的tab，我们就需要请求新的tab对应的数据,
+            // 如果相同则说明用户点击了同一个按钮，我们在这就不进行重新数据请求了，
+            // 让用户造成一个数据刷新很快的错觉，要是为了保证数据的实时更新我们也可以不加这个判断，根据需求来添加就好
+            const query={
+                tab:nextSearch
+            }
+            this.props.topicStore.fetchTopics('/api/topics',query)            
+        }        
+    }
+
+
+完整的topic_list代码：
+import React,{Component} from 'react'
+import withStyles from '@material-ui/core/styles/withStyles'
+import {inject,observer} from 'mobx-react'
+import {NavLink,Route,Link,withRouter} from 'react-router-dom'
+import queryString from 'query-string'
+
+import Container from '../../layout_components/container'
+import Tabs from '@material-ui/core/Tabs'
+import Tab from "@material-ui/core/Tab";
+import List from '@material-ui/core/List'
+
+
+import {tabs} from '../../../util/variable_define'
+
+
+import TopicListItem from "../../function_components/topic_list/list_item";
+
+
+@inject(stores => ({
+    topicStore:stores.topicStore
+})) @observer
+class TopicList extends Component{
+    constructor(props){
+        super(props)
+        this.state ={
+            tab:'all'
+        }
+        this.changeTab = this.changeTab.bind(this)
+    }
+
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        console.log('will')
+
+    }
+    componentWillReceiveProps(nextProps, nextContext) {
+        // 首先这个生命周期函数只会在props或者state改变之后执行一次，
+        // 因为这个函数执行完成之后才会进行render渲染，此时的state和props已经是最新的了，所以render只需要一次渲染就可以了
+        // 不会像componentWillUpdate那样每个数据改变，都会随render重新执行一次.
+        const thisSearch = queryString.parse(this.props.location.search).tab
+        // 跳转前url中的search
+        const nextSearch = queryString.parse(nextProps.location.search).tab
+        // 跳转之后url中的search
+
+        if(thisSearch !== nextSearch){
+            // 如果两个search不同，那么就说明用户点击了不同的tab，我们就需要请求新的tab对应的数据,
+            // 如果相同则说明用户点击了同一个按钮，我们在这就不进行重新数据请求了，
+            // 让用户造成一个数据刷新很快的错觉，要是为了保证数据的实时更新我们也可以不加这个判断，根据需求来添加就好
+            const query={
+                tab:nextSearch
+            }
+            this.props.topicStore.fetchTopics('/api/topics',query)
+        }
+    }
+
+    componentDidMount() {
+        const value = queryString.parse(this.props.location.search).tab || 'all'
+        // 首先要获取到网址中的路由，因为在刷新页面的时候可能url是/home/job，
+        // 所以我们需要刷新的就是job数据，当用户第一次进入网页的时候就是all，
+        // 当用户刷新的时候就是当前url中的tab值因为我们在render函数中已经通过同样的方法
+        // const tab = queryString.parse(location.search).tab || 'all'保证了
+        // tab选中的项和url中的tab值永远一致，所以在这只专注于当前的业务逻辑就行
+
+        const query = {
+            tab:value
+        }
+        this.props.topicStore.fetchTopics('/api/topics',query)
+    }
+
+    changeTab(e,value){
+        this.props.history.push(`${this.props.match.url}/list/?tab=${value}`)
+        // 在这我们通过js来修改当前的路由，如`${this.props.match.url}/?tab=${value}`
+        // 这种路由匹配规则就是给当前路由添加上一个search参数，形如/home/?tab=share,
+        // 获取这个参数的方法是this.location.search就会得到?tab=share这个字符串，
+        // 我们可以通过queryString.parse()方法将这个字符串解析成json对象，
+        // js传参和路由匹配的规则很多，我们在这使用这个方式是因为简单便捷，
+        // 我们可以轻松的获取tab的值，而且还不会造成路由匹配规则混乱（
+        // 如使用${this.props.match.url}/${value}这种方式的时候，
+        // 虽然我们也可以通过字符串截取的方式获取到tab的值，但是因为我们还可能会在/home下面有其他的子路由，
+        // 这时候如果出现/home/detail这个路由的时候，那么截取的字符串就会是detail，
+        // 而我们的axios参数里面并没有这个字段，而且tab的value中也没有这个字段从而造成错误，
+        // 所以当我们针对一个独立的页面，需要通过某种参数来区分该页面中不同数据的时候用/?tab=${value}
+        // 这种方式是最好的选择，既简单而且还能保证准确获取到正确的数据，但是这有一个bug，就是有的时候math.url会多出一个/来，所以为了避免不出错，我们改成：
+this.props.history.push(`${this.props.match.url}/list?tab=${value}`)
+    }
+
+
+
+    render() {
+        const {match,location,topicStore} = this.props
+        const topicList = topicStore.getlist
+        const tab = queryString.parse(location.search).tab || 'all'
+        return(
+            <Container>
+                <Tabs value={tab} onChange={this.changeTab}>
+                    {/*value属性用来确定哪个Tab是被选中的,该属性的值就是下面tab的序号,每次点击tab会触发一个事件，
+                    用来修改value中的值,这个方法接收两个参数，e和index，虽然不知道是如何传值的，但是照着例子写就没问题*/}
+                    {
+                        Object.keys(tabs).map(t=>(<Tab label={tabs[t]} value={t} key={t} />))
+                        // Object.keys(tabs)会将tabs对象的key值枚举出来形成一个数组
+                    }
+                </Tabs>
+                <List>
+                    {/*listItem是需要包含在List里面的*/}
+                    {topicList.map((topic,index)=>(
+                            <NavLink style={{textDecorationLine:'none'}} to={{pathname: `${match.path}/detail/${topic.id}`,state:{id:topic.id,index:index}}} key={topic.id} ><TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} /></NavLink>)
+                         //<TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} key={topic.id}/>)
+
+                    )}
+                </List>
+                {/*<Link to={`${match.path}/test`}>测试test</Link>*/}
+                {/*<Route path={`${match.path}/test`} component={Test}/>*/}
+                {
+                    syncingTopics ? (
+                        <div style={{
+                            display:'flex',
+                            justifyContent:'center',
+                            padding:'40px 0'
+                        }}>
+                            <CircularProgress color='inherit' size={100}/>
+                        </div>
+                        // 因为loading需要居中，所以用div包裹
+                    ) : null
+                    // 使用三元运算符来判断loading是否显示
+                }
+            </Container>
+        )
+    }
+}
+
+
+
+const styles ={
+    root:{
+
+    }
+}
+
+export default withStyles(styles)(TopicList)
+
+
+
+
+16.3、路由重认识：
+<Route path={`${match.path}/list`} component={TopicList}/>
+
+一个Route只对应一个唯一的component，Route作为该组件的一个出口将组件加载到页面中。
+
+Route作为子路由的时候（home子路由为例），首先path必须要是父组件路由的扩展路由，不能是其他任何路由：path={`${match.path}/list`}，根据路由的匹配规则，当我们访问/home/list的时候，首先会先在首页中匹配path='/home'的Route，找到之后就如到这个Route对应的组件Home中，然后在Home组件中匹配path='/home/list'对应的Route，在这任何其他以非/home开头的Route都无法进行匹配，找到了path=/home/list对应的Route之后就会将Route对应的list组件加载进来，从而完成路由的匹配。而别的页面在访问/home/list的时候也会返回的是home+list而不是单个的list组件，/home/list作为一个整体进行跳转。
+
+而我们如果在子页面中添加一个path='/detail'的Route，那么当我们访问/detail的时候，因为在首页中并没有找到该路径（首页只有/home /login /about），所以该页面会匹配不到，也就是即使我们添加了，在我们访问/detail的时候并不会在子页面中显示出来。写了也是白写。
+
+也就是path指向哪里，才会在对应的页面中找到对应的组件，只有Route所在的位置和path指向的位置一致时，才能加载出对应的component，否则全都是无效的Route。
+（不能是path='login/list',因为路由的匹配规则，首先会匹配/,然后会匹配/login,找到path='/login/'的Route组件，然后在在/login对应的组件中，寻找path='/login/list'对应的Route组件
+所以当我们在在访问login/list的时候匹配到/login之后就匹配不到/login/list了，因为login路径下并没有/list的Route存在，所以页面就会停留在/login所在的组件上。）
+
+（2）路由匹配顺序的问题：
+<Switch>
+       <Route path={`${match.path}`} component={TopicList}/>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />
+      
+</Switch>
+如上当我们访问/home的时候会匹配到TopicList组件，当我们访问/home?tab=all的时候也会匹配到TopicList组件，当我们访问/home/detail的时候我们依旧会匹配到TopicList组件，这是因为这些路径都符合path={`${match.path}`} 的匹配规则，只要是/home开头的路由都会匹配到TopicList这个组件，并直接进入到组件内，来不及匹配他后面的组件。
+
+如果我们想让/home/detail访问的时候匹配到TopicDetail组件，/home匹配到TopicList组件，那么我们可以有两种方法，第一种将两个Route颠倒位置：
+<Switch>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />
+      <Route path={`${match.path}`} component={TopicList}/>
+</Switch>
+这样当我们访问/home的时候因为path={`${match.path}/detail/:topicId`}不符合匹配规则，所以会转向匹配下一个Route，知道匹配到符合要求的path，并进入组件内。这样写换句话说就是除了/home/detail会匹配到TopicDetail组件，其他/home开头的组件都会进入到TopicList组件里面
+
+
+
+另外一个方法是添加exact：(这个方法不可取，弊病太多)
+<Switch>
+       <Route path={`${match.path}`} component={TopicList} exact/>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />      
+</Switch>
+这个方法原理是只有完全符合path={`${match.path}`}这个规则的url才能进入到TopicList组件中，如：/home或者/home/?tab='job',而其他路径/home/detail则不会进入到TopicList中，这样会导致的一个问题是TopicList组件下面的子路由将无法在匹配到，因为子路由访问的路径是：/home/list而因为我们添加了exact就导致/home/list根本就无法进入到TopicList组件，那么该组件下的子路由当然无法访问了，根本就没办法匹配到。
+
+
+16.4、topic_detail相关逻辑编写
+（1）路由
+在Home.jsx中，我们将TopicList组件的路由和TopicDetail组件的路由并列写，这样就可以在Home页面上来回展示两个组件的内容了：
+<Switch>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />
+       <Route path={`${match.path}`} component={TopicList} />
+</Switch>
+
+（2）从list页面跳转到detail页面的逻辑：
+因为我们在detail路由里面的用的是params方式：path={`${match.path}/detail/:topicId`}，这样写是把每一个文章当做一个独立的内容来进行处理了，而不是作为页面的一部分来处理，如果是页面中的一部分进行处理区分的话我们可以使用?tab='all'这种search方式进行处理。
+而params方式获取参数的方式：this.match.params.topicId就可以拿到id的值了
+
+关于跳转的方式，我们可以使用js方式：
+listItemClick(topic){        
+        this.props.history.push(`${this.props.match.url}/detail/${topic.topic.id}`)       
+    }
+
+
+也可以使用Link标签（在Tabs组件中不允许使用Link标签，但是在List标签中我们可以使用）：
+<List>
+                    {/*listItem是需要包含在List里面的*/}
+                    {topicList.map((topic,index)=>(
+                            <NavLink to={{pathname: `${match.path}/detail/${topic.id}`,state:{id:topic.id,index:index}}} key={topic.id} ><TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} /></NavLink>)
+                         //<TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} key={topic.id}/>)
+
+                    )}
+                </List>
+
+不过我们使用Link方式可以传递更多的内容到props中，这样我们可以更方便的拿到一些从上级传递过来的数据。而且NavLink标签可以方便的定义点击前后按钮的样式，这样我们可以很方便的对点击过的按钮进行样式上的处理。
+
+（3）detail页面的编写
+因为我们从API请求过来的数据是用户用markDawn方式编写的，所以我们需要的是把文章按照传递过来的数据直接展示出来，所以我们要进行markdawn配置，使内容可以在页面上直接展示。
+
+首先我们要借用marked工具：npm i marked -S
+然后导入到detail页面：import marked from 'marked'
+
+当我们编写一个由数据请求渲染的页面的时候，我们首先要考虑的是当数据没有或者加载中的时候如何过渡处理，大多数都是添加一个loading效果：
+if(!content){
+            return(
+                <Container>
+                    <section>
+                        <CircularProgress color={"secondary"}/>
+                    </section>
+
+                </Container>
+            )
+        }
+section是h5的一个新标签，用来展示一块整体的数据，section元素用于对网站或应用程序中页面上的内容进行分块，一个section元素通常由内容及其标题组成。通常不推荐为那些没有标题的内容使用section元素。
+
+因为我们是直接将content内容之间渲染，所以我们使用section标签将内容作为一个整体进行处理，又因为section通常需要标题，而且我们转发的文章肯定有一个大标题进行显示，所以我们按照如下的格式编写：
+import Helmet from 'react-helmet'
+
+return(
+            <Container>>
+                <Helmet>
+                    <title>{content.title}</title>
+                    {/*给这个文章添加了一个title，便于seo*/}
+                </Helmet>
+                <header style={{
+                    padding:20,
+                    borderBottom:'1px solid #dfdfdf'
+                }}>
+                    <h3>{content.title}</h3>
+                    {/*这个是文章的标题，样式再自己去定义*/}
+                </header>
+                <section style={{padding:20}}>
+                    <p dangerouslySetInnerHTML={{__html:marked(content.content)}}/>
+                    {/*dangerouslySetInnerHTML作用是把内容放到p标签下面，是将html内容直接塞进去，
+                    没有进行转义，如果我们直接把marked(content.content)放到p标签里面，
+                    那么输出的内容是字符串，其中p标签等内容并没有转化成dom，而是作为字符串的一部分*/}
+                </section>
+            </Container>
+        )
+
+
+
+（4）detail页面中数据的获取
+我们要遵循一个原则，就是所有的数据获取都要通过store中的方法，而不是直接从store中直接获取然后加工。修改数据，获取数据都要调用store中的方法。
+在topic_store.js中，我们添加一个方法，因为我们要在store中加工数据，所有不能通过get方式直接获取，应该使用一个方法获取。而且还有一种情况就是如果当前路由下没有数据（比如用户刷新页面，此时store中并没有相关内容，所以此时获取不到数据，那么我们就需要在store中获取一下数据，然后再显示，所以store中定义方法是最佳选择@action getDetailTopic(id){ }
+
+
+
+
+
+
+
+十五。五、
+新建layout文件夹，用来存放架构的页面home、
+
+（1）在layout下面新建container.jsx文件
+container标签是独特的，因为很多地方会用到它，我们把他当做一个容器来使用，有因为他只是一个容器，业务逻辑都在子页面里面，所有这个标签也是简单的
+因为没有业务逻辑，所以这个组件就是一个傻瓜式组件（没有业务逻辑），不需要class，只需要一个函数就行，这个函数接收的参数就是他的props，这个props我们可以使用解构的方式获取到里面的参数
+import React from 'react'
+import PropTypes from 'prop-types'
+
+import {withStyles} from '@material-ui/core/styles'
+import Paper from '@material-ui/core/Paper'
+
+const styles = {
+    root:{
+        margin:24,
+        marginTop:80,
+        // 数字会自动识别加上px
+
+    }
+}
+
+const Container = ({classes,children}) =>(
+    // 解构的方式拿到props里面的参数
+    <Paper elevation={4} className={classes.root}>
+        {/*elevation是paper这个标签的层级，可让这个标签里面的内容看起来有层次感*/}
+        {children}
+    </Paper>
+)
+
+
+Container.propTypes={
+    classes:PropTypes.object.isRequired,
+}
+
+export default withStyles(styles)(Container)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+十六、项目打包优化
+项目打包实质是将dependencies配置项中的依赖通过build配置文件打包到dist目录下
+
+
+
+16.1、打开浏览器的network
+勾选disable catche选项，这样每次加载都会重新加载资源，方便我们调试
+
+webpack4很多优化都集成到了optimization 中，以前的很多方法已经不适用了，参照下面的代码写：
+else {
+    config.entry={
+        app: path.resolve(__dirname,'../client/index.js'),
+        vendor:[
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'mobx',
+            'mobx-react',
+            'axios',
+            "react-helmet",
+            'react-jss/lib/JssProvider',
+            '@material-ui/core/styles/MuiThemeProvider',
+            '@material-ui/core/styles/createMuiTheme',
+            '@material-ui/core/styles/createGenerateClassName',
+            '@material-ui/core/styles/withStyles',
+            '@material-ui/core/Tabs',
+            '@material-ui/core/Tab',
+            '@material-ui/core/Typography',
+            '@material-ui/core/AppBar'
+        ]
+    }
+    config.output.filename=`[name].[chunkhash].js`
+    // 以上三项是将js包和项目源码分开打包，并赋予不同的hash值
+
+    config.optimization = {
+        splitChunks:{
+            cacheGroups:{
+                commons:{
+                    name:'vendor',
+                    chunks:'initial',
+                    minChunks:2
+                }
+            }
+        },
+        // 这一项是将项目源码中的依赖包成功分离到vendor中，这样源码中就只包含客户端代码了
+        minimize:true,
+        // 压缩js源码，使其变得更小，
+        namedChunks:true,
+        // 为了防止增删页面等操作时导致缓存失效
+        moduleIds:'hashed',
+        // 防止文件修改时没更改的module缓存失效
+        runtimeChunk:{
+            name:'manifest'
+        }
+        // 这个配置是将webpack打包时自己产生的代码单独封装，而不影响vendor的hash
+
+    }
+
+    config.plugins.push(
+        new MinifyPlugin(),
+        new webpack.DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify('production')            
+        })
+    )
+
+
+}
+
+16.1、打包内容分类
+网页源码里面的react、react-router等这些第三方包的源码并不需要每次更新的时候都重新打包一次，没必要每次业务更新都重新加载这些资源，很浪费，所以要把这些内容分开打包
+
+（1）在client配置文件中的生产环境下的entry配置项中，新增一个规则：
+注意我们要通过else这种方式加进去，因为在开发环境中我们不需要这么操作，开发环境中需要使用一些包进行辅助，所以为了避免出现意外，我们采用保险的方式
+
+新增一个vendor配置，这个配置是一个数组，第三方的包我们都写在这里面，需要把app重新写一遍，因为在这是新增和覆盖，并不会补充
+
+material-ui是按需加载的，也不需要全部打包，因为这俩包太大了，在引入的时候必须使用import Tab from '@material-ui/core/Tab'这样才能保证引入的包是最精简的
+服务端的express，express-session、server-favicon相关内容也不需要打包，服务端的代码不需要再客户端进行加载，只需要部署在服务器上就行了
+html-webpack-plugin也不需要，因为build完成之后index.html就已经生成好了
+如果还想检查某个包需不需要打包到客户端，可以通过在vendor配置中去掉这个包，然后观察去掉前后app.hash.js和vender.hash.js的大小来判断该包是否需要打包到客户端，如果app.hash.js增大，说明需要打包到客户端，如果没增加，则说明该包是服务端的包
+
+if (isDev) {
+// do something
+}else {
+  config.entry={
+  app:path.resolve(__dirname,'../client/index.js'),
+ vendor:[
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'mobx',
+            'mobx-react',
+            'axios',            
+            "react-helmet",
+            'react-jss/lib/JssProvider',            
+            '@material-ui/core/styles/MuiThemeProvider',
+            '@material-ui/core/styles/createMuiTheme',
+            '@material-ui/core/styles/createGenerateClassName',
+            '@material-ui/core/styles/withStyles',
+            '@material-ui/core/Tabs',
+            '@material-ui/core/Tab',
+            '@material-ui/core/Typography',
+            '@material-ui/core/AppBar'
+        ]
+  }
+}
+这些包我们都让他打包成vendor.js。这样我们就可以在更新了业务逻辑之后只更新客户端的代码，vendor.js这个包直接存储在浏览器缓存中，不更新
+
+（2）重新配置output： config.output.filename = `[name].[chunkhash].js`
+chunkhash是在我们有多个entry的时候使用chunkhash为每一个文件生成一个hash，这样生成的hash是每个文件的hash码，而不是所有内容打包之后的整个文件的hash码。以此来保证app和vendor的hash不同
+
+（3）npm run build
+查看打包后的效果，此时已经顺利打包了app.hash.js、vender.hash.js、index.html、server.ejs、render_entry.js
+app.hash.js初始684k——455k
+vender.hash.js 233k相加正好684k
+
+ejs、ejs-compiled-loader打包失败
+
+
+
+将vendor和app分别打包之后重新打包后的效果：（原始app.hash.js大小233kb）app.hash.js大小233kb、vendor.hash.js的大小221kb，发现app.hash.js并没有变小，这是因为我们还没有吧vendor里面的第三方包分离出去，此时，打包出来的文件还在app.hash.js中存在。
+
+（4）配置splitChunks，将vender中的第三方包分离出去
+（https://webpack.js.org/plugins/split-chunks-plugin/#src/components/Sidebar/Sidebar.jsx）
+
+配置splitChunks：
+在else中：
+config.optimization ={
+    splitChunks: {
+      cacheGroups: {
+        commons: {
+          name: "vendor",   // 这的name要和entry中的名字一样
+            chunks: "initial",
+            minChunks: 2
+        }
+      }
+    }
+  }
+
+重新build，发现app.hash.js是15.5kb，而vendor.hash.js大小是220kb，此时已经分离了业务代码和第三方源码。
+
+（5）进一步压缩
+
+*进一步压缩再在plugins中push一个函数：
+（https://webpack.js.org/guides/production/#minification）
+首先安装： npm i babel-minify-webpack-plugin -D
+然后导入到项目中：const MinifyPlugin = require('babel-minify-webpack-plugin')
+然后在else的plugins中使用：
+config.plugins.push(
+    new MinifyPlugin()
+  )
+这个函数是用来压缩js源码的，把一些变量名等变成一个字符，这样js会变得更小。
+
+app.hash.js 380k——379k
+vendor.hash.js 730k——726k
+为什么会这么大？？？？需要找到原因
+
+重新打包一下npm run build 看下效果，此时app.hash.js变成了15.4kb，vendor.hash.js变成了291kb（因为本来源代码就很少，而第三方源码都是压缩好的）。
+
+（6）在使用webpack配置后，js文件会自动添加到index.html中去，不需要再额外配置
+
+
+
+*（这个应该不需要，因为我们在build命令中已经添加了webpack打包的执行环境，不过先留着，至少知道有这么一个配置）
+还要声明一个webpack.DefinePlugun，这个有一个用途，可以让webpack区分打包的模块文件，比如react是使用开发的代码还是使用生产环境的代码（不同环境的代码有区别，开发的时候会有很详细的报错信息提示等），webpack在打包的时候就是根据这个区区分：
+config.plugins.push(
+    new MinifyPlugin(),    
+     new webpack.DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify('production')            
+        })    
+  )
+
+
+重新打包，并重启npm start 正常
+至此项目全部正常
+
+
+
+
+
+
+
+
+十七、CDN静态资源配置
+使用七牛CDN布置静态资源，把项目中的静态资源文件全部自动的上传到七牛CDN中，并且网页能够引用到上面的资源。
+
+（1）在七牛CDN的对象存储里面（资源主页——对象存储）。
+新建一个存储空间
+
+
+（2）初始化完成之后我们还要执行一遍：npm run deploy将静态资源部署到CDN
+
+
+
+
+十八、服务器process.yml编写（开发时直接参照后面的pm2一键部署就好了）
+
+在服务器上面部署网站，让其他人通过域名就能访问到我们的网站。
+
+在部署服务器上面代码的时候要注意一些点
+
+（1）首先我们要使用一个进程管理工具PM2，来管理服务器上node的进程
+因为node.js启动之后仅仅使用自己的命令去跑，node服务器有很多部署的概念我们就不能很好的执行，比如日志收集，比如如果服务不小心崩溃了，那么服务就无法访问了，如果没有一个工具帮我们自动重启，我们就需要手动去重启服务，而且我们不一定知道服务器是什么时候崩溃的。
+
+所以我们使用一个PM2工具来管理我们的node进程，可以帮我们做很多事情，收集日志，管理进程，重启服务器，根据配置启动多个服务的实例等等。
+
+PM2是目前作为node所有在正式环境部署情况下都会用到的一个工具。所以在部署我们的服务的时候我们也使用这个工具进行我们服务的管理。
+
+（1）在开发电脑上安装PM2：
+PM2是一个npm的包：npm i pm2 -g
+
+（2）在项目根目录下创建一个pm2的配置文件：process.yml（yml文件语法非常简单，写起来很舒服）
+
+（3）在配置文件中编写配置项：
+apps:
+  - script:
+一个斜杠表示一个数组，在apps里面可以包含多个数组（也就是多个app），我们在使用pm2执行配置文件的时候可以启动多个app。
+
+我们就可以在这配置app的选项：
+
+*./server/server.js  //要启动的app的脚本
+
+*name：jnode   // 是pm2启动进程的一个名字，我们可以根据这个名字来操作这个这个进程的后续操作（比如开启进程，关闭进程，删除进程，重启进程等，这些命令都可以通过这个名字去指定）
+
+* env_production:
+      NODE_ENV: production    // 指定环境变量。还有一个配置项叫（env：..）如果我们直接使用env来指定，那么在任何环境下面env指定的这个环境变量都会生效。我们使用env_production之后，在启动pm2的时候要--env然后再跟上production才能使用他下面的环境变量NODE_ENV: production
+
+
+（4）修改server.js
+我们在server.js中默认的启动的是3000端口，没有指定host（主机），默认的情况下他绑定的主机是0.0.0.0，也就是我们可以通过ip来访问我们启动的网站。这种情况下存在一定的安全问题，因为我们部署到服务器之后，服务器有一个对外的外网ip，如果我们使用当前的部署，那么外网通过ip端口（也就是别人通过访问42.50.27.520端口就可以直接访问到我们的服务，而不是通过域名）就可以直接访问我们的服务，我们并不想出现这种情况，所以在这我们要指定我们的host，host从哪里拿到呢？我们可以通过环境变量拿到：
+
+const host = process.env.HOST
+
+同样的端口我们也可以通过外部指定：
+const port = process.env.PORT
+
+同时如果没有指定的情况下我们给他一个默认值：
+const host = process.env.HOST || '0.0.0.0'
+const port = process.env.PORT || 3000
+
+
+然后将port和host作为参数传进去：
+app.listen(port, host, () =>{
+    console.log("server is listening on 3000")
+})
+
+（5）我们继续配置pm2的配置文件
+
+*继续配置环境变量，承接上面的NODE_ENV: production
+因为我们在server.js中定义了需要在环境变量中获取到host和port，所以我们需要在env_production这个配置项中去指定：
+HOST: localhost  // 在正式环境中我们使用localhost，这样就不能通过外网的ip来访问我们的服务了
+因为我们使用的端口是3000端口，但是服务器在启动之后会默认访问80端口，这样的话就访问不到我们的服务了。我们如何使用户在访问我们的域名的时候能访问到我们的服务呢？我们需要做一个反向代理，一般我们在服务器上都会通过nginx去做反向代理的操作，Nginx是一个非常好用的服务器工具，性能非常高，用它来做反向代理有很多好处，比如我们这个服务器上部署了好几个node的服务，并且端口都不一样，但是对外我们只有一个80端口，这个时候Nginx就可以帮我们在不同的域名指定同一个Nginx服务器，然后Nginx通过不同的域名去分发到对应的node服务，以此来访问到对应的node服务。这就是Nginx反向代理的操作。
+
+这样一个简单的pm2的配置文件就写好了，更多的配置内容，去访问pm2的官网（http://pm2.keymetrics.io/），文档里面有非常详细的讲解。
+
+作为一个成熟公司，部署的工作更多是运维的工作。因为服务器会涉及很多的安全知识，我们只需要去了解简单的部署和一些操作就可以了。
+
+apps:
+  - script:./server/server.js
+    name：jnode
+    env_production:
+      NODE_ENV: production 
+      HOST: localhost
+
+（6）使用pm2在本地启动我们的服务:
+*在命令行中：pm2 start process.yml
+我们可以在命令行中发现启动成功了，列出了一些简单的信息（app的name是jnode、cpu占用大小等等）
+
+*然后通过pm2 logs可以看到我们的日志
+我们可以看到server is listening on 3000是我们在server.js中自己定义的内容
+
+
+
+
+
+
+
+
+
+十九、使用webstorm将本地项目上传到GitHub
+修改代码——build——commit（填写commit message）——push——pm2更新代码
+
+GitHub上传文件选择问题：
+解决这个问题，就把文件根目录下的.get文件删除，然后重新git init ，这样就可以重新上传代码了，相当于初次上传代码到GitHub，挺爽
+
+13、git分支
+分支是在同一时间在不同版本的存储库的工作方式，是对master分支的拷贝，要是有分支版本，注意在clone的时候添加上分支
+
+
+（https://blog.csdn.net/dkbnull/article/details/61414350）
+13.1、首先安装git
+mac系统下，在安装xcode的时候就安装好了git。
+可以通过在命令行中输入git --version来查看版本
+
+然后进行配置（因为Git是分布式版本控制系统，所以，每个机器都必须自报家门）：
+$ git config --global user.name "Your Name"
+$ git config --global user.email "email@example.com"
+
+
+
+13.2、首先配置webstorm的GitHub
+（1）command+‘,’打开设置界面
+
+（2）搜索GitHub
+在弹出的对话框中：Login输入GitHub账户名（不要输入邮箱，因为是通过用户名来锁定账户的，而不是邮箱），Password中输入GitHub密码
+
+
+（3）搜索git，点击右侧的test按钮（这个路径是git的安装路径，一般会自动填充好，我们需要测试一下是否正确就行）弹出git版本号等信息的弹出框。
+
+（4）本地 Git 仓库和 GitHub 仓库之间的传输是通过 SSH 加密的，所以我们需要配置验证信息。
+（一般在安装git的时候我们已经生成好了，并且进行了配置）
+
+首先检查本地电脑中是否有.ssh文件：cd ~/.ssh 然后执行ls命令查看该文件中包含的文件都有什么
+
+如果没有id_rsa文件，那么就通过命令生成一个：ssh-keygen -t rsa -C "注册GitHub的邮箱"，直接三个回车就行
+
+（5）在GitHub中添加新的SSH
+title可以自己取一个容易区分的名字如项目名称“okay”，key为id_rsa.pub中的内容。
+
+command+shift+“.”将隐藏文件显示出来，在用户——dawn——.ssh——找到id_rsa.pub文件，并右击用记事本打开，将记事本里面所有的内容都拷贝到GitHub中去
+
+
+（6）验证本地仓库是否和GitHub仓库连接成功：
+ssh -T git@github.com
+
+返回successful说明连接成功了。（第一次可能会弹出一个对话，直接输入yes）
+
+到这里，所有的配置已经完成，我们就可以会用 WebStorm 上传本地项目到 GitHub 了。
+
+13.3、将本地项目上传到GitHub
+（1）VCS——import into version control——share project on GitHub
+首先登陆需要上传的GitHub账户
+
+（2）登陆之后会弹出一个share的对话框
+因为这一步操作会在GitHub中建立一个新的仓库，所以仓库名不能和已有的仓库名有重名，点击share之后会有一个弹出框，选择要上传的内容。不要把node_modules上传上去，这个文件太大了，而且在运行文件的时候都会先执行npm install
+
+（3）
+
+点击webstorm上面的vcs——import into version control ——share project on GitHub
+点击 Share Project on GitHub 后打开下图所示面板，输入想要上传到哪个仓库，这里注意，不能与 GitHub 已有仓库重名，因为这步操作会在GitHub创建一个新的仓库。
+
+13.4、其他一些注意点
+（1）commit因为LF will be replaced by CRLF in报错的时候，在命令行里面全局配置：
+git config --global core.autocrlf true
+
+
+
+
+二十、服务器环境搭建
+14.1、安装node
+在centos服务端安装node（https://blog.csdn.net/xerysherryx/article/details/78920978）
+
+（1）首先安装：yum install -y wget
+
+注意：我们要在[root@root ~]# 路径下执行命令，而不是在[root@root ]下面执行命令
+ls是查看文件列表
+
+（2）然后访问node官网，找到对应版本的node地址：我们选择linux64位版本，然后右键复制链接：https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-x64.tar.xz
+
+到服务器的命令行中输入：wget https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-x64.tar.xz
+
+（3）等下载完成之后解压下载好的文件：
+xz -d node-v8.12.0-linux-x64.tar.xz
+tar -xf node-v8.12.0-linux-x64.tar
+
+（4）然后配置node文件（将node文件添加到系统PATH目录下的可执行文件）：
+ln -s ~/node-v8.12.0-linux-x64/bin/node /usr/bin/node
+ln -s ~/node-v8.12.0-linux-x64/bin/npm /usr/bin/npm
+
+（5）然后测试：
+node -v
+npm
+
+
+
+
+
+二十一、服务器代码部署（centos7系统）
+
+*mkdir 文件名
+touch 文件名
+rm -rf 文件
+
+*nginx服务重启：
+sudo systemctl start nginx
+
+*查看服务器端口占用情况：
+      安装工具：yum install net-tools
+      执行命令查看：sudo netstat -tulpn
+      关掉某个进程：sudo kill -2 <PID>（sudo kill -2 3308）
+      
+
+
+*使用yum安装和卸载包：
+    yum install nginx
+    yum remove nginx
+
+* which nginx（这条命令主要是用来查找系统PATH目录下的可执行文件。说白了就是查找那些我们已经安装好的可以直接执行的命令）
+whereis nginx（与which不同的是这条命令可以是通过文件索引数据库而非PATH来查找的，所以查找的面比which要广）
+还有locat、find都是查找文件，但是适用场景不同
+
+*vim操作
+用vim打开文件：vim +文件路径(vim /nginx/conf.d/okay.conf)
+ctrl+c可以跳出内容编辑
+
+在已有文件中插入内容：i
+保存并关闭文件：wq
+
+
+
+绑定域名、nginx安装配置、git、pm2等
+
+15.1、服务器中Git配置
+（1）首先检查服务器是否有git：
+git --version
+（2）安装Git：
+yum install git-core（yum install -y git 作用一样，多回答了一个yes，多的这个回答不好）
+（3）卸载git：
+yum remove git
+
+（4）在服务器root文件下新建一个dawn文件夹：
+mkdir dawn
+我们把自己的东西都放在这个文件夹里面，用来和服务器系统文件区分，便于管理
+
+（5）进入到dawn文件夹中，将GitHub中的代码拷贝到这个文件夹里面
+git clone https://github.com/L-Congratulations/okay.git（我们要使用https方式，这样不会报错）
+
+（6）初始化项目
+进入到项目okay中，首先执行npm install 然后执行npm run build 然后运行npm start看是否报错
+其实我们部署到服务器上的代码肯定是生产环境的代码，所以我们在自己电脑上首先运行npm run build 然后把dist、server、和一些配置文件上传到服务器就行，client，build等文件可以不用上传（先进行一个测试，然后再敲定结论）
+
+
+15.2、服务器域名部署（以阿里云服务器为例）
+（1）打开云服务商网站找到域名选项——找到自己已经购买的域名——点击解析——点击修改进行配置，具体配置参数查看（https://help.aliyun.com/document_detail/29716.html?spm=a2c4g.11186623.2.10.73bf4c07FeOthu）
+
+（2）测试是否解析成功
+在命令行通过ssh root@www.luckoi.cn 链接服务器，如果能正常链接，说明域名配置成功
+
+
+15.3、在服务器上配置Nginx
+Nginx反向代理，我们在一个服务器中同时部署了几个服务，但是每个服务启动的端口都不一样，但是对外我们只有一个80端口，nginx可以帮助我们在不同的域名指定同一个Nginx服务器，然后通过不同的域名将域名分发到不同的node.js服务
+
+
+（1）首先开放云服务器的80端口（https://blog.csdn.net/lzl18918615216/article/details/80049471）
+打开云服务网站，找到自己服务器实例的安全组选项——点击配置规则——入方向——添加安全组规则（快速创建规则，可以一次创建多个端口开放），具体配置参数查看（https://help.aliyun.com/document_detail/25475.html?spm=5176.2020520101.0.0.6ac24df5WHZ7xN）
+
+（2）如果系统设置了防火墙，可以对防火墙进行操作，开放某个端口，或者允许某些协议访问
+sudo firewall-cmd --permanent --zone=public --add-service=http 
+sudo firewall-cmd --permanent --zone=public --add-service=https
+sudo firewall-cmd --reload
+允许http/https访问，并重启防火墙使设置生效
+
+systemctl stop firewalld.service
+firewall-cmd --zone=public --add-port=80/tcp --permanent
+systemctl restart firewalld.service
+关闭防火墙、设置防火墙开放的端口、重启防火墙
+
+（3）Nginx的安装和删除
+&、添加CentOS 7 EPEL仓库（添加Nginx存储库）：
+sudo yum install epel-release
+
+&、yum命令安装Nginx （上一步中Nginx存储库已经安装在您的服务器上l）：
+sudo yum install nginx
+
+&、Nginx不会自行启动。重启Nginx：
+sudo systemctl start nginx
+
+&、在浏览器中访问已经配置好的域名www.luckoi.cn（或者服务器的IP）
+如果成功的话会返回一个welcome to Nginx的页面
+
+
+#删除Nginx：
+yum remove nginx
+然后通过which nginx 查看user下的文件是否删除完全
+然后执行whereis nginx 查看哪里还有nginx的残留文件，并通过rm -rf 删除残留文件
+
+
+（4）nginx配置
+Nginx配置文件的目录在服务器系统的：/etc/nginx下
+只配置反向代理的话我们之间在conf.d文件中新建一个文件：okay.conf（项目名+.conf）
+nginx服务会自动识别到conf.d中的.conf文件。
+
+okay.conf配置文件：
+
+upstream okay{
+        server 127.0.0.1:9000;
+        keepalive 64;
+}
+server{
+        listen 80;
+        server_name www.luckoi.cn（106.13.3.220）;
+// 想通过什么域名来访问,只有通过www.luckoi.cn这个域名访问才会执行下面的location代理操作，把这个请求发送到node服务器上面，同理我们就可以再起一个server通过在这进行控制来把域名分发到不同的服务器上面，这样就可以部署两个服务器，使用不同的域名访问到不同的服务。
+        location / {
+                root /root/dawn/okay;
+// nginx配置root路径问题：
+删掉root路径和加上都可以访问到页面，所以可以直接不加，因为nginx服务代理的就是将80端口代理到9000端口，只要监听的是9000端口的服务就行了，就不需要配置root路径了。所以在这的root参数可以直接删除，程序正常运行没问题
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header Host $http_host;
+                proxy_set_header Connection "";
+                proxy_pass http://okay;
+// 这的okay对应的是upstream那定义的okay
+        }
+}
+
+
+配置文件写完之后测试一下nginx配置是否有问题：nginx -t
+
+然后重启nginx服务器，使我们的配置生效：service nginx reload
+如果启动失败很可能是80端口被占用了（已经有一个nginx在运行了，需要把占用80端口的服务器关掉，然后重启）
+
+到这访问我们配置www.luckoi.cn，就可以返回okay项目的网页了。
+
+
+
+
+
+二十二、pm2一键部署
+在服务器中：pm2安装（npm install -g pm2）——pm2添加到环境变量——pm2常用命令（pm2 kill / pm2 list /pm2 stop test  / pm2查看日志等等）
+
+在服务器中安装pm2：
+npm install -g pm2
+
+
+服务器中的环境已经搭配好的前提下，通过配置一个文件，可以只敲一个命令就完成项目部署（更新、重启）
+只需要在本地敲一个命令而不需要登录（因为ssh给我们提供了一个功能，可以将本地秘钥和服务器进行匹配，并将服务器密码保存到本地，这样以后只需要执行ssh root@www.luckoi.cn就能连接到服务器，不需要重新输入密码了）服务器进行操作，相当于写了一个脚本，将登录服务器，下载代码，服务器代码初始化（npm install ）等通过脚本来执行
+
+在客户端：
+12.1、在项目根目录下创建一个文件ecosystem.json
+这个就是我们配置的脚本，我们可以通过pm2来执行这个json文件
+（1）app参数：是一个数组，我们可以在里面定义多个服务，每一个元素里面的内容都是启动项目服务的一些参数
+
+deploy参数：是部署服务的一些操作命令，登录服务器的用户名（root），需要登录的服务器的IP（或者域名），需要克隆的项目的GitHub地址，克隆下来的项目需要放到服务器哪个文件夹里面，项目克隆到服务器中后初始化要执行的命令
+
+（2）我们需要将登录服务器的密码保存到本地，这样我们编写的脚本才能在不使用密码的前提下成功部署项目到服务器：
+ssh-copy-id root@www.luckoi.cn 
+然后输入密码
+
+以后再登录就不需要重新输入密码了
+
+（3）ecosystem.json代码：
+
+{
+    "app":[
+        {
+            "name":"okay",
+            "script":"./server/server.js",
+            "env_production":{
+                "NODE_ENV":"production",
+                "HOST":"localhost",
+                "PORT":9000
+            }
+        }
+    ],
+    "deploy":{
+        "production":{
+            "user":"root",
+            "host":"www.luckoi.cn",
+            "repo":"https://github.com/L-Congratulations/okay.git", 
+            "ref":"origin/master",   
+// ref这个分支配置是必须的，一般默认就是master分支
+            "ssh_options": "StrictHostKeyChecking=no",
+            "pre-deploy":"git fetch --all",        
+            "path":"/root/dawn/okay",
+// 在这要保证服务器的dawn中有okay这个文件夹，如果没有okay这个文件夹，代码依旧会下载到okay中但是npm 命令执行的时候却找不到okay这个文件夹
+            "post-deploy":"npm install && pm2 startOrRestart ecosystem.json --env production"
+        }
+    }
+
+}
+
+
+（4）先在编辑器中的git——commit查看一下变动的代码，然后将git——repository——push——将commit的代码直接提交到GitHub仓库，返回到GitHub仓库中我们可以看到代码更新的说明（pm2一键部署，也就是我们在commit的时候填写的commit message）和更新的时间
+
+注意因为ecosystem.json是在本地执行的，所以并不需要传递到服务器里面
+
+
+（5）在本地，所有命令都是在本地电脑操作的，而不是在服务器里面操作：
+使用pm2 执行ecosystem.json文件,pm2远程部署语法：
+（为了检测是否有效，先登录服务器将正在运行的服务停掉pm2 stop okay）
+pm2 deploy ecosystem.json production setup
+返回success说明GitHub中的代码已经成功克隆到服务器的指定位置了
+
+然后是在服务中的部署命令（本地运行代码）：
+pm2 deploy ecosystem.json production (--force)
+当上传到服务器的代码不完全时（只有dist、server和配置文件，而没有源码的时候）可能会需要用--force
+
+（6）pm2更新
+源码修改——npm run build——npm start（本地检查代码运行是否符合预期，如果符合停止本地服务器）——commit（Git—》commit directory）,要填写commit message方便查看修改信息等内容——push到GitHub仓库（Git-》repository-》push），然后到git仓库检查一下是否正常更新——通过pm2更新：pm2 deploy ecosystem.json production update,这个命令会帮我们更新服务器中的代码，并重启服务。
+
+
+
+当然前提是nginx已经在服务器上配置好了，那么再重新更新代码的时候使用pm2就很方便。
+
+
+
+
+
+
+
+
+
+
+
+
+二十三、常见问题总结：
+
+23.1、网站加载速度问题（昨天600ms，今天将近3s找到原因）：
+上传到服务器的代码只需要dist、server、package.json、favicon.ico等服务器需要用到的文件就行，很多东西不需要上传到服务器。但是依旧没有解决请求时间过长的问题。
+第一次加载速度确实慢，但是vendor.hahs.js缓存到本地之后加载速度就快了。
+关于文件会增大，是因为我们在服务端使用的session存储的信息，所以每次请求都可能会在session中存储数据，这样就导致了项目会逐渐增大，但是在实际工作中，我们会用数据库替代掉服务器里面的session。
+
+
+网站加载速度，上传到服务器的代码只需要dist、server、package.json、favicon等服务器需要用到的文件就行，很多东西不需要上传到服务器。但是依旧没有解决请求时间过长的问题。第一次加载速度确实慢，从服务器请求数据axios明显要比从本地请求数据速度要快，但是还是比较慢，请求一个网页话费的时间太长，解决办法，可能是在服务器直接把数据请求到，然后传递到页面，而不是在打开页面之后再发送数据请求，这样的话会加快速度请求，还可以通过cdn方式，将bandle包存储在cdn服务器上，这样就会有最有请求的通道，加快数据加载的速度，话说几兆的文件，加载速度问什么要两秒呢？
+
