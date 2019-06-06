@@ -1,0 +1,441 @@
+一、创建应用
+1.1、npx create-react-app my-app
+cd my-app
+npm start
+
+1.2、在主机上调试代码：
+http://192.168.49.128:3000/
+
+1.3、在src下创建几个文件夹： 
+views、store、config、components
+
+1.4、路由配置
+（1）安装路由：
+
+
+二、使用antd搭建UI样式
+2.1、在项目中使用antd：
+（1）安装antd：npm i antd -S
+（2）在项
+目中导入antd：
+首先将css文件导入：在App.css文件夹中：@import '~antd/dist/antd.css'
+然后将需要的组件导入:在需要使用的组件中：import Button from 'antd/lib/button'
+
+2.2、背景图片使用
+import img1 from '../asset/img1'
+backgroundImage: `url(${Background})` 
+
+
+
+
+
+
+十六、react路由详解
+16.1、路由页面的出口就是Route标签：一个页面如果想要有一个容器里面存放通过路由传递过来的内容，那么路由内容的出口就是Route标签，而一个Route标签对应一个路由匹配规则，如果想在该页面中存放多个路由规则，那么就需要定义多个Route标签。
+
+一个Route标签对应一个路由匹配规则，同时也对应一个组件，该组件中包含新的路由规则那就是属于子路由，子路由想在子组件中显示，需要在子组件中定义对应的Route匹配规则
+Route标签里面的path可以指向任何一个路由，如path='/about'就会跳转到首页的Route出口显示about组件，而path={`${match.path}/about`}就会在对应的子路由Route出口显示about组件。
+如果路由有子路由，那么久不能使用exact属性，因为这是严格匹配，子路由将不会被匹配到，所以子路由就会失效。
+
+<Route path={`${match.path}/list`} component={TopicList}/>
+
+（2）同一个路由匹配规则下定义两个Route会同时显示：
+<Route path={`${match.path}`} component={TopicList}/>
+<Route path={`${match.path}/login`} component={Login} exact/>
+此时TopicList页面和Login页面会同时显示在页面中，要想只显示一个，那么就需要不同的路由匹配规则：
+<Route path={`${match.path}/list`} component={TopicList}/>
+<Route path={`${match.path}/login`} component={Login} exact/>
+这样在匹配到list的时候就不会显示Login，匹配到login的时候就不会显示TopicList组件
+
+
+16.2、路由重新架构：
+（1）路由的默认入口就是“/”，当我们想要路由匹配到“/”的时候自动跳到另外一个路由下面的时候，我们就需要使用路由重定向。
+实际需求如：我们在访问一个网站的时候首次加载出来的是home页面。
+因为我们访问网站的时候不会在网站后面再加上/home进行访问，但是我们又想用户首先看到的是home路径下的页面，虽然我们可以在“/”路径直接匹配Home组件，但是我们在“/”路径下用{match}匹配路由的时候就是匹配到的“/”，这样我们在home下面做子路由的时候就会比较麻烦，导致子路由的路由匹配混淆，而如果我们之接将“/”重定向到“/home”之后在home下面的子路由我们就可以通过{match}直接匹配到“/home”，这样子路由就可以方便的命名{match.path}/list.
+
+又因为我们在页面中直接使用Route直接定义多个路由的时候，因为每个路由下面都有子路由存在，所以不会使用exact属性进行严格匹配，但是“/”路径和“/home”路径都会匹配“/”这个路径，所以会使Route被多次匹配到，react会提示，所以我们使用Switch标签将所有Route都包含起来，这样经过Switch处理Route只会匹配到一次，可以避免上面遇到的问题。
+<Switch>
+              <Route path='/home' component={Home} key='home' />
+              <Route path='/about' component={About} key='about'/>
+              <Route path='/' render={()=><Redirect to='/home'/>} key='index' />
+</Switch>
+
+我们在App.jsx这个容器中只负责给整个App提供一个展示的出口。具体根据业务需求和UI图对页面架构进行划分，在这我们会将home页面、login页面和about页面作为三个UI逻辑上没有关联的三个页面进行展示（也就是home、login、about三个页面都是占满整个容器，而不是作为容器的一个部分进行展示）
+
+所以在App.js中就需要三个Route标签，分别对应三个页面的出口，所以进行如下路由配置：
+
+<Switch>
+       <Route path='/home' component={Home} key='home' />
+       <Route path='/login' component={Login} key='login'/>
+       <Route path='/about' component={About} key='about'/>
+       <Route path='/' render={()=><Redirect to='/home'/>} key='index' />
+       {/*要将redirect放到最后一个位置，这样不会造成先匹配/然后再匹配/home的情况*/}
+</Switch>
+{/*经过switch处理，在Route的dom结构里面只会存留一个Route，默认情况下是四个Route都会存在于dom结构中但是显示的只是路由规则匹配到的那个*/}
+
+（2）对于Route的path，我们可以进行多层路由匹配规则，如：
+<Route path={`${match.path}/list/:topicId`} component={Test}/>
+list这个路径就是我们自己加上去的，只要匹配到这个路径，就可以将Test组件在Route这个出口中进行显示，因此我们可以花样定义路由的匹配规则。
+
+解惑：既然我们可以在path的路径下加自定义规则，那么为什么我们不在App.jsx中将“/”路径直接指向Home组件，而是需要进行路由重定向这一步操作呢？
+首先一个问题是虽然路由能跳转过去，但是浏览器的前进后退按钮会失效。
+这是因为，我们如果将“/”路径直接指向Home组件，那么Home组件显示的时候{match}匹配到的就是“/”，当我们给他添加自定义的路由匹配规则：<Route path={`${match.path}/list/:topicId`} component={Test}/>那么匹配到的路由就是：“/list/...”，但是我们在根路径下并没有“/list”这个路由，所以就会导致路由匹配不到，报错。
+
+
+（3）home页面路由编写
+home页面有一个公共的AppBar，然后可以将头部的地方定义为路由出口位置。
+
+头部AppBar是所有home页面都有的，所以直接作为一个组件导入，直接嵌套写死在home页面上，而下面的内容区域可能会根据点击的按钮不同发生变化，就需要一个可以更改的区域。
+
+我们在这根据业务需求在这规定，该页面只有一个路由出口（也就是每次更新的所有内容都在唯一的一个出口进行展示）。
+
+所以，我们将topic_list整个组件作为一个整体渲染在路由出口中，而topic_detail整个组件作为一个整体渲染在路由出口中，这样在home页面中就有两个Route进行定义
+
+根据路由匹配规则，当我们输入网址之后首先匹配到“/”然后重定向到“/home”然后加载Home组件，此时的路由是“/home”，Home组件中我们已经将AppBar组件写死在了页面中，topic_list我们需要通过路由加载进来，而默认的路由是“/home”，我们并没有触发事件将路由跳转到“/home/list”或者其他路由上，所以我们需要在“/home”默认的情况下吧topic_list组件加载进来，也就是通过下面的方式：
+<Route path={`${match.path}`} component={TopicList}/>
+这样我们就将topic_list作为默认路由加载进来了，当访问网址（“/home”）的时候自动就加载的是Home的topic_list路由。
+
+（4）进入到topic_list页面之后，需要解决的问题：
+首次页面渲染（包括网站第一次加载和刷新网页两种情况）的时候数据加载的问题：
+
+
+（5）浏览器前进后退按钮原理和处理逻辑：
+这有一个非常重要的问题，就是浏览器的前进和后退按钮相当于是组件更新操作，所以会触发componentWillUpdate函数里面的内容以及render函数里面的内容。并不会触发componentDidMount函数。这个对于使用浏览器的前进后退按钮来说非常重要。
+但是componentWillUpdate函数会在每次更新的时候都会触发，比如我们使用异步请求请求到了40个数据，那么componentWillUpdate就会执行40次，同理，如果我们在componentWillUpdate里面添加函数，那么这个函数也会执行40次，因此不能通过在componentWillUpdate中来更新store中的数据，那样会陷入死循环。
+
+又因为我们在changeTab函数中修改了state中的值，所以这会触发生命周期中的另外一个生命周期函数componentWillReceiveProps，这个周期函数在state发生改变的时候只会触发一次，而且是在render之前触发的，所以我们可以通过在这个生命周期函数中检测url的变化，componentWillReceiveProps(nextProps, nextContext) {
+        console.log(4)
+        console.log(nextProps)
+    }
+我们可以通过检测nextProps中的url和当前的url，通过对比来确定是否更新store中的数据，从而控制前进后退按钮之后数据更新。
+
+业务逻辑：页面第一次加载的时候，因为是第一次渲染，所以会在页面渲染完成之后执行componentDidMount生命周期函数，我们需要判断当前的url中的tab值（因为用户可能是第一次进入页面，也可能是已经选中了别的tab然后刷新页面，这两种情况我们都要考虑，所以在这需要判断当前url中的tab值，如果没有，就给一个默认值'all'，如果有就获取到之后作为参数传入axios进行数据请求）：
+componentDidMount() {
+        const value = queryString.parse(this.props.location.search).tab || 'all'
+        // 首先要获取到网址中的路由，因为在刷新页面的时候可能url是/home/job，
+        // 所以我们需要刷新的就是job数据，当用户第一次进入网页的时候就是all，
+        // 当用户刷新的时候就是当前url中的tab值因为我们在render函数中已经通过同样的方法
+        // const tab = queryString.parse(location.search).tab || 'all'保证了
+        // tab选中的项和url中的tab值永远一致，所以在这只专注于当前的业务逻辑就行
+
+        const query = {
+            tab:value
+        }        
+        this.props.topicStore.fetchTopics('/api/topics',query)
+    }
+
+当页面首次加载的时候数据已经展现在了页面上，
+当我们点击tab之后，会执行
+changeTab(e,value){
+        this.props.history.push(`${this.props.match.url}/?tab=${value}`)
+        // 在这我们通过js来修改当前的路由，如`${this.props.match.url}/?tab=${value}`
+        // 这种路由匹配规则就是给当前路由添加上一个search参数，形如/home/?tab=share,
+        // 获取这个参数的方法是this.location.search就会得到?tab=share这个字符串，
+        // 我们可以通过queryString.parse()方法将这个字符串解析成json对象，
+        // js传参和路由匹配的规则很多，我们在这使用这个方式是因为简单便捷，
+        // 我们可以轻松的获取tab的值，而且还不会造成路由匹配规则混乱（
+        // 如使用${this.props.match.url}/${value}这种方式的时候，
+        // 虽然我们也可以通过字符串截取的方式获取到tab的值，但是因为我们还可能会在/home下面有其他的子路由，
+        // 这时候如果出现/home/detail这个路由的时候，那么截取的字符串就会是detail，
+        // 而我们的axios参数里面并没有这个字段，而且tab的value中也没有这个字段从而造成错误，
+        // 所以当我们针对一个独立的页面，需要通过某种参数来区分该页面中不同数据的时候用/?tab=${value}
+         // 这种方式是最好的选择，既简单而且还能保证准确获取到正确的数据，但是这有一个bug，就是有的时候math.url会多出一个/来，所以为了避免不出错，我们改成：
+this.props.history.push(`${this.props.match.url}/list?tab=${value}`)
+    }
+
+在这个函数里面我们通过push方法，修改了props中的history属性，而componentWillReceiveProps生命周期触发的条件就是state或者props发生改变，所以上面的方法会触发componentWillReceiveProps生命周期，因为执行changeTab会触发componentWillReceiveProps，而且在我们按浏览器的前进后退按钮的时候其实本质也是改变this.props.history中的值，和上面的changeTab里面的函数本质一样。所以我们要满足浏览器可以进行前进后退，同时点击tab按钮的时候需要刷新对应的数据这两个要求，那么在componentWillReceiveProps这个生命周期里面进行数据请求的操作是最合适的：
+
+componentWillReceiveProps(nextProps, nextContext) {
+        // 首先这个生命周期函数只会在props或者state改变之后执行一次，
+        // 因为这个函数执行完成之后才会进行render渲染，此时的state和props已经是最新的了，所以render只需要一次渲染就可以了
+        // 不会像componentWillUpdate那样每个数据改变，都会随render重新执行一次.
+        const thisSearch = queryString.parse(this.props.location.search).tab
+        // 跳转前url中的search
+        const nextSearch = queryString.parse(nextProps.location.search).tab
+        // 跳转之后url中的search
+
+        if(thisSearch !== nextSearch){
+            // 如果两个search不同，那么就说明用户点击了不同的tab，我们就需要请求新的tab对应的数据,
+            // 如果相同则说明用户点击了同一个按钮，我们在这就不进行重新数据请求了，
+            // 让用户造成一个数据刷新很快的错觉，要是为了保证数据的实时更新我们也可以不加这个判断，根据需求来添加就好
+            const query={
+                tab:nextSearch
+            }
+            this.props.topicStore.fetchTopics('/api/topics',query)            
+        }        
+    }
+
+
+完整的topic_list代码：
+import React,{Component} from 'react'
+import withStyles from '@material-ui/core/styles/withStyles'
+import {inject,observer} from 'mobx-react'
+import {NavLink,Route,Link,withRouter} from 'react-router-dom'
+import queryString from 'query-string'
+
+import Container from '../../layout_components/container'
+import Tabs from '@material-ui/core/Tabs'
+import Tab from "@material-ui/core/Tab";
+import List from '@material-ui/core/List'
+
+
+import {tabs} from '../../../util/variable_define'
+
+
+import TopicListItem from "../../function_components/topic_list/list_item";
+
+
+@inject(stores => ({
+    topicStore:stores.topicStore
+})) @observer
+class TopicList extends Component{
+    constructor(props){
+        super(props)
+        this.state ={
+            tab:'all'
+        }
+        this.changeTab = this.changeTab.bind(this)
+    }
+
+    componentWillUpdate(nextProps, nextState, nextContext) {
+        console.log('will')
+
+    }
+    componentWillReceiveProps(nextProps, nextContext) {
+        // 首先这个生命周期函数只会在props或者state改变之后执行一次，
+        // 因为这个函数执行完成之后才会进行render渲染，此时的state和props已经是最新的了，所以render只需要一次渲染就可以了
+        // 不会像componentWillUpdate那样每个数据改变，都会随render重新执行一次.
+        const thisSearch = queryString.parse(this.props.location.search).tab
+        // 跳转前url中的search
+        const nextSearch = queryString.parse(nextProps.location.search).tab
+        // 跳转之后url中的search
+
+        if(thisSearch !== nextSearch){
+            // 如果两个search不同，那么就说明用户点击了不同的tab，我们就需要请求新的tab对应的数据,
+            // 如果相同则说明用户点击了同一个按钮，我们在这就不进行重新数据请求了，
+            // 让用户造成一个数据刷新很快的错觉，要是为了保证数据的实时更新我们也可以不加这个判断，根据需求来添加就好
+            const query={
+                tab:nextSearch
+            }
+            this.props.topicStore.fetchTopics('/api/topics',query)
+        }
+    }
+
+    componentDidMount() {
+        const value = queryString.parse(this.props.location.search).tab || 'all'
+        // 首先要获取到网址中的路由，因为在刷新页面的时候可能url是/home/job，
+        // 所以我们需要刷新的就是job数据，当用户第一次进入网页的时候就是all，
+        // 当用户刷新的时候就是当前url中的tab值因为我们在render函数中已经通过同样的方法
+        // const tab = queryString.parse(location.search).tab || 'all'保证了
+        // tab选中的项和url中的tab值永远一致，所以在这只专注于当前的业务逻辑就行
+
+        const query = {
+            tab:value
+        }
+        this.props.topicStore.fetchTopics('/api/topics',query)
+    }
+
+    changeTab(e,value){
+        this.props.history.push(`${this.props.match.url}/list/?tab=${value}`)
+        // 在这我们通过js来修改当前的路由，如`${this.props.match.url}/?tab=${value}`
+        // 这种路由匹配规则就是给当前路由添加上一个search参数，形如/home/?tab=share,
+        // 获取这个参数的方法是this.location.search就会得到?tab=share这个字符串，
+        // 我们可以通过queryString.parse()方法将这个字符串解析成json对象，
+        // js传参和路由匹配的规则很多，我们在这使用这个方式是因为简单便捷，
+        // 我们可以轻松的获取tab的值，而且还不会造成路由匹配规则混乱（
+        // 如使用${this.props.match.url}/${value}这种方式的时候，
+        // 虽然我们也可以通过字符串截取的方式获取到tab的值，但是因为我们还可能会在/home下面有其他的子路由，
+        // 这时候如果出现/home/detail这个路由的时候，那么截取的字符串就会是detail，
+        // 而我们的axios参数里面并没有这个字段，而且tab的value中也没有这个字段从而造成错误，
+        // 所以当我们针对一个独立的页面，需要通过某种参数来区分该页面中不同数据的时候用/?tab=${value}
+        // 这种方式是最好的选择，既简单而且还能保证准确获取到正确的数据，但是这有一个bug，就是有的时候math.url会多出一个/来，所以为了避免不出错，我们改成：
+this.props.history.push(`${this.props.match.url}/list?tab=${value}`)
+    }
+
+
+
+    render() {
+        const {match,location,topicStore} = this.props
+        const topicList = topicStore.getlist
+        const tab = queryString.parse(location.search).tab || 'all'
+        return(
+            <Container>
+                <Tabs value={tab} onChange={this.changeTab}>
+                    {/*value属性用来确定哪个Tab是被选中的,该属性的值就是下面tab的序号,每次点击tab会触发一个事件，
+                    用来修改value中的值,这个方法接收两个参数，e和index，虽然不知道是如何传值的，但是照着例子写就没问题*/}
+                    {
+                        Object.keys(tabs).map(t=>(<Tab label={tabs[t]} value={t} key={t} />))
+                        // Object.keys(tabs)会将tabs对象的key值枚举出来形成一个数组
+                    }
+                </Tabs>
+                <List>
+                    {/*listItem是需要包含在List里面的*/}
+                    {topicList.map((topic,index)=>(
+                            <NavLink style={{textDecorationLine:'none'}} to={{pathname: `${match.path}/detail/${topic.id}`,state:{id:topic.id,index:index}}} key={topic.id} ><TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} /></NavLink>)
+                         //<TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} key={topic.id}/>)
+
+                    )}
+                </List>
+                {/*<Link to={`${match.path}/test`}>测试test</Link>*/}
+                {/*<Route path={`${match.path}/test`} component={Test}/>*/}
+                {
+                    syncingTopics ? (
+                        <div style={{
+                            display:'flex',
+                            justifyContent:'center',
+                            padding:'40px 0'
+                        }}>
+                            <CircularProgress color='inherit' size={100}/>
+                        </div>
+                        // 因为loading需要居中，所以用div包裹
+                    ) : null
+                    // 使用三元运算符来判断loading是否显示
+                }
+            </Container>
+        )
+    }
+}
+
+
+
+const styles ={
+    root:{
+
+    }
+}
+
+export default withStyles(styles)(TopicList)
+
+
+
+
+16.3、路由重认识：
+<Route path={`${match.path}/list`} component={TopicList}/>
+
+一个Route只对应一个唯一的component，Route作为该组件的一个出口将组件加载到页面中。
+
+Route作为子路由的时候（home子路由为例），首先path必须要是父组件路由的扩展路由，不能是其他任何路由：path={`${match.path}/list`}，根据路由的匹配规则，当我们访问/home/list的时候，首先会先在首页中匹配path='/home'的Route，找到之后就如到这个Route对应的组件Home中，然后在Home组件中匹配path='/home/list'对应的Route，在这任何其他以非/home开头的Route都无法进行匹配，找到了path=/home/list对应的Route之后就会将Route对应的list组件加载进来，从而完成路由的匹配。而别的页面在访问/home/list的时候也会返回的是home+list而不是单个的list组件，/home/list作为一个整体进行跳转。
+
+而我们如果在子页面中添加一个path='/detail'的Route，那么当我们访问/detail的时候，因为在首页中并没有找到该路径（首页只有/home /login /about），所以该页面会匹配不到，也就是即使我们添加了，在我们访问/detail的时候并不会在子页面中显示出来。写了也是白写。
+
+也就是path指向哪里，才会在对应的页面中找到对应的组件，只有Route所在的位置和path指向的位置一致时，才能加载出对应的component，否则全都是无效的Route。
+（不能是path='login/list',因为路由的匹配规则，首先会匹配/,然后会匹配/login,找到path='/login/'的Route组件，然后在在/login对应的组件中，寻找path='/login/list'对应的Route组件
+所以当我们在在访问login/list的时候匹配到/login之后就匹配不到/login/list了，因为login路径下并没有/list的Route存在，所以页面就会停留在/login所在的组件上。）
+
+（2）路由匹配顺序的问题：
+<Switch>
+       <Route path={`${match.path}`} component={TopicList}/>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />
+      
+</Switch>
+如上当我们访问/home的时候会匹配到TopicList组件，当我们访问/home?tab=all的时候也会匹配到TopicList组件，当我们访问/home/detail的时候我们依旧会匹配到TopicList组件，这是因为这些路径都符合path={`${match.path}`} 的匹配规则，只要是/home开头的路由都会匹配到TopicList这个组件，并直接进入到组件内，来不及匹配他后面的组件。
+
+如果我们想让/home/detail访问的时候匹配到TopicDetail组件，/home匹配到TopicList组件，那么我们可以有两种方法，第一种将两个Route颠倒位置：
+<Switch>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />
+      <Route path={`${match.path}`} component={TopicList}/>
+</Switch>
+这样当我们访问/home的时候因为path={`${match.path}/detail/:topicId`}不符合匹配规则，所以会转向匹配下一个Route，知道匹配到符合要求的path，并进入组件内。这样写换句话说就是除了/home/detail会匹配到TopicDetail组件，其他/home开头的组件都会进入到TopicList组件里面
+
+
+
+另外一个方法是添加exact：(这个方法不可取，弊病太多)
+<Switch>
+       <Route path={`${match.path}`} component={TopicList} exact/>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />      
+</Switch>
+这个方法原理是只有完全符合path={`${match.path}`}这个规则的url才能进入到TopicList组件中，如：/home或者/home/?tab='job',而其他路径/home/detail则不会进入到TopicList中，这样会导致的一个问题是TopicList组件下面的子路由将无法在匹配到，因为子路由访问的路径是：/home/list而因为我们添加了exact就导致/home/list根本就无法进入到TopicList组件，那么该组件下的子路由当然无法访问了，根本就没办法匹配到。
+
+
+16.4、topic_detail相关逻辑编写
+（1）路由
+在Home.jsx中，我们将TopicList组件的路由和TopicDetail组件的路由并列写，这样就可以在Home页面上来回展示两个组件的内容了：
+<Switch>
+       <Route path={`${match.path}/detail/:topicId`} component={TopicDetail} />
+       <Route path={`${match.path}`} component={TopicList} />
+</Switch>
+
+（2）从list页面跳转到detail页面的逻辑：
+因为我们在detail路由里面的用的是params方式：path={`${match.path}/detail/:topicId`}，这样写是把每一个文章当做一个独立的内容来进行处理了，而不是作为页面的一部分来处理，如果是页面中的一部分进行处理区分的话我们可以使用?tab='all'这种search方式进行处理。
+而params方式获取参数的方式：this.match.params.topicId就可以拿到id的值了
+
+关于跳转的方式，我们可以使用js方式：
+listItemClick(topic){        
+        this.props.history.push(`${this.props.match.url}/detail/${topic.topic.id}`)       
+    }
+
+
+也可以使用Link标签（在Tabs组件中不允许使用Link标签，但是在List标签中我们可以使用）：
+<List>
+                    {/*listItem是需要包含在List里面的*/}
+                    {topicList.map((topic,index)=>(
+                            <NavLink to={{pathname: `${match.path}/detail/${topic.id}`,state:{id:topic.id,index:index}}} key={topic.id} ><TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} /></NavLink>)
+                         //<TopicListItem onClick={()=>(this.listItemClick({topic}))} topic={topic} key={topic.id}/>)
+
+                    )}
+                </List>
+
+不过我们使用Link方式可以传递更多的内容到props中，这样我们可以更方便的拿到一些从上级传递过来的数据。而且NavLink标签可以方便的定义点击前后按钮的样式，这样我们可以很方便的对点击过的按钮进行样式上的处理。
+
+（3）detail页面的编写
+因为我们从API请求过来的数据是用户用markDawn方式编写的，所以我们需要的是把文章按照传递过来的数据直接展示出来，所以我们要进行markdawn配置，使内容可以在页面上直接展示。
+
+首先我们要借用marked工具：npm i marked -S
+然后导入到detail页面：import marked from 'marked'
+
+当我们编写一个由数据请求渲染的页面的时候，我们首先要考虑的是当数据没有或者加载中的时候如何过渡处理，大多数都是添加一个loading效果：
+if(!content){
+            return(
+                <Container>
+                    <section>
+                        <CircularProgress color={"secondary"}/>
+                    </section>
+
+                </Container>
+            )
+        }
+section是h5的一个新标签，用来展示一块整体的数据，section元素用于对网站或应用程序中页面上的内容进行分块，一个section元素通常由内容及其标题组成。通常不推荐为那些没有标题的内容使用section元素。
+
+因为我们是直接将content内容之间渲染，所以我们使用section标签将内容作为一个整体进行处理，又因为section通常需要标题，而且我们转发的文章肯定有一个大标题进行显示，所以我们按照如下的格式编写：
+import Helmet from 'react-helmet'
+
+return(
+            <Container>>
+                <Helmet>
+                    <title>{content.title}</title>
+                    {/*给这个文章添加了一个title，便于seo*/}
+                </Helmet>
+                <header style={{
+                    padding:20,
+                    borderBottom:'1px solid #dfdfdf'
+                }}>
+                    <h3>{content.title}</h3>
+                    {/*这个是文章的标题，样式再自己去定义*/}
+                </header>
+                <section style={{padding:20}}>
+                    <p dangerouslySetInnerHTML={{__html:marked(content.content)}}/>
+                    {/*dangerouslySetInnerHTML作用是把内容放到p标签下面，是将html内容直接塞进去，
+                    没有进行转义，如果我们直接把marked(content.content)放到p标签里面，
+                    那么输出的内容是字符串，其中p标签等内容并没有转化成dom，而是作为字符串的一部分*/}
+                </section>
+            </Container>
+        )
+
+
+
+（4）detail页面中数据的获取
+我们要遵循一个原则，就是所有的数据获取都要通过store中的方法，而不是直接从store中直接获取然后加工。修改数据，获取数据都要调用store中的方法。
+在topic_store.js中，我们添加一个方法，因为我们要在store中加工数据，所有不能通过get方式直接获取，应该使用一个方法获取。而且还有一种情况就是如果当前路由下没有数据（比如用户刷新页面，此时store中并没有相关内容，所以此时获取不到数据，那么我们就需要在store中获取一下数据，然后再显示，所以store中定义方法是最佳选择@action getDetailTopic(id){ }
+
+
+二、UI样式编写
+使用antd框架：(https://ant.design/docs/react/use-with-create-react-app-cn)
+
+2.1、引入框架
+npm i antd -S
+
+2.2、在项目中使用antd样式：
+import 'antd/dist/antd.css'
+import Button from 'antd/lib/button'
+
+<Button type="primary">按钮</Button>
