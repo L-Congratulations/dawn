@@ -1,0 +1,264 @@
+简单说下python可以做什么：
+*后台开发（Django/Flask/Tornado）
+*科学计算、数据分析（Numpy/Scipy/Matplotlib）
+*机器学习、人工智能（Scikit-Learn）
+*神经网络（TensorFlow）
+*网络爬虫（Requests/xpath/Scrapy）
+*运维
+*多媒体（图像、音频、视频）
+爬虫工程师能做什么？
+*爬去数据，进行市场调研和商业分析（爬取知乎优质答案、抓取淘宝京东商品，评论级销量数据。。。）
+*作为机器学习、数据挖掘的原始数据
+*爬取优质的资源：图片、文本、视频（爬取微信公众号文章，分析新媒体内容运营策略）
+
+对于小白来说，爬虫可能是一件非常复杂、技术门槛很高的事情。比如有人认为学爬虫必须精通python，然后系统学习python的每个知识点，很久之后发现仍然爬不了数据；有人认为先要掌握网页的智商，遂开始HTML/css，结果入了前端的坑，卒。。。
+但掌握正确的方法，在短时间内做到能够爬取主流网站的数据，其实非常容易实现。但建议你从一开始就有一个具体的目标，你要爬取哪个网站的哪些数据，达到什么量级。
+在目标驱动下，你的学习才会更加精准和高效。哪些所有你认为碧玺的前置知识，都是可以在完成目标的过程中学到的。
+学习流程：
+1、爬虫简介
+2、简单爬虫架构
+3、URL管理器
+4、网页下载器（urllib2）
+5、网页解析器（BeautifulSoup）
+6、完整实例（爬取百度百科python词条相关的10000个页面数据）
+  
+一、爬虫简介：
+爬虫是一段自动抓取互联网信息的程序（自动访问互联网并提取数据的程序）
+1.1、爬虫价值：互联网数据，为我所用（如最爆笑故事App，最漂亮美女图片网、图书价格对比网等等等）
+
+二、python简单爬虫架构：
+来看一下要实现一个爬虫需要哪些方面的考虑
+爬虫调度端+爬虫执行程序+有价值的数据 就是一个简单的爬虫架构
+2.1、爬虫架构
+（1）、爬虫调度端：
+启动爬虫、停止爬虫、监视爬虫的运行情况
+（2）、爬虫：
+在爬虫程序中有三个模块：URL管理器——网页下载器——网页解析器（解析出的新的URL会再次传给URL管理器）会形成一个循环
+《1》、URL管理器：管理已经爬取的URL和将要爬取的URL进行管理
+《2》、网页下载器：从URL管理器中取出一个将要爬取的URL将其传送给网页下载器
+             URL下载器会将网页下载下来，存储成为一段字符串
+《3》、字符串会传送给网页解析器进行解析
+             解析器一方面会解析出有价值的数据，另一方面，每个网页都有指向其他网页
+             的URL，这些URL被解析出来后会补充给URL管理器
+（3）、有价值的数据
+
+三、python爬虫URL管理：
+URL管理器：用来管理待抓取的URL集合和已抓取的URL集合
+管理器的意义：为了防止重复抓取和循环抓取
+3.1、URL管理器需要支持的功能：
+《1》、添加新的URL到待爬取的集合中
+《2》、在添加之前需要判断这个URL师傅已经在集合中
+《3》、需要支持获取待爬取的URL功能
+《4》、在获取待爬取的URL之后需要判断是否还有待爬取的URL。
+《5》、获取待爬取的URL之后，需要把这个URL从待爬取的URL集合里面移动到已爬取的URL集合中。
+3.2、URL管理器的实现方式：
+目前有三种实现方式：
+（1）、我们直接将待爬取的URL集合和已爬取的URL集合存储到内存中。
+python内存：待爬取URL集合：set()   已爬取URL集合:set()
+为什么选择set呢？是因为python的set中可以直接去除重复的元素
+（2）、将URL存储在关系数据库中：
+比如mysql。我们可以建立一个表：urls（url, is_crawled）is_crawled来表示这个URL是待爬取还是已爬取，用一个字段表示了两个集合
+（3）、将URL存储在缓存数据库中：
+如redis：
+待爬取URL集合：set
+已爬取URL集合：set
+大型公司因为redis的高性能都将URL存储在缓存数据库中。
+
+四、网页下载器：
+网页下载器：将互联网上URL对应的网页下载到本地的工具。
+是爬虫的核心组件。网页下载器会将URL对应的网页以HTML格式下载到本地，存储成一个本地文件或内存字符串，然后进行后续的分析和处理。
+4.1、python有哪几种网页下载器？
+（1）、urllib2：是python官方提供的基础模块，功能很强大。
+（2）、requests：是python第三方包，提供更强大的功能。
+
+4.2、urllib2下载器下载网页的三种方法：
+（1）、最简洁的方法：将url直接传递给urllib2.urlopen(url)方法。
+import urllib2
+#直接请求
+response = urllib2.urlopen('http://www.baidu.com') 
+ // 将返回的内容传送给response这个对象
+#获取状态码，如果是200表示获取成功
+print response.getcode()
+#读取下载好的内容
+cont = response.red()
+（2）、下载网页方法2：
+增强处理，添加data、http header
+我们可以向服务器提交请求头信息（header）和需要用户输入的信息（data）
+将url、data、header这三个参数传送给urllib2.Request类，生成一个request对象，然后使用urllib2.urlopen(request),以request作为参数发送网页请求：
+import urllib2
+#创建request对象：
+request = urllib2.Request(url)
+#添加数据
+request.add_data('a','1')   // key = a value = 1
+#添加http的header
+request.add_header('User-Agent','Mozilla/5.0')  // 将爬虫伪装成一个mozilla的浏览器
+#发送请求获取结果：
+response = urllib2.urlopen(request)
+
+（3）、网页下载方法3：添加特殊情景的处理器
+HTTPCOOKieProcessor    ProxyHandler   HTTPSHandler  HTTPRedirectHandler
+比如有些网页需要用户登录才能访问，我们需要添加cookie处理HTTPCOOKieProcessor
+有些网站需要代理才能访问我们使用ProxyHandler 
+还有的网页是使用https加密访问的，我们需要使用 HTTPSHandler
+
+我们将这些handler根据需求传入到：
+opener = urllib2.build_opener(handler)生成一个opener对象
+然后调用urllib2.install_opener(opener),这样urllib2这个模块就具备了处理这些场景的能力
+然后依然使用：
+urllib2.urlopen(url)
+urllib2.urlopen(request)
+来请求一个url或者request实现网页的下载
+
+import urllib2,cookielib
+#创建一个cookie容器
+cj = cookielib.CookieJar()  //用来存储cookie的数据
+#创建一个opener
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+将urllib2.HTTPCookieProcessor(cj)这个handler传给来生成一个opener对象
+#给urllib2安装opener让urilib2具备处理这种场景的能力
+urllib2.install_opener(opener)
+#使用带有cookie的urllib2访问网页
+response = urllib2.urlopen('http://www.baidu.com/')
+
+五、urllib2实例代码演示：
+
+
+
+
+
+六、网页解析器：从网页中提取出有价值数据的工具
+网页解析器会从已经下载好的（网页下载器下载的）HTML网页字符串中提取出有价值的数据和新的URL列表
+6.1、python有哪几种网页解析器？
+*正则表达式：把整个HTML网页当做一个字符串，使用模糊匹配的方式来提取有价值的数据
+*html.parser:python自带的解析网页工具
+*BeautifulSoup:第三方插件，这个插件能使用html.parser作为他的解析器也能使用lxml作为他的解析器。相对来说比较强大。
+*lxml：第三方插件
+正则表达式属于模糊匹配的方式来提取有价值的信息而其他三种都是属于结构化解析。
+结构化解析：将整个网页文档加载成一个DOM树。
+
+6.2、BeautifulSoup模块安装和介绍：
+BeautifulSoup是一个python的第三方库，用于从HTML或XML中提取数据
+安装：pip3 install beautifulsoup4
+
+6.3、BeautifulSoup语法：
+分为三部分：将网页字符串转换成DOM树——搜索节点——访问节点属性
+（搜索的条件可以是节点的文字（是指内容，如p标签里面的文字）、属性（指标签的属性如class等）、名称（是指标签名称如：a标签））
+首先根据一个下载好的HTML网页的字符串创建一个BeautifulSoup对象，
+创建的时候会把网页字符串转换成一个DOM树
+然后根据这个DOM树可以进行各种节点的搜索，搜索的方法有两种find_all会搜索出所有满足条件的节点，find方法只会搜索出第一个满足条件的节点（搜索的条件可以是节点的文字（是指内容，如p标签里面的文字）、属性（指标签的属性如class等）、名称（是指标签名称如：a标签））
+搜索到节点之后我们就可以访问节点的属性、名称、文字等。
+
+实例：
+from bs4 import BeautifulSoup
+#将HTML网页字符串转化为BeautifulSoup对象，BeautifulSoup接受三个参数：
+soup = BeautifulSoup(
+            html_doc,    // HTML文档字符串，这就是要解析的文档字符串
+            'html.parser'   // 使用html.parser作为HTML的解析器
+            from_encoding='utf8'    //     指定网页的编码，如果网页编码和我们的代码不一致则解析过程中会出现乱码 
+)
+
+#搜索节点find_all 和find方法参数一样
+find_all(name,attrs,string)
+#查找所有标签为a的节点：
+soup.find_all('a')
+#查找标签为a，属性为href='/view/123.htm'的节点：
+soup.find_all('a',href='/view/123.htm')
+另外，bs非常强大的一点是我们可以对他的属性，名称，内容传入正则表达式来匹配对应的内容
+soup.find_all('a',href=re.compile(r'/view/\d+\.htm'))
+#查找所有标签为div，class为abc，内容为python的节点
+soup.find_all('div',classs_='abc',string='python') // 标签要加引号，class加下划线是因为python的关键字包含class。匹配内容时要将内容放到string属性内string='python'
+
+6.4、访问节点信息
+#得到的节点为：<a href='1.html'>python</a>
+#获取查找到的节点标签名称
+node.name
+#获取查找到的a节点的href属性
+node['href']
+#获取查找到的a节点的连接文字
+node.get_text()
+
+实例：
+（检测BeautifulSoup是否安装成功，可以通过import bs4   print(bs4)来确认，没报错说明安装成功）
+
+#首先引入BeautifulSoup这个方法：
+from bs4 import BeautifulSoup   
+// 从bs4模块中引入BeautifulSoup方法这里的BeautifulSoup是bs4的一个方法，所以名字必须是BeautifulSoup而不能是beautifulsoup。
+#导入HTML网页字符串  注意字符串是又三个引号包裹的
+html_doc = """
+<html>
+<form>
+ <table>
+ <td><input name="input1">Row 1 cell 1
+ <tr><td>Row 2 cell 1
+ </form> 
+ <td>Row 2 cell 2<br>This</br> sure is a long cell
+</body> 
+</html>"""
+#然后将HTML网页字符串转换为BeautifulSoup对象（DOM树）
+soup = BeautifulSoup(
+            html_doc,
+            'html.parser',
+            from_encoding='utf-8'
+)
+print ('获取所有的链接')
+links = soup.find_all('a')
+for link in links:
+    print (link.name,link['href'],link.get_text())
+
+print ('只获取baidu链接')
+link_one = soup.find(href='http://www.baidu.com')
+print (link_one['href'])
+
+print ('用正则选出第二个URL')
+link_two = soup.find_all(href=re.compile(r'3831'))  
+#因为这个地方用到了正则表达式，因此需要引入python的正则模块“re” 在开始地方：import re
+#find_all得到的结果是一个数组，find得到的结果是一个字符串
+print (link_two)
+
+七、爬虫实例：
+开发爬虫的步骤：
+《1》、确定目标：哪个网站的哪些网页的哪些数据
+（百度百科python词条页面及相关词条页面的标题和简介）
+《2》、分析目标：抓取的策略，有三个部分需要分析：
+*分析所要抓取页面的URL格式，用来限定我们抓取网页的范围
+*分析要抓取的数据的格式（在本实例中主要的是分析标题和简介这两个信息所在标签的格式）
+*分析页面的编码，网页解析器需要知道网页的编码格式（utf-8）才能正常解析
+《3》、编写代码
+《4》、执行爬虫，进行数据的爬取
+
+打开百度百科python词条的页面
+分析python词条页面链接：https://baike.baidu.com/item/Python/407313
+然后分析页面内其他链接的链接格式（右键审查元素），如：
+/item/%E5%8D%A1%E8%80%90%E5%9F%BA%E6%A2%85%E9%9A%86%E5%A4%A7%E5%AD%A6
+发现格式都为：https://baike.baidu.com/item/+？
+
+然后审查要抓取的元素的格式：在python词条页面上右键审查python标题元素：
+为dd标签的h1子标签的内容
+<h1>Python</h1>
+右键审查python简介元素：
+发现简介是位于class名为lemma-summary的div标签下的内容
+
+然后右键页面审查网页元素，找到header中的编码格式，此例中为utf-8编码
+
+分析目标总结：
+*目标：百度百科python词条及相关词条网页中的标题和简介。
+*入口页：https://baike.baidu.com/item/Python/407313
+*URL格式：
+——词条页面URL：/item/Python #在代码中我们需求将他拼成一个完整的URL才能进后续的爬取
+*数据格式：****为需要爬取的数据
+——标题：<dd class="lemmaWgt-lemmaTitle-title"><h1>******</h1></dd>
+——简介：<div class="lemma-summary" label-module="lemmaSummary">****</div>
+*页面编码：UTF-8
+这里需要注意，每个网站都会不定期升级他的网页格式，需要实时分析网页结构
+
+7.1、总调度程序：
+爬取百度百科python词条相关1000个页面数据
+新建一个文件夹，里面包含：
+main：爬虫的总调度程序
+url_manager:URL管理程序
+html_downloader:网页下载管理程序
+html_parser:网页解析管理程序
+html_outputer:数据展示程序
+
+
+
