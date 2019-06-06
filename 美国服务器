@@ -1,0 +1,62 @@
+ssh root@47.88.62.226
+
+服务器：公网ip：47.88.62.226         密码：Ls@15188961373
+
+shadowsocks：密码：15188961373
+
+
+
+
+一、云服务器搭建梯子：
+1.1、安装python：
+yum install python-setuptools
+
+1.2、 安装pip
+cd /usr/local/src
+wget "https://pypi.python.org/packages/source/p/pip/pip-1.5.4.tar.gz#md5=834b2904f92d46aaa333267fb1c922bb" --no-check-certificate
+
+tar -xzvf pip-1.5.4.tar.gz
+cd pip-1.5.4
+python setup.py install
+
+1.3、安装shadowsocks
+pip install shadowsocks
+
+1.4、创建shadowsocks配置文件：
+vim /etc/shadowsocks.json
+内容是：
+{  
+
+   "server":"0.0.0.0",  
+
+   "port_password":{     
+
+        "8388":"password1",  
+
+        "8389":"password2",  
+
+        "443":"password3" 
+
+   }, 
+
+   "timeout":300,  
+
+   "method":"aes-256-cfb",  
+
+   "fast_open":false,
+
+"workers":1
+
+} 
+
+1.5、启动shadowsocks
+ssserver -c /etc/shadowsocks.json -d start   # 启动
+ssserver -c /etc/shadowsocks.json -d stop   # 停止
+ssserver -c /etc/shadowsocks.json -d restart  # 重启
+
+1.6、在安全组里面开放端口
+
+1.7、安装客户端
+(https://blog.csdn.net/tomlucky1024/article/details/79492329)
+（https://blog.csdn.net/tomlucky1024/article/details/79492329）
+https://github.com/shadowsocks/shadowsocks-windows/releases
