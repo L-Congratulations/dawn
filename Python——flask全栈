@@ -1,0 +1,171 @@
+1、Python后端开发技术栈：
+（1）、开发工具
+（2）、web框架
+（3）、数据库：mysql，redis，mongo
+（4）、数据处理：pandas，numpy，scipy，sklearn
+（5）、业务框架：spark，hadoop，AWS，docker
+
+2、web应用开发标准流程：
+（1）、产品分析：用户需求、竞品分析、市场调研
+（2）、技术选型：前端技术选型、后端技术选型、数据库、业务框架
+（3）、开发实现：前后端开发，测试、前后端部署、前后端升级、业务框架
+（4）、生产上线：部署升级、峰值处理成本优化、警报处理
+
+
+3、Python基础语法
+（1）、认识编程模型：
+语言层面：函数式，面向对象
+框架层面：actor，socket，map reduce 。。。
+应用层面：spark，hadoop，celery，vue 。。。
+
+（2）、Python技巧：
+《1》匿名函数：map(lambda x: x**2,a_list) 匿名函数运行完成之后会自动释放内存
+《2》列表、字典推导式：
+import string
+
+a_list = range(10)  #会生成（0,...9）的元组
+
+b_list = [i*i for i in a_list]  #会生成[0,1,4,...,81]的列表
+
+b_dict = {i : string.ascii_letters[i] for i in a_list}  
+#会得到{0: 'a',
+ 1: 'b',
+ 2: 'c',
+ 3: 'd',
+ 4: 'e',
+ 5: 'f',
+ 6: 'g',
+ 7: 'h',
+ 8: 'i',
+ 9: 'j'}
+一个字典
+在这和列表里面的for循环一样，结构部分：i : string.ascii_letters[i]
+然后循环次数：for i in a_list
+string.ascii_letters生成的是一个字符串：'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+《3》列表、字典解析式
+对于列表的解析式：
+b_list = [i*i for i in a_list]  #会生成[0,1,4,...,81]的列表
+for value in b_list:
+    print('值是%d'%value)
+输出的结果就是列表中的每一项
+
+如果要获取value的同时还能获得index，不能直接：for index,val in b_list:
+这样会报错，应该使用枚举的方法：
+for index,val in enumerate(b_list):
+    print('%d:%d'%(index,val))
+
+
+字典解析式：
+b_dict = {i : string.ascii_letters[i] for i in a_list}  
+
+for key,val in b_dict.items():
+    print('%s:%s'%(key,val))
+《4》函数为第一公民的应用
+既然函数是作为第一公民，那么就是函数和变量的地位一样，可以当做参数传入的另外一个函数中去
+
+4、熟悉flask web 开发框架：
+官方文档
+stack overflow
+多读，多写，多问，再读，再写，再问
+
+（1）、开发标准：
+目录结构：配置，发布，资源，日志，测试。。。
+前后端协作：整体发布，分离发布
+（2）、常见flask目录结构：
+--app
+  --__init__.py
+  --etc
+  --server
+      --__init__.py
+  --static
+      --css
+      --js
+  --templates
+  --tests
+--requirements.txt
+--run.py
+--setup.py
+
+（3）、flask框架使用介绍
+《1》、一个最小的flask程序分析
+
+《2》、如何编写一个flask应用
+首先选择技术框架：数据库，开发模式（全栈开发还是前后端分离开发），部署模式，应用拆分等等
+
+然后设计，实现后端接口
+    以图书馆为例：
+        主页信息:
+            @app.route('/')
+            def home_page():
+                pass
+
+        获取书籍信息
+            @app.route('/')
+            def books():
+                pass
+        获取学生借阅信息
+《3》、如何调试flask应用
+第一种：设置app.run(debug = True) 
+第二种：打印log
+第三种：本地开发可以直接在应用里使用断点调试
+
+（4）、flask框架实例
+实现一共图书馆例子：
+首先一个图书馆都有那些功能：
+    图书馆主页
+    书籍管理：书单，每本书的详情
+    学生管理：学生列表，每个学生的详情
+
+接口与逻辑分开设计：
+首先接口与逻辑分开设计有两大好处：
+第一、我们的接口会非常简单好看
+第二、我们设计上功能以模块这种形式来做的话会非常方便的调试以及协作的开发
+
+说白了就是接口只是用于返回前端所需要的数据，而这些数据是如何得到的则写在逻辑里面。而不是把接口和逻辑写在一起，这样接口文件会很臃肿，当接口数量很多的时候也不利于维护
+
+（5）、对于图书馆这个例子应用架构有三个方面
+views.py:接口逻辑
+logic.py:逻辑处理
+run.oy：应用发布以及运行
+
+
+6、前后端分离技术基础
+（1）、属性前后端分离理念以及设计模式
+前后端分开开发，各自持续集成，分离上线
+前后端架构的协作可以考配置文件完成
+具体的前后端分离都分离了那些东西？
+《1》、职责的分离（各自开发各自的）
+前端负责前端的，后端负责后端的
+《2》、架构分离（前端的vue等）
+前后端分开开发，各自持续集成，分离上线
+前后端架构的协作可以靠配置文件完成
+
+《3》、全栈开发
+架构，永远不会一成不变，没有最好的，只有最合适。不同的项目情况不同，需要的架构也不同，并不是前后端完全分离就是最好的，有的时候前后端不分离才能更好的达到要求
+
+全栈是一种新兴工种，技术上双管齐下，晋升项目管理更方便
+
+
+（2）、课程案例以及课程完整的开源项目
+项目地址：https://github.com/litaotao/Ipython-Dashboard
+
+7、应用设计篇
+（1）、应用设计：
+前端：UI，交互
+
+
+后端：模块，接口，部署
+后端设计：整体上采用Python+flask+redis来作为后端技术栈
+一个页面一个模块实现
+抽取公用的api作为一个公用的服务
+
+应用设计：
+企业应用架构模式
+
+
+
+
+
+一、requests库
+1、
