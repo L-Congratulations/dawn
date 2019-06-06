@@ -1,0 +1,110 @@
+一、linux常用命令：
+*在linux下查找文件：sudo find / -name virtualenvwrapper  #在/根目录下通过name查找virtualenvwrapper
+*删除已经安装过的虚拟环境：在~/.virtualenvs目录（cd ~/.virtualenvs）下的命令行里执行rm -rf py36scrapy/
+
+
+二、使用virtualbox安装ubuntu虚拟机
+下载并安装virtualbox——新建——给虚拟机分配好空间和内存——下载ubuntu安装程序（ubuntu-18.04-desktop-amd64.ios）——选取镜像并安装程序
+
+三、搭建系统开发环境
+3.1、在linux下安装MySQLserver
+在ubuntu18.04下装mysqlserver教程：https://blog.csdn.net/zyqblog/article/details/80159990
+在linux下安装deb文件(https://blog.csdn.net/fontthrone/article/details/78066308)：
+sudo dpkg -i ***.deb
+然后输入启动MySQLserver的密码
+启动MySQLserver：service mysql start  （linux在启动的时候回默认启动mysql）
+进入mysqlserver交互界面：mysql -uroot -p
+然后输入密码就进入了mysql的交互界面(如果密码不正确那么在进入mysql交互界面的时候可以执行命令：sudo mysql -uroot -p  然后按enter按键回进入到mysql交互界面
+)
+
+查看mysql是否启动：ps aux|grep mysqld
+
+linux下卸载mysql：https://blog.csdn.net/shihongliang1993/article/details/53768301
+sudo apt purge mysql-*
+
+sudo rm -rf /etc/mysql/ /var/lib/mysql
+
+sudo apt autoremove
+
+sudo apt autoreclean
+
+3.2、因为mysql安全策略的限制，默认情况下只允许本地（localhost）访问，要想让别的ip地址访问需要修改：
+（1）、修改它的配置文件：
+在/etc/mysql/mysql.conf.d/mysqld.cnf
+文件下有一条命令：bind-addresss  = 127.0.0.1
+为了让别的地址可以连接MySQL，需要把他改成0.0.0.0
+
+在linux中系统文件不允许点进去直接修改，需要使用管理员权限：
+sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf  #vim是一个文本编辑器，需要安装之后使用，vim有自己的编辑规则，需要用时再去查看，（https://www.cnblogs.com/crazylqy/p/5649860.html    i进入编辑界面  esc退出编辑界面        
+ :wq 写入保存退出vim编辑器）
+我们只改变了MySQL对外的绑定的ip还不够，还需要给root用户授权（这个用户在用非127.0.0.1的ip地址访问的时候允许访问，不设置的话，是除了本地localhost能访问，其他ip地址都不允许访问的）
+
+（2）、MySQL给我们提供了一个修改权限的命令先进入MySQLserver的交互界面然后输出MySQL语句：
+grant all privileges on *.* to 'root'@'%' identified by 'root'  with grant option;
+提示成功之后输如命令刷新：flush privileges
+提示成功之后完成
+
+3.3、在linux下安装虚拟环境
+新建项目之前我们需要新建我们的虚拟环境，在这个项目中我们使用虚拟环境的好处就是可以把我们的开发环境可以相互隔离而不互相影响
+为了方便创建使用virtualenv我们这里使用一个基于virtualenv的虚拟环境管理包virtualenvwrapper
+我们可以看到因为virtualenvwrapper依赖于virtualenv所以会在下载的时候回默认给安装上对应的virtualenv
+安装教程：http://www.cnblogs.com/morries123/p/8568223.html（只看wrappe部分就可以）
+
+Virtaulenvwrapper是virtualenv的扩展包，用于更方便管理虚拟环境，它可以做：
+1. 将所有虚拟环境整合在一个目录下
+2. 管理（新增，删除，复制）虚拟环境
+3. 切换虚拟环境
+
+安装：
+在ubuntu18.04下安装virtualenvwrapper要使用python2的pip来安装，否则会报错
+sudo pip install virtualenvwrapper
+此时还不能使用virtualenvwrapper，默认virtualenvwrapper安装在/usr/local/bin下面，实际上你需要运行virtualenvwrapper.sh文件才行，先别急，打开这个文件看看,里面有安装步骤，我们照着操作把环境设置好。
+
+1、创建目录用来存放虚拟环境 ：mkdir $HOME/.virtualenvs 
+2、在~/.bashrc中添加行： export WORKON_HOME=$HOME/.virtualenvs 
+3、在~/.bashrc中添加行：source /usr/bin/virtualenvwrapper.sh （这里是安装的。sh地址，涌find方法查找）
+4、运行： source ~/.bashrc
+此时virtualenvwrapper就可以使用了。
+1、列出虚拟环境列表：workon
+2、也可以使用：lsvirtualenv 
+3、新建虚拟环境：mkvirtualenv [虚拟环境名称] 
+4、启动/切换虚拟环境：workon [虚拟环境名称] 
+5、删除虚拟环境：rmvirtualenv [虚拟环境名称]
+6、离开虚拟环境：deactivate
+
+3.4、安装Navicat，并连接MySQLserver，创建数据库和表
+注意：虚拟机需要设置IP地址才能正常通过ip来连接Navicat：设置——网络——连接方式（选择桥接网卡）——高级 混杂模式（选择全部允许）
+在win10下去官网下载Navicat并安装
+破解Navicat：https://blog.csdn.net/qq_21205435/article/details/78902052
+
+上边的步骤我们实现了win10与ubuntun服务器MySQLserver的链接
+但是还没有数据库
+（1）、使用Navicat新建数据库：192.168.1.133
+右击链接名（192.168.1.133）——新建数据库——数据库的名字可以随意命名（demo1），但是字符集一定要选择utf8（因为不这样选的话我们在数据库里面输入中文的时候会出现乱码），排序规则选择utf8_general_ci
+这样的话我们的数据库就建设完成，此时在
+（2）、新建表
+点击我们刚刚创建好的数据库（demo1），点开之后可以看到，表那一项还没有子集，也就是还是空的，我们需要创建一个表
+右击demo1——新建表，创建一个表，跳出来的界面就是我们的表头
+可以通过添加字段来增加表头的长度（time，name，id）
+注意要给表添加主键，我们在这个表中把id作为主键，设置主键的方式是选中主键所在的行，然后点击上边主键按钮，之后在主键那行会出现一个钥匙作为主键的标志
+然后按ctrl+s保存，此时输入表的名字就好，我们在这命名为article
+此时表就创建完成了，在表这一项下面会出现一个表的子集（article）
+
+（3）、在表中添加数据
+打开表，点击对应的表格就可以添加内容，添加完成后按ctrl+s保存
+
+（4）、查询
+点击查询——新建查询——就可以在输入界面输入我们的sql语句进行查询
+如：SELECT * FROM article WHERE id = 1
+然后点击运行，就会在下边筛选出符合条件的数据
+
+3.4、安装开发软件
+webstrom、pycharm、python2、python3、node.js
+
+3.5、在虚拟环境中安装框架
+Django、Vue、djangorestframe、
+
+
+四、框架基本配置
+django框架安装好了之后需要进行一些基本配置，连接数据库等操作
+
