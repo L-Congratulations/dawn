@@ -1,0 +1,1622 @@
+当我们用mac虚拟机开发的时候我们在配置webpack-dev-server的时候使用的是0.0.0.0端口，这样我们就可以在Windows电脑上通过ip（http://192.168.183.129:8888/）来打开网页进行调试。这样的好处是关于浏览器的各种插件我们直接在windows的浏览器安装使用。
+
+目的：完全根据自己的体系搭建完成一个完整的网站
+
+从项目架构——项目搭建到——上线，调优
+
+技术栈：
+webApp项目架构：
+开发框架：react
+架构工具：npm
+模块化工具：webpack
+
+命名规范：
+文件命名用下划线命名法：my_file.js
+js中变量的命名用驼峰法：JavaScript 
+css语法用连字号连接：font-family
+
+
+技术选型：
+我们现在都使用common.js标准
+
+
+原则还是用户想要什么，为什么要（分析根本原因，更精准投送），如何满足他们的需求
+只做浏览型网站，不提供收藏，登录等操作，可以提供分享，目的是信息扩散和引流，自己给自己打广告
+
+新闻类网站模板（
+http://demo.cssmoban.com/cssthemes5/twts_56_gazette/index.html
+
+
+最顶部有一些信息（温度、等一些人常用的小消息）、顶部有一个大的滚动条，来显示热点新闻、
+右侧有一个关键信息搜索的模块，方便人们对信息进行筛选、
+中间信息展示分为不同板块展示（科技、政治、体育、军事），每一栏展示几条信息，信息是以图片展示，图片上有蒙版是新闻的标题时间等关键信息，鼠标放上去之后翻转到背面显示新闻的详细信息，点击之后跳转到完整的信息页面，不跳也，而是在当页显示，其他模块缩小，自动排列到完整新闻的最下面，以轮播的那种样式在下面进行排列，类似于mac的桌面，这个模块只占该模块的空间位置，其他模块自动上下给他让开位置
+找找人在浏览文字信息时那种窗口大小和比例让人看着更舒服
+
+）
+
+
+
+开发流程：
+先测试打包（也就是先熟悉react、webpack、项目结构，搭建最简单的项目出来以防出问题）——》服务器渲染（客户端的简单项目已经完成，我们还需要配置服务端渲染才算是项目完整）
+
+一、测试打包都需要做哪些工作：
+
+（1）、新建一个文件夹，然后npm init 初始化一个npm项目
+（2）、想要打包首先得有被打包的文件，也就是最简单的react项目
+最简单的react项目包括项目结构和react文件
+项目初始目录：build、client、dist
+
+（3）、然后编写一个简单的react项目
+在client下新建一个index.js文件作为react整个项目的入口文件，我们在这个文件中先做最简单的react项目内容：将App.jsx挂载到reactDOM上
+
+（4）、因为将jsx挂在到reactdom上，需要用到react、react-dom。所以我们先将这两个库添加到我们的项目一来中npm i react react-dom -S
+
+（5）、因为我们还需要一个App.jsx文件，所以为了项目结构清晰，我们在client文件夹下新建一个views文件，然后在里面新建一个App.jsx（因为react组件必须首字母大写，所以我们文件保持和组件名字一样）文件，来作为react的一个页面
+
+class App extends React.Component {}
+注意我们在这继承了之后直接就是用大括号来包含里面的内容类比函数，所以里面的代码段落之间也不需要添加逗号，因为他就是一个函数，而不是一个js对象（
+function myFunction()
+{
+alert("Hello World!");
+}
+）
+
+如：
+class App extends Component{
+    render(){
+        return(
+            <div>
+                hello this is news
+            </div>
+        )
+    
+里面的render函数也和函数定义一样，之间就是render(){}
+在这就是涉及到了类继承的写法，有时间要去翻看python中类继承的那些知识点。
+
+组件写完之后，需要把组件暴露出去，才能被外界使用：
+import React,{ Component } from 'react'
+
+class App extends Component{
+    render(){
+        return(
+            <div>
+                hello this is news
+            </div>
+        )
+    }
+}
+
+export default App
+
+这样一个简单的react组件就写完了
+
+（6）、我们再index.js中将组件加载进去然后使用
+import App from './views/App'
+注意，除了在引用package.json中已经注册的文件不需要添加路径，引用其他的文件都需要加上相对路径来引入。
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx' 在这要加上.jsx因为默认的引入文件是.js如果不加，而webstorm识别不到.js就会报错，后边优化的时候再写处理办法。
+
+ReactDom.render(<App/>,document.body)
+
+这样App组件就挂在到了reactDOM上，reactDom经过编译之后就能在浏览器中正确显示了。
+在这的编译过程应该是react框架对react组件进行的编译？而webpack的编译时为了将分散的文件整合压缩吗？一会写到template的时候实验一下。
+
+（7）简单的react项目就写好了，然后我们要使用这个项目demo进行webpack的编译、打包、压缩测试。
+
+因为我们要使用webpack对react项目进行处理，所以我们要先安装webpack：
+因为webpac是一个打包用的工具，并不是我们上线的代码需要依赖的库，所以我们把webpack安装在devDependencies里面：npm i webpack -D
+
+（8）安装好webpak之后我们要对webpack进行配置，来告诉他我们要打包什么东西，打包成什么样子等。
+在build中新建一个wepack的配置文件：webpack.config.client.js
+我们在这个文件里面编写编译规则。
+
+（首先我们要明白一个前提，CommonJS模块规范和ES6模块规范完全是两种不同的概念。
+Node应用由模块组成，采用CommonJS模块规范。
+
+根据这个规范，每个文件就是一个模块，有自己的作用域。在一个文件里面定义的变量、函数、类，都是私有的，对其他文件不可见。
+
+CommonJS规范规定，每个模块内部，module变量代表当前模块。这个变量是一个对象，它的exports属性（即module.exports）是对外的接口。加载某个模块，其实是加载该模块的module.exports属性。
+
+ES6模块规范
+不同于CommonJS，ES6使用 export 和 import 来导出、导入模块。
+
+在es6标准出来之前，大家都是commonJS或者AMD规范来模块化。而es6并没有沿用commonJS的东西，所以他们之间并没有什么必要的联系。在这里只谈es6和commonJS的 导入和输出的区别，其他深入的请自行了解。
+
+所以nodeJS使用的是commonJS的规范，我们就只能在node的模块中使用commonJS的规范。而我们编写的项目源码支持更加优秀的es6规范，所以我们就在编写项目的时候使用es6语法。
+）
+因为我们的webpack.config.client.js不属于项目源码，而是在node服务器中使用的nodeJS模块。所以使用的common.js代码规范，而且我们的配置文件不是一个函数而是一个js对象，所以如下编写：
+const config ={
+    entry:{
+        app:path.resolve(__dirname,'../client/index.js')
+    }    
+}
+定义一个对象，对象里面的第一级元素就是webpack的配置项，第二级元素就是配置项对应的参数。
+
+为了保持代码的严谨性（不同系统，不同编辑器之间相对路径可能存在差异），所以我们使用path在配置文件中来指明路径。要使用path，首先在使用的文件中载入path包：
+const path = require('path')
+
+（9）webpack常用的配置项：
+enter配置项
+output配置项
+
+entry和output是我们配置webpack最基础的两项，详细的用法看其他文件。
+
+const path = require('path')
+
+const config ={
+    entry:{
+        app:path.resolve(__dirname,'../client/index.js')
+    },
+    output:{
+        filename:`[name].[hash].js`,
+        path:path.resolve(__dirname,'../dist'),
+        publicPath:''
+    }
+    
+}
+
+然后把这个配置文件暴露出去，方便被引用。
+module.exports = config
+
+https://www.cnblogs.com/fayin/p/6831071.html
+（
+module.exports 初始值为一个空对象 {}
+exports 是指向的 module.exports 的引用
+require() 返回的是 module.exports 而不是 exports
+）
+
+
+（10）webpack的基本配置文件写完了之后，我们需要在package.json中配置node命令，让webpack能够引用到这个配置文件并执行：
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build":"webpack --config build/webpack.config.client.js"
+  },
+
+在命令行中执行npm run build 命令查看效果：
+如果是第一次编译会提示我们按照webpack-cli，之间选yes按照提示安装就ok，即使我们提前安装好webpack-cli可能依旧出问题，直接在这安装最靠谱。
+
+安装完成之后会报一个错误，是因为我们并没有安装jsx的loader，所以编译不成功
+
+（11）配置webpack使其识别jsx语法和识别es6的语法。
+webpack调用babel-loader——》需要对babel进行配置才能正确调用babel-loader
+*module项是一个对象：
+然后我们需要配置，让webpack能够识别jsx语法，因为jsx语法不是常规的js语法，所以webpack默认情况下是不识别的，为了让他能识别，我们需要在config中配置module项（和entry并列的项）：
+rules:[]是一个数组，数组里面可以配置很多个loader，每个loader以对象的形式存在，loader对象里面有两项，test项是需要被识别的文件类型，接收一个正则表达式：/.jsx$/以jsx结尾的所有文件，loader项是解析文件需要的工具：
+     module:{
+        rules:[
+            {
+                test:/.jsx$/,
+                loader:'babel-loader'
+            }
+        ]
+    }
+
+babel-loader是一个能够编译各种js（es6、es7、jsx（现在官方默认的编译工具就是babel））语法的工具，编译出来的结果是浏览器能识别的es5语法
+
+*npm i babel-loader@7 -D、npm i babel-core -D：
+配置完成后，因为此时我们的项目中并没有babel-loader这个包，所有我们需要安装一下：
+npm i babel-loader -D（因为babel是一个辅助开发的工具，帮助我们翻译浏览器能识别的jsx代码，所以我们把他装在D下面，也就是devDependencies下面，注意我们要安装babel-loader@7，因为出了babel8，不兼容）
+安装完babel-loader（只是babel的一个插件，要想运行）之后我们还需要安装babel的核心代码：
+npm i babel-core -D
+
+*babel的配置文件.babelrc：这两个安装完成之后，要想正常的将jsx语法编译还需要对babel进行配置，因为babel默认的是对es6语法进行编译，所以我们得配置babel支持jsx语法的编译，在根目录下新建一个文件.babelrc，这个是babel的配置文件，我们需要在里面进行配置：
+presets项是表示babel支持的语法，现在把很多语法（jsx等等）都拆分出去了，所以需要在这指定需要被编译的语法：
+{
+  "presets":[
+    ["es2015",{"loose":true}],
+    "react"
+  ]
+}
+此时代表babel可以编译react代码，因为语法都被分离出去了，所以我们还需要安装一下我们需要编译的语法的包：
+npm i babel-preset-es2015 babel-preset-es2015-loose babel-preset-react -D
+
+到此babel才能正常的编译jsx语法成浏览器支持的js语法
+
+*但是我们还需要对js的编译进行配置一下，因为我们要让我们的js代码和jsx的代码都编译成es5语法规则的js：
+{
+                test:/.js$/,
+                loader:'babel-loader',
+                exclude:[
+                    path.join(__dirname, '../node_modules')
+                ]
+            }
+exclude的意思是对这个路径下的js不进行语法检查
+exclude:[
+                    path.join(__dirname, '../node_modules')
+                ]
+
+
+这样就把react的简单demo成功编译并打包成功了，打开dist文件夹下面会找到打包好的文件
+
+（12）编译好的只是js文件文件如何在浏览器中打开。
+如果我们直接编写一个html文件并将app.hash.js引入是没问题的，但是如果我们重新build之后会生成一个新的hash，那么我们还要手动去引入。
+所以我们在webpack中进行配置，将打包好的js文件自动导入到生成的html中：
+安装npm i html-webpack-plugin -S
+然后在webpack.config.js中载入：const htmlPlugin = require('html-webpack-plugin')
+
+*plugins配置项（与entry同级）：
+ plugins:[
+        new HTMLPlugin()
+    ]
+
+这个配置项会生成一个html页面，同时把webpack打包好的那个js导入到这个html中
+
+运行代码：npm run build
+会发现dist下面多了一个index.html。js引入的路径就是publicPath配置的路径
+（<script type="text/javascript" src="/app.645b5f0f2dfaa31e99b5.js"></script>）。
+
+
+到这为止我们就已经将客户端的react代码完成了编译打包
+
+
+
+
+
+二、服务端渲染流程（如何进行服务端渲染）
+
+*服务端渲染：使用react构建完成的app可以在node的环境下进行渲染，会得到一些html内容，将这些内容返回给浏览器端，就能方便我们的网站进行SEO，同时减少用户等待的时间（避免白屏）。
+
+*实现原理：react-dom是react专门为web端开发的渲染工具，在客户端利用render方法完成react的组件渲染。而在服务器端，react-dom的server模块提供给我们将react组件渲染成HTML的方法。
+
+原理是node服务器直接返回完整页面
+
+需要解决的问题是react的jsx代码在node服务器解析，服务器读取html文件，当客户端请求的时候将html文件和js代码组合并返回给客户端
+
+2.1、使用express搭建node服务器
+因为express和webpack更搭，社区也更强大，我们的服务器相对来说比较简单，就用更稳定的express就能满足要求。
+
+（1）在根目录下新建server文件夹，用来存放服务器相关的内容。
+然后在server下新建server.js用来编写服务器入口文件
+
+因为我们使用express搭建node服务器框架，所以首先安装express库：
+npm i express -S
+
+（2）使用express在server.js中搭建一个简单的node服务器
+首先引入const express = require('express')
+顺便将path引入，因为在写文件路径的时候需要用到
+
+然后用实例化express：也就是使用express创建了一个服务器
+const app =express()
+
+然后使用服务器创建一个get请求：
+app.get('*',(req,res)=>{
+    res.send('hello')
+})
+意思是该服务器接到任何请求都返回hello
+
+然后将服务器挂载到本机的端口上：
+app.listen(8000,()=>{
+    console.log('server is listing on 8000')
+})
+也就是在8000端口启动该服务器
+
+（3）在package.json中编写服务器启动命令（在package.json中编写是为了方便用npm进行项目管理）
+"start":"node server/server.js"
+
+然后在命令行中启动服务器，并访问查看服务器是否能正常启动使用：
+npm run start
+http://localhost:8000/
+
+到这简单的服务器已经搭建好了
+
+2.2、配合服务器渲染，修改客户端代码：
+（1）首先我们要确定对哪些内容进行渲染
+我们在这直接对App这个组件进行服务端渲染，在client根目录下创建一个server_entry.js文件（和index.js对应，一个是客户端编译的入口文件，一个是服务端渲染文件编译的入口文件）
+
+因为index.js中reactDom的render函数渲染的是<App/>组件，用到了jsx语法，类似在进行服务端渲染react的时候需要渲染的组件也是<App/>而不是App。
+
+在server_entry.js中引入App组件和React，并暴露出去，供别的地方使用：
+import React from 'react'
+
+import App from './views/App.jsx'
+
+export default <App/>
+
+在这我们已经写好了要进行渲染的文件，但是服务器并不能直接读取jsx语法，所以我们要使用webpack将server_entry.js进行打包成es5语法的js文件，然后才能被服务器识别。
+
+（2）配置webpack.config.server.js对server_entry.js进行打包
+之前我们已经对index.js进行打包了，配置的大部分内容都类似，但是有一些服务器独有的配置项需要我们进行配置。
+*target配置项：target:'node'
+表示的是webpack打包出来的这个js文件是在哪个执行环境中使用，参数还可以是web，表示的是在浏览器中执行，还可以是其他的，可以到官网中查看
+
+*服务器没有缓存这个概念，所以在output的filename就不需要再使用hash值来区分，可以直接使用固定命名：filename:"server-entry.js",
+
+*在output配置项中再增加一项： libraryTarget:'commonjs2'
+表示的是我们打包出来的js使用哪种模块方案，如umd、cmd、amd、commonjs、global等。在这我们使用commonjs2这个方案，适用于node端。
+
+const path = require('path')
+
+const config = {
+    target:'node',
+    entry:{
+        app:path.resolve(__dirname,'../client/server_entry.js')
+    },
+    output:{
+        filename:'server_entry.js',
+        path:path.resolve(__dirname,'../dist'),
+        publicPath:'',
+        libraryTarget:'commonjs2'
+    },
+    module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader: 'babel-loader'
+            },
+            {
+                test:/.js$/,
+                loader:'babel-loader',
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    }
+}
+
+module.exports = config
+
+到这服务端代码的编译打包配置完成，打包出来的文件就可以在node环境下运行了。
+
+（3）在package.json中编写webpack.config.server.js的运行命令：
+"build:client": "webpack --config build/webpack.config.client.js",
+    "build:server":"webpack --config build/webpack.config.server.js",
+
+然后在命令行运行npm run build:server看看打包的效果
+
+（4）此时客户端代码，服务端渲染代码打包工作都完成了，然后我们就目前的项目，进行一些优化
+
+*首先优化一个点就是每次我们在运行build命令的时候都会生成一个新的js文件，而我们需要的只是最新build生成的那个文件，所以我们要把原先的文件都删除，每次只留最新生成的那些文件。
+首先安装npm i rimraf -D
+然后在package.json中添加命令：clear:"rimraf dist"
+这个命令的意思是删除dist这个文件夹，因为我们的项目中没有rimraf这个包（rimraf是node一个很小的包，这个包是专门用来删除文件夹的）
+
+然后我们再编写一条命令用来集成build:client/build:server/clear:
+"build": "npm run clear && npm run build:client && npm run build:server",
+意思是当我们执行npm run build的时候会先执行clear命令然后依次执行client和server
+
+*根据webpack的要求，我们（development、production）
+"build:client": "webpack --mode production --config build/webpack.config.client.js",
+    "build:server": "webpack --mode production --config build/webpack.config.server.js",
+
+运行npm run build 查看效果，此时命令行中不再有warn
+
+*因为webpack在导入文件的时候会默认.js文件可以不加后缀名，但是.jsx不加后缀名就会报错，我们可以在webpack的config中添加一个配置项，让webpack认识在导入.jsx的时候不报错：
+在webpack.config.js中写入：
+resolve: {
+    extensions: ['.js', '.jsx']
+  },
+
+此时就可以在导入jsx的时候不加后缀了
+
+
+
+2.3、配合服务器渲染，修改服务器代码
+（1）首先引入reactDom的服务器版本，用来将客户端代码解析成node服务器能识别的代码
+const ReactSSR = require('react-dom/server')
+
+（2）工具有了，然后我们需要把素材引入到node服务器，包括需要被编译的jsx和html页面
+然后把我们需要运行的（dist下已经打包好的那个）server-entry.js引入到server.js中
+const serverEntry = require('../dist/server-entry')
+但是在这存在一个问题，因为我们在客户端编写的时候client下的server_entry.js是使用export default 暴露给外界的，而我们在node服务器中使用的是require这种方式引入的，所以引入的时候要改成：
+const serverEntry = require('../dist/server-entry').default
+才能正确获取到内容
+（
+*但是此时会报一个错，这是因为我们使用的是commonjs2
+熟悉一下es6：
+export default app——import app from './app'
+export const app = App——import { app } from './app'
+
+而我们在node.js中使用的是require这种方式：
+require不会拿到export default暴露出的内容，而是直接拿到整个export中的内容，整个expoer出来的东西其中就包括default中的内容，我们打印一下serverEntry ，看结果：
+{ __esModule: true,
+  default:
+   { '$$typeof': Symbol(react.element),
+     type: [Function: t],
+     key: null,
+     ref: null,
+     props: {},
+     _owner: null } }
+我们可以看到使用require获取到的export结果里面包含default，所以我们如果想用require获取到export里面的default的结果需要这样获取：
+const serverEntry = require('../dist/server-entry').default
+
+经过上面修改我们再次执行：npm run start
+）
+
+
+（3）将html导入到服务器
+首先在client文件夹下新建一个template.html文件，作为index.html的蓝本，在里面写入：
+
+<body>
+<div id="root">
+    <!--App-->
+</div>
+</body>
+
+ <!--App-->是一个占位符，方便我们在服务端将其替换掉。
+
+因为我们自己创建了html文件，这样可以自定义自己的一些元素，比html-webpack-plugin这个插件生成的单纯的html功能更加强大灵活，所以我们把客户端的代码也挂载到我们自定义的html上面，也会在服务器中使用。
+ReactDom.render(<App/>, document.getElementById("root"));
+new HTMLPlugin({
+            template: path.join(__dirname,"../client/template.html")
+        })
+注意在HTMLPlugin方法调用的时候我们传递进去的参数是一个对象，template对应的value是html的路径
+
+重新npm run build 就可以发现在dist中新生成的index.html就是一template.html为蓝本
+
+客户端配置完成之后，我们需要把template读取到服务器中：
+首先作为html文件服务器是不识别的，所以不能使用require直接将html文件读取到服务器，我们需要借助一个fs工具来完成这一步：
+const fs = require('fs')
+const template = fs.readFileSync(path.join(__dirname,'../dist/index.html'),'utf8')
+使用同步读取到index.html，同时指定utf-8格式读取到文件中（node读取文件默认的是另外一种格式）
+
+
+（4）原料和素材都准备好了，接下来就是加工。
+将jsx使用reactSSR编译成node服务器能识别的代码，然后将编译好的文件挂载到html中，再将加工完的html返回给客户端
+
+首先加工jsx：const appString = ReactSSR.renderToString(serverEntry)
+
+然后将appSting挂在到html中：
+const serverTemplate = template.replace("<!--App-->",appString)
+
+然后将结果返回给客户端：
+app.get('*',(req,res)=>{
+    res.send(serverTemplate)
+})
+
+服务端渲染的意义就是直接返回完整的页面，而不是返回html之后再进行js请求，再渲染页面。所以我们要在这之间返回的是一个已经渲染好了的完整页面。
+
+
+const path = require('path')
+const fs = require('fs')
+
+const express = require('express')
+
+const ReactSSR = require('react-dom/server')
+
+const serverEntry = require('../dist/server_entry.js').default
+const template = fs.readFileSync(path.resolve(__dirname,"../dist/index.html"),"utf8")
+
+const appString = ReactSSR.renderToString(serverEntry)
+const serverTemplate = template.replace("<!--App-->",appString)
+
+const app = express()
+
+
+
+
+app.get('*',(req,res)=>{
+    res.send(serverTemplate)
+})
+
+
+重启服务器：npm run start 并访问
+
+此时服务端完整的渲染过程就完成了，我们重新编译并启动服务器看看效果：
+打开network，发现app.hash.js返回的内容也是html和localhost返回的结果一样，这样肯定不对，js返回的应该是我们使用webpack打包好的那个app.hash.js里面的内容。
+
+这是为什么呢？因为我们编写的node服务，接收所有的请求返回的都是
+res.send(serverTemplate)这个服务端渲染的代码
+
+事实证明html和里面的js只向服务器发送了一次请求，所以当我们配置好public之后就能正常显示
+
+我们怎么解决这个问题呢？
+*给静态文件指定对应的请求返回
+也就是给静态文件重定向路由，当我们访问'/public'这个路径下的内容的时候重定向去真实获取'../dist'文件夹下对应的内容，这样的话我们就可以通过访问指定路径下的内容来真实的获取到其他文件下的内容。
+app.use('/public', express.static(path.join(__dirname, '../dist')))
+
+这段代码的意思是，当我们在服务端请求'/public'下面的内容的时候实际获取的是'../dist'里面对应的内容。
+
+*然后修改config中output配置项：
+publicPath:"/public/"
+
+因为这一项指定的是script引用js的路径，这样修改之后再html中请求js的时候路径就是：
+/public/app.hash.js,又因为服务端的html就是直接导入的dist下的index.html，所以此时服务端的template的script标签导入js的路径就是/public/app.hash.js，又因为服务端对/public路径下的静态文件进行了重定向，所以此时能正常获取到app.hash.js
+
+
+2.4、服务端的favicon：
+上面编写的服务端代码我们并没有指定渲染的时候favicon。所以favicon返回的内容和localhost返回的内容一样。
+
+安装：npm i serve-favicon -S 
+这是一个express专门用来做这个功能的插件
+
+const favicon = require('serve-favicon')
+app.use(favicon(path.join(__dirname,'../favicon.ico')))
+favicon函数里面的参数是图标的地址，注意我们一定要在服务端渲染之前使用，因为服务端get方法默认是对所有路径都返回serverTemplate，所以我们要在他之前就使用，使favicon的请求get不到。
+
+制作favicon：（https://tool.lu/favicon/），直接放在项目根目录下就行
+
+
+
+三、工程化架构（优化）
+我们在上面步骤中已经完成了一个简单的react项目的客户端和服务端渲染代码，已经能顺利跑起项目了，在保证了有的前提下提高开发效率（先有后快然后是好最后是优）
+接下来我们要进行工程化架构：配置客户端热更新和服务端热更新
+
+3.1、客户端热更新
+（1）webpack-dev-server和hot module replacement
+webpack-dev-server是webpack的一个插件，作用是在本地开启一个node服务器（方便我们在本地用浏览器查看调试代码，就不用我们每次编译完成之后在再点击html查看代码效果了），此外还会监听代码变化，自动刷新浏览器。
+
+hot module replacement 配合webpack-dev-server可以达到不刷新浏览器就显示代码改动之后的效果（减少了资源的请求）。（这个功能只是看起来很牛皮，但是我们开发过程中真用的到吗？先不去配置，提升效率的程度有限，代码越多出错的概率越大）
+
+
+（2）配置webpack-dev-server
+《1》虽然我们是直接在webpack.config里面直接配置了devServer，但是webpack目前版本里面并不包含webpack-dev-server这个包，我们需要单独安装一下：npm i webpack-dev-server -D
+
+因为我们是为了方便在开发过程中的自动化，所以我们要区分一下是在开发环境还是在生产环境，告诉他当前环境是开发环境还是正式环境，这样的话我们就可以根据不同的环境对config中的代码进行调整。有助于减少生产环境下的代码量，也不用担心开发环境的代码会对生产环境的代码造成影响。
+
+《2》在webpack.config.client.js中声名一个变量，用来获取并保存自定义的环境变量
+const isDevelopment = process.env.NODE_ENV === "development"
+注意我们在这定义的变量是获取的webpack-dev-server这个启动命令中的变量，和build命令里面定义的--mode development没有关系
+
+
+《3》将module.exports中的代码进行抽离，方便在不同的环境中调用：
+将配置项变成对象之后我们就可以在暴露之前通过对象形式增加一些配置，然后再暴露出去：
+const config = {}
+
+devServer和entry这些配置项属于同级，都是webpack.config的配置项。
+在使用webpack的时候常用devServer配置项，遇到问题可以去官方文档查看（https://www.webpackjs.com/configuration/dev-server/）
+然后编写webpack-dev-server配置项
+
+if(isDev){
+      config.devServer = {
+        
+    }
+}
+
+module.exports = config;
+
+
+《4》devserver配置项
+ config.devServer={
+        host:"0.0.0.0",
+        port:"8888",
+        contentBase:path.join(__dirname,'../dist'),
+        overlay:{errors:true},       
+    }
+注意host等不加引号，这样在写配置项的时候就会有代码提示。（加引号倒是也能运行，但是没有了代码提示）和config配置项一样，host等是参数，而不是字符串
+
+
+《5》添加webpack-dev-server的启动命令：
+"dev:client":"webpack-dev-server --config build/webpack.config.cilent.js",
+使用webpack-dev-server 用--config命令 运行build下的config文件
+
+
+因为我们在config.client.js中添加了环境变量，所以我们要在这将变量传递进去。
+为了保证在不同操作系统中不出现问题，我们使用cross-env包来完成
+首先安装：npm i cross-env -D
+
+然后使用cross-env将参数传递进去：cross-env NODE_ENV=development
+
+也就是：
+"dev:client":"cross-env NODE_ENV=development webpack-dev-server --config build/webpack.config.cilent.js",
+
+这样我们在config文件中就能通过const isDev = process.env.NODE_ENV 这个语法拿到启动命令中的参数，并进行判断：const isDev = process.env.NODE_ENV === "development";
+
+然后我们启动项目：npm run dev:client
+此时会发现我们请求不到app.hash.js报错404。
+
+这是因为我们配置的devServer（contentBase: path.join(__dirname, '../dist'),）是在dist下面开启了一个服务，所以会在请求的时候默认js请求路径不挂public（js就在dist根目录下），而我们在使用webpack打包的时候默认给js添加了一个/public（src="/public/app.3030f9be4d1f160a1658.js"），导致了请求的时候找不到js文件。所以我们还需要对devServer进行配置，也给他加一个publicPath：
+
+
+《6》对devServer进行配置publicPath：
+也是相当于对路由进行了一个重定向，将dist下面的js代码需要使用/public/js才能请求的到
+config.devServer={
+        host:"0.0.0.0",
+        port:"8888",
+        contentBase:path.join(__dirname,'../dist'),
+        overlay:{errors:true},
+        publicPath:"/public/",
+        historyApiFallback:{
+            index:'/public/index.html'
+        }
+    }
+
+为了我们的程序更加健壮，我们在给他添加一个historyApiFallback配置项，这一项的作用是当用户的url出错，或者在服务器没有对应的api的时候直接返回index页面而不是返回404错误界面。
+
+
+然后再运行：npm run dev:client
+发现js还是请求不到，这是因为在我们的项目中已经手动build生成了一个dist目录，把这个dist目录删掉，然后再刷新页面发现js就能正常的加载进来了。因为devServer会检测我们的项目中是否有这个目录，如果有的话就会直接访问dist里面的内容，所以public就不起作用了。删除dist之后由devServer自己运行项目就没问题了。
+
+
+
+
+《7》在运行npm run dev:client我们会发现整个程序重新编译需要用4000多毫秒才能重启完成，而且命令行会有一个warn，说的是在编译的时候没有指定编译模式（production还是development），
+
+所以我们需要在dev:client启动命令中在webpack-dev-server后面给他添加上编译的环境：--mode development（仿照webpack那种写法：webpack --mode production --config ）:
+"dev:client": "cross-env NODE_ENV=development webpack-dev-server --mode development --config build/webpack.config.client.js",
+
+此时我们再重启服务：npm run dev:client
+发现命令行没有提示warn，同时修改代码之后重新编译的时间变成了100毫秒左右。
+
+
+
+
+3.2、开发时服务端渲染
+我们再开发的过程中同样也需要使用服务端渲染，因为服务端的渲染涉及到客户端的一些js，以及服务端的bundle等内容，所以服务端不应该像以前一样（因为以前是在dist下已经生成了静态文件了，当我们使用webpack-dev-server之后我们已经把dist删除了）我们需要用别的方法获取到服务端需要用到的template和dist下面的其他文件，所以需要修改服务端的代码来实现上述功能。
+
+（1）和客户端自动化处理一样，我们在服务端声名一个变量来区分代码的运行环境
+const isDev = process.env.NODE_ENV === 'development';
+
+（2）调整代码结构，在不同环境下执行不同的代码：
+首先把在生产环境下运行的代码摘出去，也就是我们刚开始写的代码：
+if(!isDev){
+    const serverEntry = require('../dist/server_entry.js').default
+    const template = fs.readFileSync(path.resolve(__dirname,"../dist/index.html"),"utf8")
+
+    const appString = ReactSSR.renderToString(serverEntry)
+    const serverTemplate = template.replace("<!--App-->",appString)
+
+    app.get('*',(req,res)=>{
+        console.log(1)
+        res.send(serverTemplate)
+    })
+}
+
+（3）在开发环境下我们该如何处理服务端渲染？
+因为内容比较多，我们在server文件夹下新建一个文件夹util，用来存放一些文件
+在util下新建一个dev_static.js用来存放在开发环境下服务端代码的处理逻辑
+
+我们在dev_static中暴露出去一个函数，该函数接收一个app参数
+module.exports = function (app) {
+    
+}
+
+然后在server.js中使用这个函数
+}else {
+    const devStatic = require('./util/dev_static')
+    devStatic(app)
+}
+
+然后我们就能在dev_static.js中对app（在这的这个app就是express的实例）进行操作了
+
+《1》首先我们需要使用app返回一个结果给客户端（因为我们在if中已经把app.get给摘出去了，所以在这我们需要创建一个app.get方法）
+module.exports = function (app) {
+    app.get('*',(req,res)=>{
+        console.log('development')
+        res.send()
+    })
+}
+
+《2》然后我们需要原材料：template
+
+但是当我们使用dev:client启动的时候index.html其实并没有生成文件存在我们的硬盘中，因此我们不能通过fs直接读取到这个文件（虽然在client中有template.html但是我们没有办法将app.hash.js动态的导入进去）有很多方法可以读取到index.html，我们在这使用用http请求去webpackdevserver的服务里面读取template
+
+首先安装yarn add axios 然后在文件中引入const axios = require('axios')
+
+然后定义一个方法来读取template文件：
+const getTemp = () =>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http')
+    })
+}
+
+使用promise（处理node单线程机制的函数）方法，里面传递一个函数
+因为webpackdevserver服务是本地服务，启动的地址比较固定
+const getTemp = () =>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:8888/public/index.html')
+            .then(res => {
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+
+如果成功的话返回res.data，如果出错的话直接reject将错误结果暴露出去
+
+这样的话我们就可以通过webpac-dev-server实时拿到最新的template
+
+
+《3》获取server端的bundle，我们是在使用了dev:server命令启动了webpack.config.server.js之后才会生成server端的bundle，而且我们在客户端改动了内容都会同步到server的bundle中，而不是一次获取之后就能永远使用
+
+我们可以在dev_static.js中去启动webpack，然后通过读取webpack打包的结果来获取到试试的server的内容，
+
+首先我们要把webpack给导入到dev_static.js中来，然后还要把webpack.config.server.js给导入进来
+const webpack = require('webpack')
+const configServer = require('../../build/webpack.config.server')
+
+然后我们通过webpack和他的配置启动一个compiler（汇编程序的意思）：
+const serverCompiler = webpack(configServer)
+这个程序会去监听它所依赖的文件的变化，一旦有变化会从新打包，我们接下来如何操作呢
+我们通过webpack的watch方法，他接收一个配置文件的参数，因为我们不需要配置就直接传一个空对象，
+const serverCompiler = webpack(configServer)
+serverCompiler.watch({}, (err, stats)=>{
+    
+})
+这样我们就能监听webpack里面文件的变化
+
+一旦出现err，我们就把err扔出去：if(err) throw err
+
+stats就是weback在打包的过程中输出的一些信息（也就是我们启动webpack后在命令行输出的那些信息，比如打包是否成功，打包的文件大小等等）
+
+我们要做的就是将stats的内容输出出来：
+serverCompiler.watch({}, (err, stats)=>{
+    if(err) throw err
+    stats = stats.toJSON()
+    stats.errors.forEach(err => console.error(err))
+    stats.warnings.forEach(warn => console.warn(warn))
+})
+
+如果stats里面有错误信息，那么我们逐条输出出来，同样有warn信息，我们也逐条输出出来
+其他的信息我们不关心，所以不输出也没关系，那么我们怎么去读取server的bundle（服务器的包信息）信息呢？
+
+首先我们要获取到serverBundle的路径：
+引入path：const path = require('path')
+ const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+也就是serverconfig配置文件中的output配置项的path+filename
+在这我们已经拿到了server的bundle的实时编译后的路径，但是我们并不想在dev_static中的compiler输出出去，因为我们就是为了要拿到server包的路径，不需要其他的操作，而compiler输出出去是占硬盘位置的，而且写到硬盘的这个过程是比较耗时的，降低我们的工作效率
+
+我们安装一个工具：npm i memory-fs -D
+memory-fs 作用是在内存里面去读写文件（node服务器中的fs是在硬盘中读取文件）
+
+然后把这个工具导入到dev_static.js中：const MemoryFs = require('memory-fs')
+然后创建一个memory-fs实例：const mfs = new MemoryFs
+然后serverCompiler.outputFileSystem =mfs（outputFileSytstem 是webpack给我们提供的一个配置项）这样的话以前通过fs在硬盘上读取的文件，我们都可以使用mfs在内存中读取了（这样的话速度回非常快，因为在内存中读写比在硬盘上读写快多了）
+然后我们使用mfs通过前面获取的路径就能将bundle读取出来了：
+const bundle = mfs.readFileSync(bundlePath,'utf-8') 但是此时我们读取出来的是string内容并不是我们能在js中使用的内容,我们要指定读取过来的文件的编码
+
+如何把不能使用的内容转化成我们能使用js调用的内容，在这根据作者介绍使用一种比较绕的方法，整个方法只需要理解，不需要记忆，用的时候直接拿过去用就行：
+首先定义一个变量，用来存储module.constructor：const Module = module.constructor（这点module对应于页面中使用的module.exports中的module，而module.constructor就是module的构造方法，我们使用这个方法重新构造一个module）
+然后在需要使用的地方实例化一个moduel：const m = new Module()
+然后调用module的_compile方法来解析我们读取出来的bundle包：m._compile(bundle)会给我们生成一个新的模块，这个模块生成之后我们把它放到函数外面的全局里面去，方便调用：let serverBundle 
+
+然后在函数里面给serverBundle赋值：serverBundle = m.exports.default我们需要default才能获取到我们真正要使用的内容
+
+
+我们拿到了能用js操作的bubndle之后就像服务端里面一样需要用reactSSR渲染，因此要讲reactSSR导入进来：const ReactSSR = require('react-dom/server')
+
+
+《4》到现在template和serverBundle都有了，我们接下来就是对他们进行加工：
+首先我们要调用函数获取到template（获取template我们是封装了一个函数并没有调用），获取到template之后用reactSSR解析serverBundle，：
+
+module.exports = function (app) {
+    app.get('*',(req,res)=>{
+        getTemp().then(template =>{
+            const appString = ReactSSR.renderToString(serverBundle)
+            const serverTemplate = template.replace("<!--App-->",appString)
+            res.send(serverTemplate)
+        })
+        
+    })
+}
+
+《5》在package.json中修改server的启动命令，添加环境变量：
+将start命令替换成："dev:server": "cross-env NODE_ENV=development node server/server.js",
+
+因为我们需要再webpack-dev-server中获取到template，所以我们需要先启动dev:client,然后再启动dev:server
+
+（要把这三行代码注释掉，因为会报错
+// stats = stats.toJSON()
+    // stats.errors.forEach(err => console.error(err))
+    // stats.warnings.forEach(warn => console.warn(warn))）
+
+
+《6》此时发现服务器已经正常启动了，但是刷新页面发现没有内容，查看network发现app.hash.js返回的是html页面，这个问题和我们在生产环境的问题一样，在生产环境下面我们使用的是static解决的问题app.use('/public',express.static(path.resolve(__dirname,"../dist")))
+
+但是在这，所有东西都是在内存里面，并没有在硬盘里面，读取不到，我们使用一个工具
+npm i http-proxy-middleware -D（这个工具是express的中间件，用来做代理的）
+
+首先在dev_static中引入：const proxyMiddle = require('http-proxy-middleware')
+
+因为客户端的js全部是在webpack-dev-server里面存储的，是通过一个http服务export出来的，
+我们在这里就通过代理的方式当我们编写的这个服务端请求静态资源的时候就将请求的资源地址指向webpack-dev-server生成的服务里面的静态文件，实现代理：
+ app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+也就是public下面的内容都是静态文件里面的内容代理到http://localhost:8888下面，proxyMiddle接收一个对象参数，其中target项就是http需要代理到的位置
+
+
+先启动dev：client 然后再启动dev：server
+两个服务启动都正常，返回的内容也是正确的。同时客户端的热更新正常，也会同步到服务端
+const path = require('path')
+const axios = require('axios')
+const ReactSSR = require('react-dom/server')
+
+const webpack = require('webpack')
+const proxyMiddle = require('http-proxy-middleware')
+const configServer = require('../../build/webpack.config.server')
+
+const MemoryFs = require('memory-fs')
+
+const mfs = new MemoryFs
+
+
+let serverBundle
+
+
+
+const serverCompiler = webpack(configServer)
+
+serverCompiler.outputFileSystem =mfs
+
+serverCompiler.watch({}, (err, stats)=>{
+    if(err) throw err
+    // stats = stats.toJSON()
+    // stats.errors.forEach(err => console.error(err))
+    // stats.warnings.forEach(warn => console.warn(warn))
+
+
+    const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+
+    const bundle = mfs.readFileSync(bundlePath,'utf-8')
+    const Module = module.constructor
+    const m = new Module()
+    m._compile(bundle,'server_entry.js')
+    serverBundle = m.exports.default
+})
+
+
+const getTemp = () =>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:8888/public/index.html')
+            .then(res => {
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+
+module.exports = function (app) {
+    app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+    app.get('*',(req,res)=>{
+        getTemp().then(template =>{
+            const appString = ReactSSR.renderToString(serverBundle)
+            const serverTemplate = template.replace("<!--App-->",appString)
+            res.send(serverTemplate)
+        })
+
+    })
+}
+
+3.3、服务器热更新
+
+每次我们修改完服务端的代码的时候都需要重新build，很麻烦耗时，我们可以使用一个工具来达到自动启动服务的效果：
+（1）安装工具：npm i nodemon -D
+这个工具就是让我们写一个脚本去控制服务器的启动，一旦这个服务下面的任何文件有改动，就会自动重启这个服务。
+如何使用这个工具？
+
+（2）首先在跟目下创建一个nodemon.json这个是nodemon的配置文件
+然后写配置项：
+*"restartable":"rs", 这个配置项的意思是进行了这样配置才能在修改代码之后重启我们的服务。（但是刚才没有配置的时候也重启了）
+*"ignore":[
+    ".git",
+    "node_modules/**/node_modules",
+    ".eslintrc",
+    "build",
+"client"]  这个配置的目的是让我们忽略某些文件的变化，不去重启服务器，因为我们只需要server下面的文件变动的时候启动服务器
+
+* "verbose":true  这个配置的意思是，让他输出的信息特别详细，便于查找报错问题
+
+*"ext":"js" 这个配置的意思是我们可以规定哪些文件类型的文件变化了重启服务器
+
+*"env":{}, 这个配置的意思是环境变量，因为我们在之前启动服务的时候，我们判断了服务器质性的环境（是开发还是线上const isDev = process.env.NODE_ENV === 'development';），这个变量是从package.json中获取的，但是我们在使用nodemon的时候是不会直接这么传的，我们需要在nodemon的配置文件中去写：
+"env":{
+    "NODE_ENV":"development"
+  },
+
+{
+  "restartable":"rs",
+  "ignore":[
+    ".git",
+    "node_modules/**/node_modules",
+    ".eslint",
+    "build",
+    "cilent"
+  ],
+  "verbose":true,
+  "ext":"js",
+  "env":{
+    "NODE_ENV":"development"
+  }
+}
+服务端的isDev = process.env.NODE_ENV === 'development'不变。
+
+然后我们就可以使用nodemon启动了，我们还是通过配置package.json的命令来启动，添加新的命令："dev:server": "nodemon server/server.js",
+
+这样就好了，然后我们启动服务：npm run dev:server 查看效果
+
+同时我们修改一下App.jsx，并重新npm run serverbuild之后服务器也会重启，这样在服务端渲染进行调试的时候就比较方便了。
+
+同时运行npm run dev:client也没问题
+
+
+
+到目前为止webpack打包、客户端热更新、服务器端热更新、服务器端渲染已经完成
+接下来的工程化就是配置eslint和editorclient这样工程化的基础配置就完成了，剩下的就是根据需求进行丰富
+其中eslint、editorclient、调试时服务器渲染都按照笔记直接用就行，不需要深入理解。所以接下来是项目架构，eslint等配置以后再说。
+
+工程化完成之后是项目架构（有时间单独拆出来一个文件，作为一个文档保存，拆成模块）
+
+3.4、优化一下工程架构的代码：
+（1）在webpack.config.client和webpack.config.server两个文件中有很多相同的代码，我们把公用的东西提出去：
+新建一个文件webpack.config.base.js,在里面写入：
+
+
+
+
+
+
+
+
+
+
+
+二、项目架构
+2.1、路由配置
+逻辑是用render渲染Route标签，路由是什么对应的Route标签就会显示出对应的组件的内容。
+
+在client目录下新建config目录：
+存放客户端的配置文件，如第三方类库引用，路由配置等。
+新建一个router.js备用
+
+
+（1）安装npm i react-router -S（只开放客户端的话直接这样安装就行npm i react-router-dom -S）
+因为react-router中包含react-router-dom和react-router-native两部分，但是我们只是开发的网页端的，所以直接安装其中一个就好了
+
+（2）路由配置：在router.js中
+首先导入React和Route
+import React from 'react'
+import { Route } from 'react-router-dom'
+
+*然后引入我们需要使用路由的组件：
+
+为了方便测试，我们在client的Views下面新建一个页面，为了方便模块化管理，我们将每一个页面单独封装在一个文件夹里面，如home_page文件夹里面包含所有首页页面独有的内容，我们在home_page文件夹下新建index.js作为页面的主文件，这样的话在引入文件的时候直接就可以通过
+import TopicList from '../views/home_page'导入对应的index.js文件。
+
+
+将页面导入进来：
+import Home from '../views/home_page'
+import Mine from '../views/mine_page'
+
+材料和工具有了，然后就是加工：
+路哟偶的配置是一串固定格式的Route标签，所以我们直接返回一个数组就可以了：
+export default () => [
+ <Route path='/' component={Home} exact />,
+    <Route path='/mine' component={Mine} exact />
+]
+
+exact是为了防止路径模糊匹配（如果不加我们在请求/detail的时候也会顺带把/目录下的内容返回）
+
+
+（3）路由的配置文件写好了，接下来就是将配置文件挂载到react中
+根据规定，我们要想react-router生效，必须将<Route>标签包含在<Router>标签里面，我们在这配置的就是全局范围内的路由，所以直接用<Router>包裹住整个项目，从而从整体上控制项目的路由跳转关系。
+
+首先将<Router>（我们在这使用官方已经封装好的BrowserRouter标签 ）标签导入到index.js中（因为App.jsx也应该包含在路由以内，所以直接在index.js中对项目进行包裹）：
+import { BrowserRouter } from 'react-router-dom'
+
+*然后用这个标签将整个应用包含进去：
+ReactDom.render(<BrowserRouter><App /></BrowserRouter>, root)
+
+（使用BrowserRouter包含项目之后Router就挂载到了整个项目的最外层，Route标签控制的路由就能正常跳转了）
+
+此时就已经将react-router挂在到了整个项目上，然后就是在需要的地方，用规定的语法使用路由了
+
+
+（4）在需要的地方使用路由：
+
+首先在需要的文件导入路由文件：
+import Routes from '../config/router'
+
+然后在render函数中使用 <Routes />：
+  render() {
+    return (
+      <div>        
+          <Routes />        
+      </div>
+    )
+  }
+
+注意我们在App.jsx中的render函数中使用的是<Routes/>标签，而不是routes变量
+<Route />相当于是路由出口界面，路由导入的内容会在Route这个标签的位置显示。
+其实在这的<Routes /> 和直接使用<Route path='/' component={Home} exact />,
+    <Route path='/mine' component={Mine} exact />效果一样，都是在这渲染了两个Route标签。我们在这先这样写，把路由基础的配置跑通了，后面关于嵌套路由的写法再优化
+
+
+
+启动应用，看一下效果：npm run dev:client
+
+效果就是在对应的比如<Route path='/' component={Home} exact />位置render函数会生成一个新的<Home></Home>标签，里面渲染的东西就是对应的首页页面里面的内容。
+
+
+（5）引入Link标签，灵活使用路由跳转
+
+当我们将react-router挂载到全局react项目之后，和Route标签一样常用的标签还有Link标签，
+
+首先将Link标签引入到需要使用的页面中，注意如果一个页面中我们同时使用了Route和Link标签，我们要先引入Link标签，然后再引入<Route/>（<Route path='/' component={Home} exact />）标签：
+import { Link } from 'react-router-dom'
+
+然后在需要点击跳转的地方使用Link标签：
+<Link to="/mine">我的页面</Link>
+
+当点击Link标签的时候，对应的Route标签里面就会渲染对应的页面并显示出来，换句话讲也就是要想让页面通过<Route>显示出来，点击那个link，就会跳到对应的<Route>所在的页面
+<div>
+                    <Link to='/'>home page is me</Link>
+                    <div></div>
+                    <Link to='/mine'>mine page</Link>
+                </div>
+                <Route path='/' component={home} exact />
+                <Route path='/mine' component={mine} exact />
+
+</div>
+
+我们在chrome安装一个插件react developer tools，这个插件可以解析出react源码结构。
+
+
+（6）路由重定向，在router.js中
+*引入重定向标签：import { Route, Redirect } from 'react-router-dom'
+
+*然后在需要重定向的路由上添加一个render函数，这个函数可以接受一个组件，也可以接收一个函数： <Route path="/" render={() => <Redirect to="/list" />} exact />
+这样我们在点击指向/路径的路由的时候会自动跳转到/list这个路由下
+
+
+2.2、store配置
+mobx的文档（https://cn.mobx.js.org/refguide/observable.html）
+
+我们在这个项目中使用mobx这个flux实现的后起之秀，其以更简单的使用和更少的概念，让flux使用起来变得更加简单。相比redux有mutation、action、dispatch等概念，mobx更符合对一个store增删该查的操作概念。
+执行效率相对于redux效率高一些（redux流程控制的比较死，对于流程化要求比较严格，而mobx流程则比较随意，如果能控制每个协作成员的书写规范，使用mobx更好些）
+
+（1）在client下新建一个store文件夹用来存储项目的数据，然后在store文件夹下新建一个store.js来创建整个应用的store，
+
+*不过我们还可以将应用分成一些小的store进行维护，如新建一个app_state.js用来存储和业务逻辑关系不大的数据，用来控制整个应用的展示和一些纯前端的交互数据
+
+
+（2）mobx安装和环境配置：
+《1》npm i mobx -S
+npm i mobx-react -S是mobx和react建立联系的一个工具
+
+《2》然后需要配置mobx使用环境，因为mobx语法不是es6的标准语法，所以我们要配置babel对他的语法进行编译：
+在.babelrc的presets中增加一个配置项"stage-1"
+《3》然后在plugins元素里面首位上添加元素"transform-decorators-legacy"（必须在首位）这个是babel的一个插件
+{
+  "presets": [
+    ["es2015",{"loose":true}],
+    "react",
+    "stage-1"
+  ],
+  "plugins": ["transform-decorators-legacy"]
+}
+
+《4》然后安装这两个插件
+npm i babel-plugin-transform-decorators-legacy babel-preset-stage-1 -D
+
+重启项目看是否报错：npm run dev:client
+
+
+
+（3）在store.js中定义store
+
+《1》在app_state.js中首先创建一个class，并从mobx中引入对应的API，方便创建store实例：
+（因为我们在使用mobx的@computed等API的时候放在class里面是最好的，而且定义一个class能更方便的去组织我们的store，因为一个store就是一个class的实例，这样的话使用起来会比较方便，可以在里面使用各种this来调用）
+
+import { observable } from 'mobx'
+
+class AppState {
+    @observable count=0
+    @observable name="zhangsan"
+}
+
+然后创建一个实例，并将实例暴露出去，方便项目使用
+import { observable } from 'mobx'
+
+class AppState {
+    @observable count=0
+    @observable name="zhangsan"（@observable来指定我们这个name是store的一个值，也就是当name更新的之后会实时的显示到视图层里面）
+}
+
+const appState=new AppState()
+export default appState
+
+《2》丰富store
+import { observable, computed，autorun } from 'mobx'
+
+@computed get msg() {
+    return `${this.name} say ${this.count}`
+  }
+}
+
+@autorun(() =>{
+  console.log(appState.msg)
+})
+
+@action add() {
+    this.count += 1
+  }
+
+@computed这个api在mobx中负责给客户端返回一个结果
+@autorun它里面接收一个方法，也就是一旦我们的AppState有更新了，就会执行autorun定义的那个方法
+@action在AppState这个类里面定义action方法
+
+
+此时我们的appState这个store就创建好了
+
+（4）store定义好了在页面中使用
+《1》首先在整个项目的入口index.js中将mobx和react关联起来
+Provider：import { Provider } from 'mobx-react'
+
+然后用<Provider>标签将整个项目包裹起来
+ReactDom.render(
+    <Provider>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root")
+)
+
+《2》然后我们就可以在Provider标签上添加各种store属性：
+import appState from './store/app-state'
+<Provider appState={appState}>
+
+这样我们就将appState这个之前定义好的store绑定到了react上，接下来就是在需要的地方通过固定的语法获取到store里面的值和方法
+
+《3》随便打开一个我们定义的子组件（fire_page），使用mobx-react将当前组件和store进行关联
+首先将import { observer, inject } from 'mobx-react'
+然后通过@inject('appState')拿到appState这个store中的值
+再通过@observer 将当前组件和store中的数据进行同步，写法如下：在class上面
+@inject('appState') @observer
+
+《4》获取、修改store中的数据
+{this.props.appState.msg}获取store里面的数据
+
+然后通过下面的方法修改store中的数据：
+ <input type="text" onChange={this.changeName} />
+  constructor(props) {
+        super(props);
+        this.changeName = this.changeName.bind(this)
+    }
+
+    changeName(e){
+        this.props.appState.name = e.target.value
+    }
+
+重启一下服务:npm run dev:client查看效果
+发现在input中修改的内容能顺利的同步到store中并且动态渲染到msg方法中
+
+
+直接进行赋值就能修改，因为我们已经通过mobx-react的observer这个api将组件中的数据和store中的数据建立了链接。
+
+虽然上面的步骤能达到修改store中的数据效果，但是在团队合作的时候我们不建议这样做，因为别人在开发的时候不确定是否有人曾经动过store中的值。我们应该使用action去做，这样mobx会有一个数据变更的记录，我们是有办法查到的。所以标准的方法是我们用action方式去做。
+
+我们在app-state.js中修改代码：
+在class类中添加一个action的方法:
+@action changeName(name) {
+    this.name = name
+  }
+
+然后在组件中通过属性获取到provider中的changeName方法，并调用：
+changeName(e) {
+    const state = this.props
+    state.appState.changeName(e.target.value)
+  }
+
+
+在这一定要注意使用这种方式来修改store中的值，为了使代码看起来更加规范，流程更加正规。
+
+《5》注意我们在这要使用const state = this.props先把props导入过来，否则的话eslint会报错
+
+
+《6》但是在react的开发中有一个强烈的建议就是，每一组件我们用到的props都要声明他的类型，这样做的好处是能帮助我们排除一些不必要的错误。
+
+我们首先安装prop-types（react已经把他拆分出去了）：npm i prop-types -S
+
+然后在项目中引入：import PropTypes from 'prop-types'
+然后在项目中使用：
+TopicDetail.prototypes = {
+  appState: PropTypes.object.isRequired,
+}
+
+
+
+三、服务器代理
+如果我们需要的API比较简单，只需要客户端向对应的API发起请求就能返回我们需要的数据，那么我们直接使用代理就可以了。
+但是有一些接口需要用户登录之后才能调用，在CNode的API中登录是通过一个accesstoken接口实现的。但是这个接口的参数我们不能存在客户端，因为里面保存了用户信息，客户端相对来说不安全，我们需要进行处理。将accesstoken获取到的数据存储到node.js的session里面，然后接下来的请求会去检查session里面是否有accseetoken，如果有，代表我们已经登录了，会向API发送请求，如果没有，就返回给客户端，提示需要登录之后才能发送请求。
+
+3.1、CNode API代理
+
+
+
+
+（1）安装服务端代理需要使用的工具：
+npm i body-parser express-session query-string -S
+body-parser是用来转化我们请求的body的，把请求的body转化成json格式的数据，便于我们使用
+express-session是express的一个插件，用来存放服务端的session
+query-string是帮助我们转化通过一个连接请求过来的url？后面的参数（a = b这种格式转化成a:b这种格式）转化成一个json格式的数据，在写业务逻辑的时候比较方便
+
+
+（2）在服务器中使用body-parser：
+打开server.js
+
+首先引入const bodyParser = require('body-parser')
+然后使用：
+app.use(bodyParser.json())  //把application中json格式的数据转化成req.body上面的数据
+
+app.use(bodyParser.urlencoded({extended: false}))  //对应http请求
+
+因为我们要接收客户端传递过来的请求，而请求的参数可能会存在几种形式进行传递（post请求的参数会存在application中，而数据格式可能是json也可能是formdata的格式；get请求可能会存在url中），上面两行代码的作用就是无论客户端传递到服务端是通过哪种方式传递的参数，我们都可以直接在服务端通过req.body中找到传递过来的参数。
+这样在服务端我们想要拿到客户端传递的参数的时候直接就可以通过req.body中拿到了，使我们编写代码的时候更加简洁。
+
+
+（3）引入session：
+const session = require('express-session')
+然后使用：
+app.use(session({
+  maxAge: 10 * 60 * 1000, // 过期时间在这是10分钟真正上线的项目session是存在数据库当中的，在这写服务一旦宕机session所有的数据就会消失，所有人需要重新登录一遍才能获取到这个新的session
+  name: 'user', // 就是session会放一个cookie的ID到浏览器端，给这个cookie的ID设置一个名字
+  resave: false, // 在每次请求是否都要重新生成一个cookie的ID，如果每次都生成的话会造成资源浪费，在这不需要
+  saveUninitialized: false, // 和resave差不多，在这不需要启用
+  secret: 'react code class' // 在这我们随便定义一个字符串，他会用这个字符串加密我们的cookie，来保证我们的cookie在浏览器端是没有办法被人解密的
+}))
+到这session就配置好了，这样我们就可以在服务器启动阶段之内给session设置值
+
+
+（4）编写login服务：
+在server文件夹下的util文件夹下新建handle_login.js：
+
+我们的login这个接口是需要做单独处理的，因为我们要把用户登录的信息（token）存在session中，通过验证之后再带着用户信息（token）去请求CNode接口，用来请求CNode里只有用户登录之后才能访问的接口。
+
+*const router = require('express').Router() //注意这要有括号,在express实际开发中推荐使用 express.Router 将不同的路由分离到不同的路由文件中，每个路由文件通过生成一个 express.Router 实例 router 并导出，通过 app.use 挂载到不同的路径。（Router的作用就是将路由文件中的内容挂载到express上，这样就可以在路由文件中编写请求处理的逻辑代码了。，当客户端发送请求之后，server.js会接受到某个请求（app.use('/api/user', require('./handle-login'))，如/api/user，然后服务器应该根据请求路径返回对应的内容，在这我们将请求的业务逻辑转发到了handel_login.js这个文件内，handle.js就会按照业务逻辑进行对url处理，并返回对应的内容，然后返回给客户端））
+
+const axios = require('axios') // 因为我们要发送请求，所以需要axios
+
+* 因为我们要代理到CNode，CNode有他自己的域名和url路径，所以我们用一个baseUrl来存储这个路径，方便使用
+const baseUrl = 'https://cnodejs.org/api/v1 '
+
+*编写收到客户端请求后的业务逻辑代码
+
+每一个请求到达服务器时，node.js会为请求创建一个请求对象，即为request，该对象包含客户端提交上来的数据，包括请求头（请求主机地址，请求方式，客户端-浏览器等一些相关信息），消息体（用户提交上来的数据）。所以req是node服务器的，里面包含客户端提交上来的数据。
+
+router.post('/login', (req, res) =>{
+  
+})
+当客户端向/login这个接口发送请求之后，我们就会在这接收到请求，并对请求进行处理
+
+*编写业务逻辑代码
+《1》当我们接收到客户端发来的login请求之后，我们要做的是向CNode发送登录的请求：
+router.post('/login', (req, res) =>{
+  axios.post(`${baseUrl}/accesstoken`,{
+     accesstoken: req.body.accessToken   // 参数就是我们在客户端传递过来的accessToken 这个参数
+  }).then(response =>{
+    
+  }).catch(err =>{
+    
+  })
+})
+
+《2》我们向CNode发送请求之后会返回一些数据，我们根据返回的数据进行处理
+.then(response =>{
+    if (response.status === 200 && response.data.success){
+      
+    } 
+  })
+
+response.data.success我们是根据API说明来进行判断的，如果为true说明数据已经正确返回了
+
+《3》如果我们成功请求到数据之后，我们首先需要做的的是吧请求到的数据存储到服务器的session中：
+我们在req.session上面存放一个数据，这个session的名字叫做user，这个数据是是一个对象：
+if (response.status === 200 && response.data.success){
+      req.session.user = {       
+      }
+    }
+
+这个对象的第一项：accessToken: req.body.accessToken   // 因为我们要在请求接口的时候使用到accessToken这个参数，这个参数是我们在给CNode发送请求（我们只能从服务器向CNode发送请求，客户端的请求都被转接到了我们的服务端，所以在这的session是存在服务端的，和客户端没关系，我们是在接收到客户端的请求之后，再在服务端进行处理的时候将session加上去的）的时候有的接口需要必带的，所以我们把它存在服务器的session中，方便使用，又因为我们这是post请求成功时代码的处理（已经有accesstoken才能请求成功），所以此时session中已经有了这个参数，直接就可以通过服务器的req对象获取到。写在这是为了方便调用。
+
+然后把从CNode返回的数据也存储在服务器的session中：
+ req.session.user = {
+        accessToken: req.body.accessToken,
+        loginName:response.data.loginname,
+        id:response.data.id,
+        avatarUrl:response.data.avatar_url
+      }
+
+
+
+下一次请求的时候我们就可以在服务器的session中读到这些信息，客户端只保存sessionid到cookie中，而不会保存session，session销毁只能通过invalidate或超时，关掉浏览器并不会关闭session（因为浏览器只是关闭了客户端，服务端没有关闭，而session存储在服务器的内存中）。
+
+《4》将数据存储在了session之后，我们给浏览器一个反馈，告诉浏览器我们已经请求并将session存储成功了。（这一步是为了闭合业务逻辑，方便调试）
+if (response.status === 200 && response.data.success){
+      req.session.user = {
+        accessToken: req.body.accessToken,
+        loginName:response.data.loginname,
+        id:response.data.id,
+        avatarUrl:response.data.avatar_url
+      }
+      res.json({
+        success:true,
+        data: response.data
+      })
+    }
+
+
+《5》如果出现错误我们需要对错误进行处理：
+.catch(err =>{
+    if (err.response){ // err.response的意思是，服务器有返回内容，不是服务器报的错误，是我们业务逻辑出现了问题，那么我们就将错误信息返回给客户端
+        success:false,
+        data:err.response      
+    }
+  })
+
+否则的话，我们在这先将next作为参数传入到post请求中：
+router.post('/login', (req, res, next) =>
+
+然后将错误信息抛给全局的错误去处理：
+catch(err =>{
+    if (err.response){
+      res.json({
+        success:false,
+        data:err.response
+      })
+    }else {
+      next(err)
+    }
+  })
+
+*将router暴露出去：module.exports = router  // 注意都是exports而不是export
+
+这样的话登录接口就完成了，然后要在server.js中将这个路由文件挂载到node服务器上：
+app.use('/api/user', require('./handle-login'))
+
+然后当请求：/api/user/login这个路径的时候就是对应的handle-login里面的业务逻辑。
+
+
+（5）不需要登录的接口的代理：
+因为不需要登录就可以直接请求到接口的内容，所以更加简单
+
+在server文件夹下的util文件夹下创建proxy.js文件，将所有客户端发送的请求都用服务端的请求代理出去。
+
+*const axios = require('axios')
+const baseUrl = 'https://cnodejs.org/api/v1'
+
+
+然后：
+路由规则是app.use(path,router)定义的，router代表一个由express.Router()创建的对象，在路由对象中可定义多个路由规则。可是如果我们的路由只有一条规则时，可直接接一个回调作为简写，也可直接使用app.get或app.post方法。
+app.get('/hello',function(req,res,next){
+    res.send('hello test2');
+});
+等价于：
+router.get('/', function(req, res, next) {
+  res.send('hello world!');
+});
+app.use('/hello',router);
+
+当一个路径有多个匹配规则时，使用app.use，否则使用相应的app.method(get、post)
+app.use(path,callback)中的callback既可以是router对象又可以是函数
+app.get(path,callback)中的callback只能是函数
+
+所以也不用纠结，两个写着都不复杂。在主文件中都使用app.use导入（因为user即接收callback，也接收router），然后在子文件中，再根据匹配规则是否单一使用router（
+router.post('/login', (req, res, next) =>）还是callback（module.exports = (req, res, next) =>）
+其实app.use的主要作用还是导入路由（用来在主文件中导入路由），用来对路由拆分到多个文件中编写（在路由对象中可定义多个路由规则），使代码结构更加清晰，app.get则是侧重于对应路由的业务逻辑的编写，只支持get方法的请求（用来在子文件中处理对应路由的业务逻辑）。（
+app.js
+app.use(’/test’, test.js)
+
+test.js
+app.get(’/’, function(req, res){
+	res.send(‘this is test’);
+});
+app.post(’/’, function(req, res){
+	res.send(‘this is test’);
+});
+
+）
+
+*在proxy.js中：
+module.exports = (req, res, next) =>{
+  
+}
+
+*我们使用的是callback方式，可以定义多个路由规则，所以我们首先从req中拿到客户端请求中的url（也就是代理地址（代理哪个url））
+
+const path = req.path
+
+*然后我们要判断我们的用户有没有登录，从服务器的session中读取user（我们存储session时定义的）这个session：
+const user = req.session.user
+
+在此处获取是为了后面在用的时候方便
+
+*判断CNode请求的接口是否需要accesstoken才能获取到数据：
+
+我们加一个参数，这个参数我们放在req的query上面const needAccessToken = req.query.needAccessToken
+
+req.query是包含在路由中每个查询字符串参数属性的对象。如果没有，默认为{}
+用来判断路由中是否存在needAccessToken这个参数
+
+*如果路由中存在needAccessToken这个参数（也就是请求的路由中需要这个参数），但是session中没有，那么我们需要告诉客户端，需要登录之后才能请求到需要的数据：
+
+if (needAccessToken && !user.accessToken) {
+    res.status(401).send({
+      success:false,
+      msg:'需要登录才能访问'
+    })
+  }
+
+
+因为我们在这对user进行了判断，为了防止user根本就没有在这会报错，我们将上面的user改成：const user = req.session.user ——》const user = req.session.user || {}
+
+
+*如果不需要登录就可以直接访问，那么我们就可以直接拿到path然后进行代理：
+  axios(`${baseUrl}${path}`,{
+    
+  }).then(response =>{
+    
+  }).catch(err =>{
+    
+  })
+
+因为我们要传query，我们不确定这个客户端请求是否有query，如果是get请求的话是可能存在queyr参数的，我们不能把query直接传递过去，因为我们可能在服务器这自己加一下query属性（比如needAccesstoken等），那么我们就需要把传递过来的query添加或删除新的属性，然后再传入到http请求中去，也就是重新定义一下，
+  const query = Object.assign({}, req.query)
+使用Object.assign深拷贝一个新的变量query出来
+
+  if (query.needAccessToken) delete query.needAccessToken
+因为我们传递到CNode的请求参数中并没有needAccessToken这个参数，这个参数是为了我们在服务端好判断自己在客户端添加上去的，所以为了保证请求CNode的API不出错，我们就需要将这个参数删除，然后安装API的要求传递参数
+
+在axios中，传递query的参数是通过params这个键值来存储的：
+params: query,
+
+*data：也就是req的body（post请求的请求体，或者说是post请求的请求参数），在body中我们要加上accesstoken（即使请求的接口不需要这个参数的话也没关系）：
+axios(`${baseUrl}${path}`,{
+    method:req.method,
+    param:query,
+    data:Object.assign({},req.body,{
+      accesstoken:user.accessToken
+    })
+  })
+
+
+ 这里针对CNode的API需要定义一下header，才能正常接收
+因此Cnode的API我们直接使用axios发送的时候，发送的contentType是application格式的，而CNode的API有些是可以接收这个格式，有的无法接受这个格式，只能用formData这个数据格式传输，为了防止出现一些问题我们把contentTpye全部设置为
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  })
+这个header的意思是所有的数据请求都使用formData这个格式，这个格式CNode的API都可以接收。
+
+*然后就是处理API返回的结果：
+axios(`${baseUrl}${path}`,{
+    method:req.method,
+    param:query,
+    data:Object.assign({},req.body,{
+      accesstoken:user.accessToken
+    }),
+    headers:{
+      "Content-Type":"application/x-www-form-urlencoded"
+    }
+  }).then(response =>{
+    if (response.status === 200){
+      res.send(response.data)
+    }else {
+      res.status(response.status).send(response.data)
+    }
+  }).catch(err =>{
+    if (err.response){
+      res.status(500).send(err.response.data)
+    }else {
+      res.status(500).send({
+        success:false,
+        msg:"未知错误"
+      })
+    }
+  })
+
+*这样我们的代理接口基本就搞定了。然后在server.js中将这个路由处理模块注入到app中：
+我一定要放在服务端渲染的代码之前，如果服务端渲染的的代码先执行了，因为我们设置的服务端渲染的代码所有请求都会返回index页面，所以我们要先让api先进行处理，如果api先拦截到需要api来处理的那么api直接返回就可以了
+app.use('/api/user', require('./util/handle_login'))
+app.use('/api', require('./util/proxy'))
+
+如果请求路径是'/api/user'，那么我们将所有请求都转到handle-login.js下面执行
+如果请求路径是'/api'，我们就将所有请求都转到proxy.js下面去执行。
+
+这样代理服务就全都写完了，我们测试一下：npm run dev:server
+
+重启成功
+
+我们使用chrome的postman或者firefox的httprequester测试一下，输入：http://localhost:3000/api/topics，点击get请求，就会发现正确返回了数据。我们就可以使用这些数据来开发我们的应用了。（如果是get请求，在浏览器直接输入请求地址也行的通：http://localhost:3000/api/topics）
+因为我们使用了服务器代理，所以在本地请求的时候能正确的返回API的数据就说明我们写的代理没问题。这样我们就可以使用CNode的接口来开发自己的应用了。
+
+
+
+
+
+
+四、使用ant design作为react的UI库进行编写页面
+至少第一感觉给人不错，各种组件都有，也是国内开发的，star数也不少
+
+4.1、在项目中引入antdesign库
+npm i antd -S
+
+然后按照官方提示使用按需加载的方式来引用组件，在babelrc配置文件中添加：
+  "plugins": [
+    "transform-decorators-legacy",
+    ["import",{"libraryName":"antd","style":"css"}]
+  ]
+
+然后在webpack.config.client.js中添加loader解析器，因为我们在项目中使用了css文件，但是jsx语法并不识别css语法，所以需要添加css的loader解析器：
+ {
+                test: /\.css$/,
+                loader: 'style-loader!css-loader'
+            },
+在这我们使用了style-loade和css-loader，所以我们需要在项目中安装：
+npm i style-loader css-loader -D
+
+antd的环境配置已经完成，然后在需要添加组件的页面从antd中引入并使用组件：
+import { Button } from 'antd'
+<Button type="primary">Primary</Button>
+
+重启项目：npm run dev:client
+看是否报错
+
+编写css样式，新建一个css文件，然后在需要的文件导入css文件，先这样，这样至少有效，直接导入css文件之后就会生效：
+import styles from '../../style/home.css'
+这种方式应该会有问题，先这样写，后面再优化。
+
+4.2、先按照自己的逻辑编写一个首页出来，然后再去看教程，看彼此的差距在哪里
+
+4.3、跟着教程走一遍
+后期提升的方法是找文章分析react的新特性等讲解，或者看源码文档。
+（1）、react16新特性
+error boundary 用来捕获渲染过程中的错误（可以在开发过程中抓到错误给用户提醒，也可以查找是哪里出了错误）
+
+支持在render方法中直接返回一个数组，也支持直接返回一段字符串
+
+Portals使得组件可以脱离父组件层级挂载在DOM树的任何位置。比如浮层（和当前节点上下文没关系的）
+
+服务器渲染速度提升，提供了一个新方法，在有服务端渲染的时候客户端使用ReactDom.hydrate挂载组件，在没有服务端渲染的时候还使用原来的APIReactDom.render方法
+
+（2）进行网站搭建，将网页大体的功能实现
+《1》使用material-ui，因为可以实现ios和Android的一些效果，就不用我们自己去实现了，对接移动端
+
+在使用组件库之前我们需要进行一些设置是关于服务端渲染的，在官网（https://material-ui.com）guides下面有一个server rendering选项。在使用这个组件库的时候我们需要配置一些服务端渲染的环境，这些配置涉及到一些样式的内容，因为这个组件库的样式实现是他自己使用的jss（css in js），就是我们在使用这个库写样式的时候是在js文件中写的，没有css（less）文件，全部写在js里面，我们在js中写的css最终都会以样式表的方式从js里面把它插入到html下面的某个style标签下面以此来实现css的功能，这种方法的有点是有非常好的动态性，而且classname是动态生成的，不会有重名，而且className还可以压缩，我们在开发过程中很长的语义化className在上线之后就可以经过压缩变成很短的class名
+
+《2》在项目中使用materialUI：
+npm install @material-ui/core @material-ui/icons -S
+然后先在客户端进行配置，在index.js中我们可以使用这个UI库创建我们的主题：
+import {MuiThemeProvider,createMuiTheme} from '@material-ui/core/styles'
+
+主题的颜色我们要从UI组件中import进来：
+import { lightBlue, pink} from '@material-ui/core/colors'
+里面有很多颜色可以选择，可以从文档中找到说明
+
+然后我们创建一个主题：
+（https://material-ui.com/customization/themes/）
+const theme = createMuiTheme({
+    palette:{
+        primary:lightBlue,
+        secondary:pink,
+        type:'light'
+    }
+})
+
+然后把theme挂在到react上：包裹在APP组件的外面
+ReactDom.render(
+    <Provider appState={appState}>
+        <BrowserRouter>
+            <MuiThemeProvider theme={theme}>
+                <App/>
+            </MuiThemeProvider>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root")
+)
+
+这样我们就可以在应用中使用UI组件了
+
+然后在需要使用UI组件的文件中引入对应的组件：
+import Button from '@material-ui/core/Button'
+这样的好处是我们需要哪些组件在打包的时候就会打包那些，而不是将整个组件导入进来，即使没用到的组件也会被打包
+然后使用：<Button raised="true" color="primary">这是一个按钮</Button> 我们给button添加了一个熟悉，这样这个button就会增加一些样式，效果是悬浮有边框的感觉，指定颜色color在这的primary就是我们在定义主题时候的那个参数
+
+启动查看一下效果
+
+但是样式渲染的逻辑是：先没有样式的button加载到页面，然后请求css样式，等css样式插入完成之后才会显示出渲染完成的button，这个我们是不能忍的，所以我们要在服务器渲染的时候进行调整，让他在服务端返回的内容里面就已经有了样式。
+
+在这我们回过头去先去做服务端渲染部分的代码，来保证我们渲染的过程是没问题的，要不出现了问题找不到头绪。回去去做服务端渲染相关内容（服务器router渲染、mobx渲染等操作）
+
