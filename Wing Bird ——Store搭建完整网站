@@ -1,6 +1,15 @@
 比翼鸟——服装（情侣？）
 主打舒适，自然，健康
 
+
+
+api：豆瓣电影（书）（https://github.com/jokermonn/-Api/blob/master/DoubanMovie.md#playing）
+样式：
+架构：react
+
+先仿照豆瓣做一个资讯类的网站，要有图文，真实网评等
+
+
                                                     Ⅰ搭建前端
 
 一、前台环境初始化项目，并进行相关配置
