@@ -1,0 +1,851 @@
+一、系统和环境搭建、初始化
+1.1、安装macOS系统：
+（1）官方下载vmware workstations最新版本，然后找一个注册码激活
+（2）从百度网盘上下载macOS系统，以.ios结尾的
+（3）从网盘上下载unlock-master软件，解压到vmware根目录下
+（4）打开任务管理器——服务——在里面关闭vmware相关的四个服务（VM开头的四个）
+（5）打开unlock-master文件，以管理员身份运行win-install.cmd
+（6）打开vmware安装macOS系统
+（7）在虚拟机中安装：
+vmware-tool（https://jingyan.baidu.com/article/ff411625b9011212e48237b4.html)
+（8）创建共享文件夹，并在vmware中进行设置
+（9）虚拟机设置中自定义设置：
+处理器：数量2，内核数量1
+虚拟化引擎：全勾选
+网络适配器：桥接模式（这个模式相当于两台电脑，各自独立存在）
+显示器：指定监视器设置为1920*1080，这样看起来mac界面比较舒服
+
+到此macOS环境搭建完毕
+
+1.2、开发环境搭建：
+（1）在AppStore中下载xcode（如果想要完全卸载Xcode：https://blog.csdn.net/toopoo/article/details/85218502）
+（2）在网站上下载webstore和chrome并安装，因为这两个软件是从网站上下载的，我们双击下载好的软件，然后根据提示将图标直接拖拽到应用程序文件夹，然后就会自动安装。
+因为chrome在第一次安装之后会闪屏，所以需要重新更新一下版本，最新的版本就不会闪屏了。
+（3）从node.js官网下载最新的node.js的mac版本，然后运行安装并检查是否安装成功（node -v）
+（4）command+空格打开搜索界面，然后搜索终端就会找到命令行，然后将命令行固定在程序坞。
+（5）如果运行npm的时候报错，那么需要添加前缀sudo npm ...这样就不会报错了
+（6）配置webstorm内存：在应用程序界面找到图标，右击——显示包内容——contents——bin——*.vmpotions——将Xms改成512m，Xmx改成2048m保存后退出。
+
+
+
+二、rn基础理论
+2.1、rn开发环境搭建（官网）
+分为两种形式：
+（1）expo方式：一种是快速搭建：适用于只有js代码（不含原生代码的项目）
+快速搭建需要使用expo工具，这个工具是rn开发的一个工具链，这个工具链可以让我们用js和react来开发ios和Android项目
+打开expo官网——点击工具——下载ios或者Android客户端（这样我们就可以在真机上查看项目源码，ios直接在应用商店里面下载就行）
+然后安装脚手架工具expo：npm i -g expo-cli
+然后使用expo工具初始化一个项目：expo init Project1（创建时会让我们选择模板，我们直接选择第一个blank模板就行）
+,并进入到Project1项目根目录，然后使用npm start启动这个项目，启动成功之后会有一个二维码，我们通过客户端扫码（直接用相机扫码）就能在手机上面显示创建好的应用了。这个应用是一个实时预览
+
+（2）另外一种是build项目代码的形式：如果有原生代码或者就是在原生代码里面进行集成的就需要用这种方式。这种开发环境是最常见的，因为我们的应用里面或多或少的需要用到原生的代码，扩展性更强。
+在mac环境下搭建：
+首先要：watchman（brew install  watchman是本地文件监听的一个工具，主要用来对rn进行监听）
+然后安装react-native-cli：npm i -g react-native-cli（如果npm安装上了但是报错，那就sudo npm ...就可以了）
+
+然后使用react-native init my_app来初始化一个rn项目
+cd进入到项目根目录，执行react-native run-ios 启动rn项目（启动之后脚手架会在本地创建一个服务，用来更新rn项目的bundle包）
+comand+r刷新rn项目
+
+1.2、调试rn项目（以mac系统ios开发为案例）
+调试项目是每一个开发者需要的基本功。
+（1）开发者菜单（就是热更新的时候需要选择的那个菜单，通过command+D），在真机上通过摇动手机来开启Developer Menu（开发者菜单）
+
+（2）开发者菜单中的功能选项：
+enable live reload：是否实时加载（调教UI样式的时候使用），初始化整个项目，会回到初始页面
+enable hot reloading：是在当前页面进行刷新，只在当前页面进行更新。
+
+（3）对于运行项目的时候发出的警告，如果我们想忽略，可以通过手动配置来忽略
+
+（4）chrome 的开发者工具：
+在模拟器的开发者菜单中打开debug选项，这样就会在本地的浏览器上打开一个debug界面。
+然后右键——检查——打开chrome调试程序界面。我们可以在sources菜单里面看到debuggerWorker.js，这个文件下面还有一个localhost:8081文件，然后在这个文件里面我们就可以找到项目的源代码，我们点开源代码之后就可以在需要调试的地方再chrome操作界面里面打断点，或者在console里面输出我们需要的东西从而进行debug调试
+
+chrome调试工具提供了八大面板：
+Elements：查看和编辑当前页面的html和css
+NetWork：查看Http请求的详细信息，如请求头，响应头以及返回内容等
+Sources：用于查看和调试当前页面所加载的脚本的源文件
+TimeLine：用于查看脚本的执行时间、页面元素渲染时间等信息
+Profiles：用于查看cpu执行时间与内存占用等信息
+ResourceL用于查看当前页面所请求的资源文件，如html、css样式文件等
+Audits：用于优化前端页面，加速网页加载速度等
+console：用于显示脚本中输出的调试信息，或运行测试脚本等。
+对于RN应用，sources和console是最常用的工具
+
+
+
+（5）通过chrome调试RN程序
+真机调试：在使用真机调试时，要确保手机和电脑处在同一个网段（同一个路由下）
+IOS：首先打开项目中的RCTWebSocketExecutor.m文件（这个文件我们首先需要打开xcode，然后在左下角搜索，打开文件之后我们搜索localhost，并将这个字母改成我们电脑的ip：ifconfig 在en0中第一个innet 192.168.1.220），将localhost改为电脑的IP，然后在手机的调试工具里面点击Debug JS Remotely启动js远程调试功能，虚拟机识别不出来手机，不知道为啥，先不去管这个
+
+
+Android上：将手机通过usb连接到电脑，然后通过命令行工具运行如下命令：adb reverse tcp:8081 tcp:8081。
+或者通过摇一摇来打开手机的开发者菜单，然后选择Dev Settings中设置你的电脑ip来进行调试。
+
+
+（6）断点调试
+在sources右上角的调试工具里面有常用的断点调试按钮，依次功能为：
+*暂停/继续按钮：继续执行代码直到遇到下一个断点
+*单步执行按钮：步进代码以查看每一行代码对变量做出的操作，当代码调用另一个函数时不会进入这个函数，使你可以专注于当前的函数
+*跳入按钮：调试器会进去这个函数并跳转到函数的第一行
+*跳出按钮：当你进入一个函数后，可以点击step out执行函数余下的代码并跳出该函数
+*关闭/激活断点按钮：控制断点的开启和关闭，同时保持断点完好。
+*异常是否暂停按钮：
+*捕获异步堆栈跟踪按钮：
+*Pause On Caught Exception：开启/关闭全局断点
+
+当我们选择了很多断点之后，如果我们想要单独调试其中的某些断点，可以在右侧的Breakpoints里面进行选择性的勾选
+
+
+
+
+
+
+
+
+（5）RN项目启动报Unhandled JS EXception:SyntaxError解决方法：清除浏览器缓存
+
+三、ES基础
+3.1、类（class）
+让js面向对象编程变得更加简单
+类不是函数，所以不需要加小括号，类是一个类似于对象的特殊形式
+class Animal{
+    constructor(name,color) {
+        // constructor是构造函数，在类实例化的时候会被调用，如果我们在构造类的时候没有指定，那么就会有一个不带参数的默认构造函数。
+        this.name = name;
+        this.color = color;
+        // this.name是Animal这个类的属性，name是在实例化这个类的时候传入的参数
+    }
+
+    toString(){
+        // toString是Animal这个原型上的属性
+        console.log("name:"+this.name)
+    }
+
+}
+3.2、模块化
+export：导出模块，可以导出变量也可以导出常量，如导出多个变量的时候可以：export {name, age};
+
+import：导如模块。将定义好的模块在另外一个模块中通过import使用。import {name,age} from 'test'
+一条import可以同时导如函数和其他变量（import defaultMethod,{otherMethod} from 'xxx.js';）
+
+
+3.3、箭头函数（=>）
+（a,b）=>{.....}
+箭头函数与包围它的代码共享同一个this（父级），这个特性能帮你很好的解决this指向问题，借助箭头函数我们就可以不需要使用var that = this这种引用外围this的模式了。
+（1）箭头之后可以是一个表达式或者是用花括号括起来的函数体，不过，需要自行通过return来返回值，否则返回的是undefined
+
+（2）卸载监听器时的陷阱
+因为我们的箭头函数或者bind，每次执行完都返回一个新的函数引用，所以当我们需要函数的引用去做一些别的事情，那么就必须保存这个引用。最简单的办法也是平时写代码时候习惯性的写法就是在constructor中绑定this：onPaused是一个函数
+this._onPaused = this.onPaused.bind(this)
+这样onPaused这个值就被绑定到了构造函数的_onPused属性上，直接使用构造函数的属性就不会导致bind指定不一致的情况了。
+
+或者直接在定义函数的时候就使用箭头函数，那么这个函数自定就将自己绑定给了构造函数的属性：onPaused = ()=>{....} 把函数直接用箭头函数来定义，初始化的时候就绑定好了this指针。这种方法更加简便，要熟悉实用。
+
+3.4、函数参数默认值
+ES6支持在定义函数的时候为其设置默认值
+function foo(height = 50, color = 'red'){...}
+
+不使用默认值的情况：
+function foo(height,color){
+  var height = height || 50;
+  var color = color || 'red';
+}这种写法一般情况下没有问题，但是当参数为false的时候就会出现问题，但是ES6写法没有问题，更安全实用。
+
+3.5、字符串模板(``)
+在ES6中通过${}在字符串中使用变量：
+var name = `your name is ${first} ${lase}.`
+更加简洁方便
+
+3.6、解构赋值
+解构赋值语法是js的一种表达式，可以方便的从数组或者对象中快速提取值赋给定义的变量。
+
+（1）获取数组中的值
+var foo = [1,2,3,4,5]
+var [one,two,three] = foo
+则one = 1，two = 2， three =3
+
+如果要忽略某些值，可以用空白的间隔来取值：
+var [one,,,last] = foo
+last = 4。因为one后面有一个空格，然后又加了一个空格，所以last对应的是4的位置
+
+也可以先声明变量，然后取值：
+var a,b;
+[a,b] = [1,2];
+则a =1，b=2
+
+
+如果没有从数组中获取到值，我们还可以为变量设置一个默认值：
+var a,b;
+[a=5,b=7] = [1]
+则 a=1，b=7和为函数中的变量初始化一样
+
+此外我们可以通过解构赋值方便的交换两个变量的值，比传统的方法简便的多：
+var a =3;
+var b =1;
+[a,b] = [b,a]
+则a = 1， b =3 这种方式比再额外定义一个变量来存储要方便的多
+
+
+（2）获取对象中的值：
+直接通过在大括号中列举key来获取到对象中的值：
+const student ={name:'Min', age:18, city:'beijing'}
+const {name,age,city} = student
+则name = Min ，age = 18
+
+
+（3）延展操作符（...）
+可以在函数调用/数组构造时，将数组表达式或者string在语法层面展开，还可以在构造对象时，将对象表达式按key-value的方式展开。
+let a=[1,2,3,4]
+[...a,'5',6]=[1,2,3,4,'5',6]
+
+let c = 'hello'
+[...c] = ['h','e','l','l','o']
+
+构造对象时，进行克隆或者属性拷贝：
+let aClone = {...obj}
+
+在函数调用时使用延展操作符：
+function  sum(x,y,z){return x+y+z}
+let num = [1,2,3]
+sum(...num) = 6
+
+
+3.7、构造数组
+在没有...操作符的时候，我们构造新的数组只能通过push、splice等方法，将已有的数组元素变成新的数组一部分，有了展开操作符，构造新的数据就会变得更简单：
+const a = [1,2]
+const b = [3,...a,4]
+b=[3,1,2,4]
+
+在进行数组拷贝的时候，展开操作符的作用和Object.assign()行为一直，执行的都是浅拷贝（只遍历一层）。
+[...a] 就等同于Object.assigen([],a)
+
+3.8、ECS2018（ES9）中，延展操作符增加了对对象的支持：
+let obj1 = {foo:'bar', x:42}
+let obj2 = {foo:'baz', y:38}
+
+let cloneObj = {...obj1} 
+克隆后的结果是：{foo:"bar",x:42}
+
+let newObj = {...obj1,...obj2}
+合并后的对象：{foo:"baz",x:42,y:38},重复的key后面的会覆盖掉前面的
+
+
+3.9、延展操作符在react中的应用：
+通常我们在封装一个组件时，会对外公开一些props用于实现功能，大部分情况下在外部使用都应显示的传递props，但是当传递大量的props时，会非常繁琐，我们可以使用延展操作符来进行传递。
+如：
+<Example name = 'a' age={3} />
+可以变成下面的写法：
+const params = {name:'a', age:3}
+<Example {...params} />
+注意在这里面自动将对象里面的:转化成了属性里面的=
+
+配合解构赋值，避免传入一些不需要的参数：
+let params = {
+a:'z',
+b:2,
+c:20
+}
+
+let {c,...other} = params
+
+<Example c='f' num=80 {...other} />
+结果就是：
+<Example c='f' num=80 a='z' b=2 />
+就是把params通过解构赋值分离成了c和other，然后对c我们自己重新定义，而other等那些不需要变动的则直接传入
+
+
+3.10、对象属性的简写
+在ES6中，允许我们在设置一个对象的属性的时候不指定属性名：
+const name='Ming' , age=18,city='Shang'
+const student = {
+name:name,
+age:age,
+city:city
+}
+上面这种写法可以直接转化为下面这种写法（属性名和变量相同时）：
+const student ={
+name,
+age,
+city
+}
+
+3.11、Promise
+Promise是异步编程的一种解决方案，比传统的解决方案callBack更加优雅，在ES6中统一了用法，原生提供了Promise对象：
+
+
+
+
+
+
+
+3.12、let和const
+let和const都是块级作用域
+
+
+3.13、ES7的特性
+ES6之后基本每年发布一次，所以自ES6之后，每个版本的特性的数量就比较少，ES7的新特性主要是两个：includes()和指数操作符
+（1）Array.Prototype.includes()
+includes()函数用来判断一个数组是否包含一个指定的值，如果包含则返回true，否则返回false
+
+includes函数与indexOf函数很相似，只不过是返回的结果前者是布尔值，后者是数字
+
+
+（2）指数操作符：**
+指数操作符是两个星号，具有与Math.pow()等效的计算结果
+console.log(2**10) 输出：1024
+
+
+3.14、ES8的特性
+（1）async/await
+在ES8中加入了对async/await的支持，也就是我们所说的异步函数，这是一个很实用的功能。async/await将我们从头疼的回调地狱中解脱出来，是代码看起来很简洁。
+
+
+
+
+
+四、react基础知识
+4.1、jsx
+react官方推荐我们使用jsx，因为它能简洁的定义我们熟知的包含属性的树状结构语法。
+
+jsx中使用属性：只需要用一对大括号包起来：<Person name={this.name} />
+
+jsx语法允许我们在组件内部通过表达式返回一个组件：
+<Container>{this.value ? <Nav/> : <Login /></Container>
+
+定义组件时，一般要求组件类只能包含一个顶层标签，但是有的时候为了避免重复渲染，我们需要同时返回多个同层级的标签（如多个并列的View视图），这时我们应该首先定义一个数组，然后将多个定义好的标签放到数组中去，然后将数组作为一个整体返回：
+class Message extends Component{
+  render(){   
+        let views=[];
+          views.push(<h1>Hello {this.state.name}</h1>);
+          views.push(<h1>Hi {this.state.name}</h1>);
+          return views;
+  }
+}
+
+
+4.2、组件的属性（props）
+我们可以通过this.props.xx的形势获取组件对象的属性，对象的属性可以任意定义，但要避免与js关键字冲突。
+
+遍历对象的属性：
+this.props.children会返回组件对象的所有属性。react提供一个工具方法react.children来处理this.props.children。我们可以用react.children.map或react.children.forEach来遍历子节点：
+render(){
+return(
+  <ul>
+{
+React.Children.map(this.props.children,(child)=>{return <li>{child}</li>;})
+}
+</ul>
+)
+}
+React.Children.map里面的第一个参数是需要遍历的内容，第二个参数是一个函数，这个函数的参数是map遍历出来的结果child
+
+
+
+4.3、PropTypes（用来对组件的属性进行检查）
+组件的属性可以接受任意值，有时，我们需要一种机制，验证参数是否符合要求。这个属性就是用来验证组件实例的属性是否符合要求的。
+现在的PropTypes已经从react中分离出来到了一个单独的组件库中，所以在使用的时候需要手动安装，然后再使用：
+import PropTypes from 'prop-types'
+然后对需要验证的参数进行验证：
+static propTypes = {
+title:PropTypes.string.isRequired,
+}
+这样当组件在进行render渲染的时候就会坚持title是否存在且是字符串类型，如果不满足条件就会报错。
+具体使用方法可以查看官方文档
+
+
+4.4、defaultProps（默认属性）
+用来设置组件属性的默认值。
+class MyTitle extends Component{
+  static defaultProps = {
+    shortName:'mytitle'
+};
+render(){
+return <h1>{this.props.shortName}</h1>
+}
+}
+ReactDom.render(<MyTitle/>,document.getElementById('root'))
+
+当组件渲染出来之后h1位置显示的就是‘myTitle’
+
+
+4.5、ref（获取真实的DOM节点）
+组件并不是真实的DOM节点，而是存在于内存之中的一种数据结构，叫做虚拟DOM，只有当他插入文档以后，才会变成真实的DOM，根据react的设计，所有的DOM变动，都现在虚拟DOM上发生，然后再将实际发生变动的部分，反映到真实DOM上，这种算法叫做DOM diff，它可以极大提高网页的性能表现。
+但是，有时需要从组建获取真实DOM的节点，这时就要用到ref属性。
+class Alert extends Component{
+  showAlert(message){
+    alert(`debug:${message}`)
+}
+render(){
+  return null;
+}
+}
+
+class MyTitle extends Component{
+  onClick =()=>{
+    this.refs.alert.showAlert('MyTitle');
+// this.refs是MyTitle这个组件内部的所有含有ref属性的子组件,这样就可以获取到showAlert方法
+};
+render(){
+  return(
+    <div>
+  <h1 onClick = {this.onClick}>click me</h1>
+<Alert ref = 'alert' />
+</div>
+)
+}
+}
+
+需要注意的是，由于this.refs.[refName]属性获取的是真实DOM，所有必须等到虚拟DOM插入文档之后，才能获取到这个属性。上面代码中，通过为组件指定Click事件的回调函数，确保了只有等到真实DOM发生click之后，才会读取到this.refs属性
+
+ref属性在开发中使用频率很高，使用它你可以获取到任何你想要获取的组件的对象，有了这个对象你可以灵活地做很多事情，比如：读写对象的变量，甚至调用对象的函数。
+
+
+4.6、state
+组件会根据props的变化来进行渲染，但组件无法改变自身的props，那么组件为了实现交互，可以使用组件的state。state是组件私有的，可以通过state={}方式初始化
+
+由于this.props和this.state都用于描述组件的特性，可能会产生混淆。一个简单的区分方法是this.props表示那些本组件无法改变的特性，而this.state是会随着用户互动而产生变化的特性。
+也就是this.props不会因为用户的互动而发生变化，而state是根据用户互动发生变化的。
+
+
+4.7、组件的生命周期
+组件生命周期分为三个主要过程：组件挂载、组件更新、组件卸载
+
+组件挂载阶段：首先执行constructor初始化组件
+
+（1）组件的不安全方法：
+componentWillMount
+componentWillReceiveProps
+componentWillUpdate
+使用这些生命周期方法通常会导致错误和不一致，这三个方法在新版的react中已经被标记为不安全了，在未来会被弃用。
+
+但是当我们需要在上面的周期时候进行操作时，我们如何进行？可以参考（https://github.com/reactjs/rfcs/blob/master/text/0006-static-lifecycle-methods.md）
+before是以前的方法，after是替代方法
+
+（2）render方法
+render方法是必须的，当被调用时，其会检查this.props和this.state并返回以下类型中的一个：
+*react元素：通常是有jsx创建。该元素可能是一个原生DOM组件的表示（<div />）或者是一个自定义的复合组件（<div><span /></div>）
+*字符串和数字：这些将被渲染为DOM中的text node（文本节点）
+*null或布尔值：什么都不渲染
+*以及另外一种我们用不到的结果
+
+render()函数应该是纯粹的，也就是说该函数不修改组件的state，每次调用都返回相同的结果，不读写DOM信息，也不和浏览器交互（例如通过使用setTimeout）。如果需要和浏览器交互，在componentDidMount中或者其他生命周期方法中做这件事。保持render()纯粹，可以使服务器端渲染更加切实可行，也使组件更容易被理解
+
+（3）componentDidMount()方法
+这个生命周期方法是非常重要且频繁使用的方法。
+这个方法在组件被装配后立刻调用，通常在该方法中进行一些初始化操作。初始化时需要DOM节点的操作可以放到这里进行。若你需要从远端加载数据，这是一个适合实现网络请求的地方。在该方法里设置状态将会触发重新渲染。
+
+这一个方法是发起任何订阅的好地方。如果你这么做了，别忘了在componentWillUnmount退订。
+
+另外，在这个方法中调用setState将会触发一次额外的渲染，但是他将在浏览器刷新屏幕之前发生。这保证了即使render将会调用两次，但用户不会看到中间状态。
+
+
+五、react-native布局详细指南
+一款好的App离不开一个漂亮的布局，在RN中的布局方式采用的是FLexBox（弹性框）进行布局。
+FlexBox提供了在不同尺寸设备上都能保持一致的布局方式。FlexBox是css3弹性框布局规范，大家在做RN开发时不需要单行FlexBox的兼容性问题，RN支持的很好。
+
+5.1、宽和高
+一个组件的高度和宽度决定了它在屏幕上的尺寸，也就是大小。
+
+5.2、像素无关
+在RN中尺寸是没有单位的，他代表了设备独立像素。
+<View style={{width:100,height:100,margin:40,backgroundColor:'gray}}>
+  <Text style={{fontSize:16,margin:20}}>尺寸</Text>
+</View>
+上面代码，在android上时，View的长和宽被解释成100dp，字体被解释成16sp，在ios上时尺寸单位被解释成pt，这些单位确保了布局在任何不同dpi的手机屏幕上显示不会发生改变；
+
+5.3、FlexBox在RN里面和Web里面稍微有区别
+（1）flexDirection属性：在RN中默认值是‘column’，在Web中默认值是“row”
+（2）alignItems属性：在RN中默认值是“stretch”，在Web中默认值是“flex-start”
+（3）flex属性：在RN中只接受一个参数，在Web中可以接受多个参数
+（4）在RN中不支持的属性：align-content、flex-basis、order、flex-flow、flex-grow、flex-shrink
+剩下的都能通用
+
+5.4、FlexBox在RN中的一些属性
+（1）父视图属性（容器属性）
+flexDirection：row、column、row-reverse、column-reverse（定义了容器中子元素沿水平还是垂直方向排列）
+flexWrap：wrap、nowrap（定义了容器中的子元素是否允许多行排列，默认是nowrap，不允许多行排列）
+justifyContent：flex-start、flex-end、center、space-between、space-around（容器中子元素以及元素周围空间的分配）
+alignItems：flex-start、flex-end、center、stretch（定义了容器中侧轴方向子元素的对齐方式，默认值是stretch（拉伸的意思）：当子元素没有设置高度或宽度的时候，元素将会拉伸到与容器相同的高度或宽度）
+我们可以用这些属性来约束子元素的排列方式
+
+（2）子视图属性
+用来约束元素本身的属性，只有两个
+alignSelf：auto、flex-start、flex-end、center、stretch（定义了容器内部被选中子元素的对齐方式，这个属性可以覆盖被选中元素的alignItems属性）
+    alignSelf属性默认值是auto，意思是继承了父元素的alignItems属性（如果父元素没有设置            
+    alignItems属性因为alignItems的默认值是stretch，所以alignSelf的值也是stretch）
+    stretch属性：元素被拉伸以适应容器
+    center属性：元素位于容器的中心
+    flex-start属性：元素位于容器的开头
+    flex-end属性：元素位于容器的结尾
+
+flex：number（定义了一个可伸缩元素所占空间的比例，默认为0）
+
+
+六、react-navigation开发指南
+随着react-navigation逐渐稳定，navigator逐渐被取代。react-navigation是navigator的加强版，不仅有navigator的全部功能，还支持底部导航类似于ios中的UITabController，也支持侧拉效果方式，类似于android中的抽屉效果。
+
+6.1、导航器
+可以看成是一个普通的react组件，你可以通过导航器来定义你的app导航结构。导航器还可以渲染使用通用元素，例如配置的标题栏和选项卡栏。
+
+react-navigation中有以下7中类型的导航器：
+（1）createStackNavigation：类似于普通的navigator，屏幕上方导航栏
+（2）createTabNavigator：createTabNavigator已弃用，使用createBottomTabNavigator、createMaterialTopTabNavigator替代
+（3）createBottomTabNavigator：相当于ios里面的TabBarController，屏幕下方的标签栏；
+（4）createMaterialTopTabNavigator：屏幕顶部的材料设计主题标签栏
+（5）createDrawerNavigator：抽屉效果，侧边滑出
+（6）createSwitchNavigator：switchNavigator的用途是一次只显示一个页面。
+
+你可以通过上面7种导航器来创建你的App，可以任意组合
+
+6.2、在开始学习7种导航器之前，我们需要先了解两个和导航相关的概念：
+（1）Screen navigation prop（屏幕导航属性）：通过navigation可以完成屏幕之间的调度操作，例如打开另一个屏幕
+（2）Screen navigationOptions（屏幕导航选项）：通过navigationOption可以定制导航器显示屏幕的方式（例如：头部标题，选项卡标签等）
+
+6.3、导航器所支持的三个属性（props）：
+（1）ref：可以通过ref属性获取到navigation
+（2）onNavigationStateChange(prevState,newState,action)：顶级节点除了ref属性外，还接受onNavigationStateChange(prevState,newState,action)属性，每次当导航器所管理的state发生改变时，都会回调该方法。
+prevState：变化之前的state
+newState：新的State
+action：导致state变化的action
+（3）screenProps：想子屏幕传递额外的数据，子屏幕可以通过this.props.screenProps获取到该数据。
+
+
+6.4、屏幕的navigation Prop（screen Navigation Prop）：
+当导航器中的屏幕被打开时，他会收到一个navigation prop，navigation prop是整个导航环节的关键一员。
+（1）navigation的作用：
+navigation包含该以下功能：
+&navigate：跳转到其他界面
+&state：屏幕的当前state
+&setParams：改变路由的params
+&goBack：关闭当前屏幕
+&dispatch：向路由发送一个action
+&addListener：订阅导航生命周期的更新
+&isFocused：true标识屏幕获取了焦点
+&getParam：获取具有回退的特定参数
+&dangerouslyGetParent：返回父导航器
+
+需要注意：一个navigation有可能没有navigate、setParams、goBack，只有state和dispatch，所以在使用navigation时要进行判断，如果没有navigate可以使用navigation去dispatch一个新的action，例如：
+const {navigation，theme，selectedTab} = this.props
+const resetAction = StackActions.reset({
+index:0;
+actions:[
+  NavigationActions.navigate({
+    routeName:'HomePage',
+    params:{
+      theme:theme,
+      selectedTab:selectedTab
+  }
+})
+]
+})
+navigation.dispatch(resetAction)
+
+注意：这里的reset在2.0及以后的版本中被放到了StackActions中，使用时记得留意。
+
+
+6.5、当我们的导航器是StackNavigator的时候他的navigation还有额外的功能：
+只有当前的navigator是stack navigator时，this.props.navigation上有一些附加功能。这些函数是navigate和goBack的替代方法，你可以使用任何你喜欢的方法，这些功能是：
+（1）push：导航到堆栈中的一个新的路由
+（2）pop：返回堆栈中的上一个页面
+（3）popToTop：跳转到堆栈中最顶层的页面
+（4）replace：用新路由替换当前路由
+（5）reset：擦除导航器状态并将其替换为多个操作的结果
+（6）dismiss：关闭当前栈
+
+
+6.6、使用navigate进行界面之间的跳转
+我们可以通过两种方式来实现界面之间的跳转
+（1）navigation.navigate({routeName,params,action,key})
+（2）navigation.navigate(routeName,params,action)
+
+routeName：要跳转到的界面的路由名，也就是在导航其中配置的路由名
+params：要传递给下一个界面的参数
+action：如果该界面是一个navigator的话，将运行这个sub-action
+key：要导航到的路由的可选标识符。如果已经存在，将后退到此路由
+export const AppStackNavigator = createStackNavigator({
+  HomeScreen:{
+    screen:HomeScreen
+  },
+  Page1:{
+    screen:Page1
+  }
+})
+
+class HomeScreen extends Component{
+  render(){
+    const {navigate} = this.props.navigation
+    return(
+        <View>
+          <Text>this is homescreen</Text>
+          <Button
+            onPress={()=>navigate('Page1',{name:'Devio'})}
+            title={'go to Page1'}
+          />
+        </View>
+    )
+  }
+}
+
+6.7、使用state中的params
+可以通过this.props.state.params来获取由setParams()或navigation.navigate()传递的参数，例如：
+<Button
+            title={params.mode === 'edit' ? '保存' : '编辑'}
+            onPress={()=>{
+              setParams({mode:params.mode === 'edit' ? '' : 'edit'})
+            }}          
+          
+          />
+          <Button
+              title={'go to page1'}
+              onPress={()=>{
+                navigation.navigate('Page1',{name:'Devio'})
+              }}
+          />
+
+const {navigation} = this.props;
+    const {state,setParams} = navigation;
+    const {params} = state
+    const showText = params.mode ==='edit' ? '正在编辑' : '编辑完成'
+
+
+6.8、使用setParams改变route params
+setParams(params):我们可以借助setParams来改变route params，如通过setParams来更新页面顶部的标题，返回按钮等。
+class ProfileScreen extends Component{
+            render(){
+              const {setParams} = this.props.navigation;
+              return(
+                  <Button 
+                    onPress={()=>setParams({name:'Lucy'})}
+                    title={'set title name to Lucy'}
+                  />
+              )
+            }
+}
+
+注意：navigation.setParams改变的是当前页面的params，如果要改变其他页面的params可以通过NavigationActions.setParams完成
+
+6.9、使用goBack返回到上一页面或指定页面
+goBack(key):我们可以借助goBack返回到上一页或者路由栈的指定页面
+*其中key标识你要返回到页面的页面标识如：id-1233445-4,而不是routeName
+*可以通过指定页面的navigation.state.key来获得页面的标识
+*key不是必须要传的，也可以穿null
+
+navigation.state {params:{...}, key: 'id-123456-4},routeName:'Page1'}
+例如：
+export  default class Page1 extends Component{
+              render(){
+                const {navigation} = this.props;
+                return(
+                    <View>
+                      <Text>欢迎来到Page1</Text>
+                      <Button
+                        title={'go back'}
+                        onPress={()=>{navigation.goBack()}}
+                      />
+                    </View>
+                )
+              }
+}
+
+6.10、通过dispatch发送一个action
+dispatch(action):给当前界面设置action，会替换原来的跳转，回退等时间。
+例如：
+const {navigation，theme，selectedTab} = this.props
+const resetAction = StackActions.reset({
+index:0;
+actions:[
+  NavigationActions.navigate({
+    routeName:'HomePage',
+    params:{
+      theme:theme,
+      selectedTab:selectedTab
+  }
+})
+]
+})
+navigation.dispatch(resetAction)
+
+
+6.11、NavigationActions的功能：
+（1）navigate：导航到其他的页面
+
+（2）back：返回到上一个页面
+（3）set Params：设置指定页面的params
+（4）Init：初始化一个state如果state是undefined
+
+6.12、
+
+
+
+
+
+
+
+
+
+
+二十、需求分析
+RN开发跨平台的App，任何一家公司无论是做外包还是做产品都需要从需求分析开始。
+20.1、软件开发流程：
+作为一个工程师要清楚整个过程的来龙去脉，这样才能游刃有余，成为全栈工程师的必备
+（1）需求分析（作者的需求是GitHub上查看最热开源项目的案例，自己做还是做一个依赖豆瓣API查看最新电影的APP。作者的案例在没网的时候也能查看，而且在ios和android手机上都能看到，运行效果几乎是没差别的）
+*APP要具备哪些功能：
+    基本功能：客户端、能搜索GitHub上的项目、有离线缓存
+    拓展功能：支持50多种编程语言、订阅的功能（取消的功能）、排序的功能、收藏的功能、分享的功能、更换主题的功能、统计的功能（统计APP每天有多少人下载，什么功能使用的最多）
+
+*用到的技术分解：
+    基础部分：语言（js、ES6系列、Node.js/npm、react、android、ios）、开发工具（webstore、AndroidStudio、XCode）、调试（chrome、yellowBox/redBox、developer Menu）
+
+    布局部分：FlexBox
+
+    组件部分：导航（react-navigation组件）、列表（FlatList）、图片（Image组件，包含静态图片资源、Native图片、网络图片、Uri图片（base64））、第三方组件（RN组件：react-native-splash-screen、react-native-check-box、react-native-easy-toast、react-native-event-bus、GitHubTrending、react-native-code-push、react-native-vector-icons等等；Native组件：统计和分析、社会化分享、第三方登录）；自定义组件（NavigationBar、Dialog、Item、SafeAreaViewPlus等）
+
+    网络和存储：AsyncStorage、Fetch、离线缓存框架
+
+    状态框架：Redux（react-redux、redux-thunk、react-navigation-redux-helpers）、Flux
+
+    高级功能：native Modules（图片剪裁、统计SDk、分享SDK）、RN混合开发（RN+android混合开发、RN+ios混合开发）、全面屏适配指南（ios全面屏适配、android全面屏适配）、RN更新升级（手动更新、react-native-git-upgrade（命令行更新））
+
+    打包发布更新：CodePush热更新、android打包发布、ios打包发布
+
+
+*模块设计：最热模块、趋势模块、收藏模块、我的模块（底部导航栏分为这四个模块）
+
+*项目工程结构：android（关于项目的android部分的代码）、ios、js（所有js部分的代码，）
+    
+（2）UI界面设计
+（3）编码开发
+（4）测试
+（5）上线
+
+20.2、react navigation 3.x介绍
+和2x有一个比较大的区别是3x，有些注意点，需要看视频来处理
+
+
+
+三十、react-navigation搭建App的导航框架
+这个很重要，就相当于路由，也是和web应用区别很大的地方。
+为了将来复盘简单，我在这单独建立一个app，主要用来实现导航相关的代码。
+react-native init Navigation
+
+30.1、用Git做版本控制
+（1）项目初始化好之后为我们的项目来启动Git的版本控制，这样每次提交的代码变更都会有记录
+VCS——Enable Version Control Integration——Git（相当于git init）
+
+（2）将初始化好的项目提交到Git仓库
+右击项目——Git——Commit Directory（提交项目）——因为是第一次提交，所以我们右击最顶层项目——勾选Add to VCS——在commit message中输入“init”——点击右下角commit
+
+30.2、为了导航框架测试方便，需要创建几个页面
+WelcomePage页面（欢迎页面）、HomePage（首页）、DetailPage（详情页）
+
+（1）在项目根目录下新建一个js文件夹，用来存放js相关的代码（区别于ios和android源码）；
+然后在js目录下新建一个page目录，用来存放应用的一些页面
+import React,{Component} from 'react'
+import {View, Text, StyleSheet,} from 'react-native'
+
+type Props ={}
+
+class WelcomePage extends Component<Props>{
+    render(){
+        return(
+            <View style={styles.container}>
+                <Text style={styles.welcome}>Welcome Page</Text>
+            </View>
+        )
+    }
+}
+
+const styles = StyleSheet.create({
+    container:{
+        flex:1,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor:'#f5fcff'
+    },
+    welcome:{
+        fontSize:20,
+        textAlign: 'center',
+        margin:10,
+    }
+})
+
+export default WelcomePage
+
+同上创造一个HomePage页面备用
+
+（2）因为WelcomePage是在加载的时候首先展示的，所以我们在项目根目录下的index.js中用WelcomePage替换掉App，这样在应用打开的时候加载的就是WelcomePage了。
+
+30.3、使用导航器将页面从WelcomePage跳转到HomePage
+（1）首先安装导航器：npm install react-navigation -S
+
+（2）在js目录下创建一个navigator目录专门用来存放导航路由
+
+（3）然后在navigator目录下面创建一个AppNavigators.js
+在这个文件里面我们需要导入一些我们会使用到的导航器：
+import {createStackNavigator, 
+    createMaterialTopTabNavigator,
+    createBottomTabNavigator, 
+    createSwitchNavigator} from 'react-navigation'
+// createSwitchNavigator 是因为当我们的导航从welcome跳转到home的时候我们不希望我们的应用再回到欢迎页面了，
+// 如果我们只使用createStackNavigator，那么应用还是可以从首页返回到welcome页面的
+
+（4）创建导航器的配置，在AppNavigators.js中：
+import {createStackNavigator,
+    createMaterialTopTabNavigator,
+    createBottomTabNavigator,
+    createSwitchNavigator} from 'react-navigation'
+// createSwitchNavigator 是因为当我们的导航从welcome跳转到home的时候我们不希望我们的应用再回到欢迎页面了，
+// 如果我们只使用createStackNavigator，那么应用还是可以从首页返回到welcome页面的
+
+import WelcomePage from '../page/WelcomePage'
+import HomePage from "../page/HomePage";
+import DetailPage from "../page/DetailPage";
+
+const InitNavigator = createStackNavigator({
+    WelcomePage:{
+        screen:WelcomePage,
+        navigationOptions:{
+            header:null, // 可以通过将header设为null来禁用stackNavigator的navigation Bar,这样welcomePage就可以全屏显示了
+        }
+    }
+});
+// InitNavigator 是初始化的导航器，用来将welcome跳转到首页
+
+
+const MainNavigator = createStackNavigator({
+    HomePage:{
+        screen:HomePage,
+        navigationOptions: {
+            header:null
+        }
+    },
+    DetailPage:{
+        screen:DetailPage,
+        navigationOptions: {
+            header:null
+        }
+    }
+
+})
+// MainNavigator 是主导航器，用来在应用中页面间来回切换
+
+export default createSwitchNavigator({
+    // createSwitchNavigator 的作用是让Init导航过度到主导航，切不能回退。这个方法第一个参数是路由配置，第二个参数是其他配置参数
+    Init:InitNavigator,
+    Main:MainNavigator,    
+},{
+    navigationOptions: {
+        header:null
+    }
+})
+
+
+
+（5）使用导航器（因为2.x和3.x的区别，在这遇到了坑，然后就是void造成的问题，需要总结反思一下，还有timer的用法，以及setTimeout的使用和销毁，安装及配置）
+在项目根目录下的index中导入导航器配置：
+import AppNavigators from './js/navigator/AppNavigators'
+
+然后我们需要在welcome页面停留2秒钟后跳转到home页面，所以我们需要在welcome页面的componentDidMount生命周期里面添加一个定时器，当计时结束之后触发函数，进行跳转：
+
+好好总结，看完视频不算玩，再去看文档和别人写好的文章。还是看自己的规划
