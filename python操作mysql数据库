@@ -1,0 +1,113 @@
+客户端——业务逻辑层——数据访问层（底层、核心技术）——数据库（DB）
+目标：开发完整的数据库操作程序
+包含内容：
+*python访问DB的官方接口规范
+*python开发DB程序的开发环境
+*python访问DB的connection、cursor两大对象
+*python执行增删改查操作的实例讲解
+*完整实例：银行转账实现
+
+一、python DB API：python访问数据库的统一接口规范
+只需要使用python DB API就可以完成针对不同数据库（MySQL、Oracle、SQLServer）的访问。对于开发者来说，学习了一套API对不同的数据库都可以一次完成。对于系统来说切换数据库也只需要很少的操作
+1.1、DB API包含的内容：
+              数据库连接对象connection（打通服务器的通道）、
+              数据库交互对象cursor（传送数据的货车，数据装在车里进行输送）
+              数据库异常类exceptions（检测数据库的错误和异常，可以根据异常的关键字        
+               查找API来定位错误出现的原因）
+python程序——————————————————————————数据库服务器
+
+1.2、DB API访问数据库的流程
+有了这个规范，我们访问数据库的流程也是标准化的。
+开始——创建connection——获取cursor——【执行查询、执行命令、获取数据、处理数据】——关闭cursor——关闭connection（关闭的原因是避免占用更多的资源，提供程序运行效率）——结束
+
+二、python开发mysql环境搭建：
+2.1、mysql安装：
+以MSI文件进行安装更简单一些：
+（1）、下载mysql，选择5.5版本进行安装：https://dev.mysql.com/downloads/file/?id=474442
+（2）、选择Typical（典型安装）
+（3）、在结束界面不选择那个复选框，后边再进行配置
+2.2、MySQL配置：
+进入到mysql的默认安装路径的bin目录下：
+C:\Program Files\MySQL\MySQL Server 5.5\bin
+点击MySQLInstanceConfig.exe文件开始进行配置（win10下，需要右键这个文件，属性——兼容，兼容win8才会安装正常）
+选择标准配置：standard configuration（详细配置比较复杂，初学者暂时用不到）
+每次电脑启动时启动mysql服务和添加环境变量两个复选框都勾选
+超级用户root的密码默认设置为password，方便自己记忆，输完密码之后单击next按钮
+然后单击execute按钮执行当前的程序
+finish安装结束
+
+2.3、mysql目录结构：
+bin目录：存储可执行文件
+data目录：存储数据文件
+docs：文档
+include目录：存储包含的头文件
+lib目录：存储库文件
+share：错误消息和字符集文件
+
+2.4、mysql配置选项：配置my.ini文件
+即使我们刚才已经通过MySQLInstanceConfig.exe的配置向导进行了基础配置，但这只是最常规最简单的一些配置，还有很多操作除了配置向导的图形化界面来进行配置外，我们还可以通过修改配置文件来实现。
+如标准配置中没有的编码方式：
+需要将文件中的编码方式改变为：
+[mysql]
+default-character-set=utf8
+[mysqld]
+character-set-server=utf8
+修改完之后需要重启mysql才会生效
+
+
+2.5、停止和启动mysql服务：以管理员身份运行
+在命令行中输入：net start mysql (net start不止可以启动mysql，在计算机的服务列表中的所有服务都可以通过这个命令启动)
+net stop mysql 是停止mysql服务（如果电脑里面的mysql已经运行了，那么应该先停止服务然后再启动）
+
+2.6、mysql的登录与退出
+如果要使用mysql我们首先要先登录mysql客户端，通过客户端向服务器来发送我们要执行的一些指令才可以。
+（1）、mysql客户端的登录：
+用管理员什么进入命令行后输入：
+mysql -uroot -p（如果更改了启动的端口号，或者链接的不是本地的mysql则需要改为：
+mysql -uroot -p -P3306 -h127.0.0.1）
+然后会提示输入密码
+输入正确的密码后就进入到了mysql的交互界面
+（2）、mysql客户端的退出：
+退出mysql的命令，直接在mysql的交互界面里面输入：exit;
+
+2.7、mysql常用命令：
+
+2.8、mysql可视化工具：
+下载和破解：http://blog.csdn.net/qq_21205435/article/details/78902052
+三、python3 连接mysql数据库
+PyMySQL是在python3.x版本中用于连接mysql服务器的一个库，python2中则使用mysqldb。PyMySQL是遵循数据库API v2.0规范，并包含了pure-Python MySQL客户端库。
+PyMySQL的目标是成为MySQLdb（MySQLdb是python2.0的库，与之对应的python3.x就是PyMySQL）的替代品。
+3.1、安装：pip3 install PyMySQL
+3.2、安装数据库可视化工具：
+https://www.jianshu.com/p/42a33b0dda9c
+
+四、用python操作MySQL
+http://www.runoob.com/python3/python3-mysql.html
+#引入PyMySQL包
+import pymysql
+
+#和数据库建立连接
+db = pymysql.connect(
+    host="localhost",  #字符串类型 mysql服务器地址
+    user="root",  #字符串类型 可以访问数据库的用户名
+    password="password",  #字符串类型 可以访问数据库的密码
+    db="testdb"   #字符串类型   数据库名称
+    #port = "3306" 数字类型  mysql服务器端口号
+    #charset  字符串 连接编码
+    )
+
+#使用cursor()方法创建一个游标对象cursor 新建一个货车来运输数据
+cursor = db.cursor()
+
+#使用execute()方法执行SQL查询
+cursor.execute('SELECT VERSION()')
+
+#使用fetchone()方法获取单条数据
+data = cursor.fetchone()
+
+print (data)
+
+#关闭数据库
+db.close()
+
+
