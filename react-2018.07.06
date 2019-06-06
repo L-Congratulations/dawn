@@ -1,3 +1,98 @@
+*选react原因：性能高、生态好、可与其他框架并存、扩展性高能支撑大型项目开发、使用rn开发APP、一个框架很重要的一点就是在保证开发效率（组件化开发）的同时减少bug产生（单向数据流）
+*一个好的代码：代码严谨（少bug）、结构清晰好维护、性能高、扩展性好
+
+*核心：所有的事情要做的无非两个，一个是从页面或者服务器获取到数据（经过逻辑运算）存储到store中，另外一件事就是将store中的变量提取出来（经过逻辑运算判断）然后输出给页面或者其他地方。一个是输入（吸入），一个是输出，只需要抽象成这两个部分就OK了。
+
+*理清从属关系和代码本质（哪个函数属于谁，是对象还是函数还是哪种函数）
+
+*在react中不要去尝试修改dom，要通过修改数据来完成：如更改className的值，或者在jsx语法中使用js语法来实现jsx的重新布局（ 
+                    this.state.list.map((item, index) =>{
+                            return <li key = {index}>{item}</li>}
+）
+
+*注意！！！不能直接修改state或store中的值，要把原值进行深拷贝之后再修改，然后再将新的结果赋值给state或者store（ this.setState({
+            list:[...this.state.list, this.state.inputValue],})
+），或者使用immutable.js来避免低级错误。所有操作和原始数值并没有任何关系。如果直接修改原始数值的话会对后面的性能优化。
+状态类型为不可变类型（number，string，bool，bull,undefined）
+这种情况最简单，因为状态时不可变类型，所以直接给要修改的状态赋一个新值即可
+状态类型为数组books:[...preState,''React Guide]
+状态的类型是普通对象(不包含：string，array)：owner:{...preState.owner,name:'Jason'}
+
+*、label（label的作用是扩大点击区域，使光标聚焦在input框中）标签中的for（与js中的for循环冲突因此）改成htmlFor
+
+*引用还是执行
+
+*父组件给子组件传递是通过属性的方式进行传递，既能传递值也能传递方法。子组件通过this.props方法来接收父组件传递过来的值或方法。有的时候子组件需要调用（触发）父组件的方法来改变父组件的数据，需要注意一定要把父组件传递过来的函数的this指向进行bing绑定给父组件。父组件中的数据发生改变了就会自动触发dom的改变。
+
+*通过优化我们可以了解标准的react代码应该如何编写。
+（1）、把样式的引入放在所有组件的后面
+（2）、把this指向的绑定尽量都放到constructor里面去
+（3）、如果render函数里面有比较复杂的js逻辑，可以把他封装成一个函数，然后通过{this.a()}在render函数中调用。使render的结构更加清晰精简jsx体积不会很大，维护起来更方便。注意封装成的函数要使用return返回。当我们编程的时候如果代码写的一坨一坨的就要考虑函数或代码的拆分
+（4）、在新版的react中，setState方法已经不推荐使用对象的形式了，而是推荐使用匿名函数的形式，匿名函数返回一个对象，也就是setSate原始的那个对象：
+原来对象写法：
+ this.setState({
+            list:[...this.state.list, this.state.inputValue],           
+            inputValue: ''
+        });（setState方法接收一个参数，该参数是一个对象）
+优化函数写法：
+ this.setState(()=>{
+            return{
+                inputValue: e.target.value
+            }
+        });   （setState方法接收一个参数，该参数是一个函数）
+使用es6的语法可以简化为：
+this.setState(()=>({
+            inputValue: e.target.value
+        }))
+return——（{}）返回小括号里面的对象
+我们把setState从对象变成一个函数其实是把对象那种同步的模式改成了函数这种异步执行，也是为了代码性能优化。此时我们直接在函数里面直接使用e.target.value的时候会有问题，我们需要将点击事件触发时的value值取到并保存下来，然后再在异步函数里面调用，这样的话就不会出现问题：
+ handleInputChange(e){
+        const value = e.target.value;
+        this.setState(()=>({
+            inputValue: value
+        }));
+        console.log(e.target.value)
+    };
+
+在使用函数编写setState的时候他接收一个参数prevState，这个参数在setState函数中相当于this.state，所以将原来的写法：
+this.setState(()=>({
+            list:[...this.state.list, this.state.inputValue],
+            inputValue: ''
+        }));
+改成下面这种写法更加合理：
+this.setState((prevState)=>({
+            list:[...prevState.list, prevState.inputValue],
+            inputValue: ''
+        }));
+
+
+*chrome扩展工具：react developer tools，插件在网盘里面（https://pan.baidu.com/disk/home#/all?vmode=list&path=%2F%E8%B5%84%E6%96%99%E5%88%86%E7%B1%BB%2F%E5%89%8D%E7%AB%AF%2Freact）
+
+
+*当父组件的render函数被运行时，它的所有子组件里面的render也会被重新执行
+
+*优化：将DOM的操作（生成和对比）转化成了js操作，极大的提升了性能
+
+*深入了解虚拟DOM
+react底层真正的实现步骤：
+（1）、生成 state 数据
+（2）、生成jsx模板
+（3）、数据+模板结合生成虚拟DOM
+（4）、用虚拟DOM的结构生成真实的DOM，来显示
+（5）、state发生变化
+（6）、数据+模板生成新的虚拟DOM
+（7）、比较新旧虚拟DOM，并找到区别
+（8）、直接操作DOM，改变内容
+
+*react的生命周期函数：组件初始化——组件挂载——组件更新——组件剔除
+生命周期函数是指在某一时刻组件会调用并自动执行的函数
+
+
+
+
+
+
+
 一、react开发环境搭建
 1.1、通过脚手架工具来编码（只要学会使用就可以了。前端开发过程中的辅助工具，方便项目管理）脚手架工具编译出来的代码才能正常运行。
 在这使用官方推荐的脚手架工具：create-react-app（官方提供的比较健壮，稳妥）
@@ -13,14 +108,14 @@ package.json文件（实际是一个node的包文件，主要是一些关于node
 public目录：
 
 src目录：里面存放的是我们项目的所有源代码 
-    index.js：是整个程序运行的入口文件，整个程序从index.js开始逐行执行。在index中为什么能直接引入react呢（import React from 'react';）？是因为我们在package.json文件中（"dependencies": {
+    index.js：是整个程序运行的入口文件，整个程序从index.js开始逐行执行。在index中为什么能直接引入react呢（import React from 'react';）？是因为我们在package.json文件中（"dependencies（依赖）": {
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-scripts": "1.1.4"
-  },）的依赖包里面已经有了react,所以在index里面可以直接引入react和react-dom
+  },）的依赖包里面已经有了react,所以在index里面可以直接引入react和react-dom，我们每次使用npm安装一个模块（如axios）该模块就会被添加到这个依赖包里面，所以我们在引用该安装包的时候就可以像引入react一样。否则的话就需要加上路径引入。
 同时我们看到在index.js还是用import引入了一个css文件：import './index.css';这是因为react的设计理念中包含很重要的一条就是:all in js
 import 是es6
-import App from './App';这句话实际引用的是./App.js文件，他会默认有限寻找APP.js，载入进来。
+import App from './App';这句话实际引用的是./App.js文件，他会默认优先寻找APP.js，载入进来。
 
 项目的入口文件是index文件，index文件里面引入了App.js文件——App.js文件里面引入了App.css文件
 
@@ -33,7 +128,7 @@ pwa+serviceworker：可以允许我们已经访问过的网页当做一个app来
 
 1.3、react中的组件
 import App from './App';
-在react中APP就是一个组件，我们打开app.js来查看react组件是如何被定义的：
+在react中APP就是一个组件，我们打开App.js来查看react组件是如何被定义的：
 import React, { Component } from 'react';
 class App extends Component {}
 这是es6的一个解构赋值，等价于React.Component
@@ -66,6 +161,7 @@ class App extends Component {
 import React, { Component } from 'react';这是es6解构赋值的写法，这种写法等价于：
 import React from 'react';
 const Component = React.Component
+解构赋值能更方便的使我们引用对应的模块，减少出错率（代码量越少出错的概率越底）
 
 到此我们创建完成了一个组件，我们如何把组件导入到我们的项目中？打开index.js我们会发现：
 import ReactDOM from 'react-dom';
@@ -103,7 +199,7 @@ class TodoList extends Component{
 }
 
 
-2.2、react中的响应式设计思想和事件绑定
+2.2、react中的响应式设计思想和事件绑定（核心：所有的事情要做的无非两个，一个是从页面或者服务器获取到数据（经过逻辑运算）存储到store中，另外一件事就是将store中的变量提取出来（经过逻辑运算判断）然后输出给页面或者其他地方。一个是输入，一个是输出，只需要抽象成这两个部分就OK了。）
 我们常规的思维是通过操作dom来实现：给input绑定事件，获取input这个dom中的内容然后操作dom把内容添加到ul中去。
 但是react的设计思想和直接操作dom是完全不同的，react是响应式的框架，在编程的时候强调的是不要直接操作dom，而是需要操作数据，通过数据的变化，react会感知到数据的变化，自动的帮我们生成dom，所以在写react代码的时候我们再也不需要关注dom的相关操作了，我们通过数据层的操作就可以了。
 在这个todolist中我们通过分析可以得出只需要两组值，一组用来存储input中的值，一组用来存储ul中的每一项。
@@ -136,7 +232,7 @@ react我们定义数据要把数据定义在状态里面：this.state就是这�
 如何让input框中的值按照我们输入的发生改变呢？需要通过事件绑定，通过监测键盘事件来动态的修改state的值。
 react的事件绑定和原生的事件绑定有差别：就是如果是两个单词组成的事件的话需要使用驼峰法：传统：onchange react：onChange
 onChange = {this.handleInputChange}
-handleInputChange这个函数写在TodoList这个类里面，与render()方法并列：
+handleInputChange这个函数写在TodoList这个类里面，与render()方法并列，因为这是个方法而不是render函数中的一个jsx语法，而且这个函数是属于Component这个类的，而不是render函数的，所以需要和render函数并列，用来处理render函数中的逻辑this.handleInputChange这种引用方法也证明了这个函数是属于component这个类的：
  <div>
             <input type="text" value={this.state.inputValue} onChange={this.handleInputChange}/>
             <button>提交</button>
@@ -156,6 +252,7 @@ handleInputChange(e){
        this.setState({
            inputValue: e.target.value
        })
+（this.setState，setState是这个组件（component这个类）的方法，所以我们在使用的时候必须要用this指向来调用这个方法（就好比this.handleInputChange、this.state），而且handleInputChange这个函数只是我们临时定义的一个函数里面并没有setState这个方法。因此要调用父类中的方法要使用this.setState（此时因为我们的函数this进行了绑定，在这的this就是指的TodoList这个组件本身）这种方法。）
     }
 
 TodoList的新增删除列表内容：
@@ -228,6 +325,2048 @@ handleItemDelete(index){
 </li>
 这句话表达的意思是把item里面的内容当做html来解析而不是字符串。
 
-（4）、
+（4）、label（label的作用是扩大点击区域，使光标聚焦在input框中）标签中的for（与js中的for循环冲突因此）改成htmlFor
+
 
 2.4、拆分组件与组件之间的传值
+（1）、新建TodoItem组件，并引入到TodoList组件中：
+import TodoItem from './TodoItem'
+然后在TodoList中使用TodoItem组件：
+<ul>
+
+                    {
+                        this.state.list.map((item, index) =>{
+                            return (
+                                <div>
+                                    <TodoItem />
+
+                                    {/*<li key = {index} onClick={this.handleItemDelete.bind(this, index)}>{item}</li>*/}
+                                
+                                </div>
+                            )
+
+                        })
+                    }
+                </ul>
+
+（3）、父组件给子组件传值：
+把父组件state中的内容传递给子组件。
+我们要通过属性来传递值给子组件：在TodoList中：
+ <TodoItem item = {item} index={index}/>
+我们在子组件上定义一个属性item，然后把父组件里面的值{item}保存在子组件的属性item。这样子组件就保存了父组件上的值。
+在子组件TodoItem中使用父组件传递过来的值：
+<div>{this.props.item}</div>
+通过this里面的props里面的item拿到父组件传递过来的值，并展示
+
+（4）、子组件如何向父组件传递数据：（点击对应的子组件可以把父组件list中对应的元素删除）
+因为列表是通过子组件生成的，所以我们要给子组件绑定一个事件，这样当我们在点击子组件生成的列表的时候就会触发对应的事件。
+因此我们需要做的就是在触发子组件的事件的时候能修改父组件list中的元素。
+在react中不允许子组件直接修改父组件里面的数据。我们只能通过子组件调用父组件里面的方法，通过触发父组件中的方法来修改父组件里面的数据。
+接下来我们需要做的事就是将父组件的方法传递给子组件，然后子组件触发父组件的方法来实现修改父组件数据。
+同时我们还需要将被点击的子组件的index索引值传递给调用的那个函数。
+我们首先来获取被点击的子组件的index值：
+<TodoItem item = {item} index={index}/> 通过属性传递，我们可以把index值直接传递给对应的子组件。然后是在子组件中通过props这个属性拿到index值。又因为我们需要在点击子组件的时候出发函数，因此还需要给子组件添加一个onClick事件：
+<div onClick={this.handleClick}>{this.props.item}</div>
+
+handleClick(){
+        console.log(this.props.index)
+    }
+
+但是上面这段代码我们并不能获取到index值，因为this指向的是undefined，我们要给在onClick语句中使用bind改变this指向，使this指向TodoItem这个组件：
+<div onClick={this.handleClick.bind(this)}>{this.props.item}</div>
+但在实际开发过程中，这种写法会对代码性能有影响，因此改成如下这种写法更加合理：
+在constructor里面对this指向进行重定向：
+constructor(props){
+        super(props)
+        this.handleClick = this.handleClick.bind(this)
+    }
+然后直接调用this.handleClick：
+ <div onClick={this.handleClick}>{this.props.item}</div>
+
+这样的话this.handleClick这个函数的this指向会永远指向TodoItem这个组件本身。
+这种写法在复杂组件的开发过程中会节约一定的性能
+
+然后就是父组件将函数传递给子组件：
+和传递数据一样，我们再定义一个属性，只不过这次传递的不是一个数据而是一个方法：
+ <TodoItem item = {item} index={index}
+                                        deleteItem = {this.handleItemDelete}
+                                    />
+然后子组件依然通过props属性获取到父组件的函数，并执行：
+ handleClick(){
+        this.props.deleteItem(this.props.index);
+        console.log(this.props.index)
+    }
+此时的逻辑就：子组件被点击的时候调用父组件上的handleItemDelete方法并传递了index参数。
+但是当运行的时候会报错Cannot read property 'list' of undefined，找不到list这个属性。这是因为上面代码的含义是我们在子组件里面调用了一个函数handleItemDelete。 this.props.deleteItem(this.props.index);这句话可以直接翻译为：this.handleItemDelete很显然在子组件中并没有handleItemDelete这个函数，怎么做才能找到呢，实际上handleItemDelete是父组件里面的方法，应该在父组件的环境里面执行，我们需要把this.handleItemDelete里面的this指向父组件，而不是子组件。改变函数this的指向很简单，我们只需要使用bind来强制this.handleItemDelete的this指向指向父组件：
+ <TodoItem item = {item} index={index}
+                                        deleteItem = {this.handleItemDelete.bind(this)}
+                                    />
+此时this.handleItemDelete这个函数就会被强制指向父组件。会在父组件的环境里面执行。
+
+父组件给子组件传递是通过属性的方式进行传递，既能传递值也能传递方法。子组件通过this.props方法来接收父组件传递过来的值或方法。有的时候子组件需要调用（触发）父组件的方法来改变父组件的数据，需要注意一定要把父组件传递过来的函数的this指向进行bing绑定给父组件。父组件中的数据发生改变了就会自动触发dom的改变。
+
+2.4、TodoList代码优化：
+通过优化我们可以了解标准的react代码应该如何编写。
+（1）、把样式的引入放在所有组件的后面
+（2）、把this指向的绑定尽量都放到constructor里面去
+（3）、如果render函数里面有比较复杂的js逻辑，可以把他封装成一个函数，然后通过{this.a()}在render函数中调用。使render的结构更加清晰精简jsx体积不会很大，维护起来更方便。注意封装成的函数要使用return返回。当我们编程的时候如果代码写的一坨一坨的就要考虑函数或代码的拆分
+（4）、在新版的react中，setState方法已经不推荐使用对象的形式了，而是推荐使用匿名函数的形式，匿名函数返回一个对象，也就是setSate原始的那个对象：
+ this.setState(()=>{
+            return{
+                inputValue: e.target.value
+            }
+        });   
+使用es6的语法可以简化为：
+this.setState(()=>({
+            inputValue: e.target.value
+        }))
+return——（{}）返回小括号里面的对象
+我们把setState从对象变成一个函数其实是把对象那种同步的模式改成了函数这种异步执行，也是为了代码性能优化。此时我们直接在函数里面直接使用e.target.value的时候会有问题，我们需要将点击事件触发时的value值取到并保存下来，然后再在异步函数里面调用，这样的话就不会出现问题：
+ handleInputChange(e){
+        const value = e.target.value;
+        this.setState(()=>({
+            inputValue: value
+        }));
+        console.log(e.target.value)
+    };
+
+在使用函数编写setState的时候他接收一个参数prevState，这个参数在setState函数中相当于this.state，所以将原来的写法：
+this.setState(()=>({
+            list:[...this.state.list, this.state.inputValue],
+            inputValue: ''
+        }));
+改成下面这种写法更加合理：
+this.setState((prevState)=>({
+            list:[...prevState.list, prevState.inputValue],
+            inputValue: ''
+        }));
+这种写法可以避免我们不小心改变state的状态。
+同理我们可以把下面这段代码也进行改造：
+ const list = [...this.state.list]; 
+        list.splice(index,1);
+        this.setState(()=>{
+            return{
+                list:list
+            }
+        });
+改造成：
+ this.setState((prevState)=>{
+            const list = [...prevState.list];
+            list.slice(index,1);
+            return{
+                list:list
+            }
+        })
+
+2.5、react循环中key值的问题
+如果我们有一个循环，那么key值应该加在最外层的那层上
+return (                                
+                                <TodoItem
+                                    item = {item}
+                                    index={index}
+                                    deleteItem = {this.handleItemDelete}
+                                    key = {index}
+                                />
+                            )
+
+
+2.6、围绕react衍生出的思考：
+（1）、react是声明式开发方式（与之相对的是命令式编程）
+（2）、react可以与其他框架并存，我们通过分析代码结构可以发现react只会负责id=root这个DOM的渲染，其他的DOM和react一点关系没有，只要其他框架不去操作id=root这个DOM就可以了
+（3）、组件化开发
+（4）、单向数据流，react在我们编程的时候父组件可以向子组件传值（通过自定义属性），子组件能使用父组件传递过来的值。但是子组件不允许向父组件传值。如果尝试改变react会报错。
+做单向数据流是为了我们开发的时候方便，能避免一些坑（父组件被多个子组件共用的时候出了问题就不好定位出问题的到底是哪个子组件）
+（5）、react是一个视图层框架
+如果一个项目极其复杂，会形成一个组件树。因此在大型项目中我们还要使用redux等数据层组件来配合react使用
+（6）、react是函数式编程
+在写组件的时候都是一个函数一个函数这种写法。
+函数式编程的好处是：好维护，便于前端自动化测试
+
+
+四、
+4.1、安装react开发调试工具
+可以很方便的帮我们做react的调试
+chrome扩展工具：react developer tools，插件在网盘里面（https://pan.baidu.com/disk/home#/all?vmode=list&path=%2F%E8%B5%84%E6%96%99%E5%88%86%E7%B1%BB%2F%E5%89%8D%E7%AB%AF%2Freact）
+
+我们可以发现在非react开发的网页时这个插件显示是灰色。非上线的react开发的网页显示是红色，已经上线（如知乎）的react开发的网页显示的是黑色。
+打开控制台我们可以看到右边新增了一个react工具，这样就会很简单的调试程序了，都不需要用console来打印数据了，可以通过追踪state来调试
+
+4.2、proptypes和defaultprops（具体参数去官网查）
+在子元素接收参数的时候如何对接收的参数类型做校验，如何定义参数的默认值
+我们在TodoList中，子组件接收的数据的类型是固定的，父组件不能乱传。我们就可以借助propTypes来做一个属性接收的强校验：
+首先引入PropTypes：import PropTypes from 'prop-types' 
+我们的脚手架工具已经为我们自带了prop-types，可以直接引入
+然后我们对传入的数据做校验：（也可以显示既可以接收number也可以接收一个字符串：arrayOf，oneOfType等）
+TodoItem.propTypes = {
+    item: PropTypes.string,
+    deleteItem: PropTypes.func,
+    index: PropTypes.number
+}
+我们可以测试一下，改成 index: PropTypes.string此时就会报warn（警告不会阻止代码继续执行，但是会提示）
+我们还可以判断某些参数是否是必传值：
+ item: PropTypes.string.isRequired,
+
+如果我们要求某个参数的值必须有，但是父组件在某些情况下不能满足这个要求的时候我们可以在子组件里面给参数设置一个默认值，
+TodoItem.defaultProps={
+    item:'hello'
+}
+如果我们要求item必填，但是有的时候无法给他传递值的时候就可以使用defaultProps给item传递一个默认值，在父组件没传递的时候就显示默认值，传递之后显示传递的值
+
+
+react的最佳学习方式：看官方文档
+
+4.3、props、state、render函数的关系
+当state或者props发生改变的时候，render函数就会重新执行。
+当父组件的render函数被运行时，它的所有子组件里面的render也会被重新执行
+
+4.4、react中的虚拟DOM
+（1）、生成 state 数据
+（2）、生成jsx模板
+（3）、数据+模板 结合生成真实DOM，并显示
+<div id = 'abc'><span>hello</span></div>
+（4）、数据+模板生成虚拟DOM（虚拟DOM就是一个js对象，用它来描述真实DOM）
+虚拟DOM是一个数组结构的对象：
+数组的第一项是最外层的DOM标签名：'div'
+数组的第二项是一个对象，对象里面的内容是标签的属性：{id:'abc'}
+数组的第三项是它的子节点（最外层DOM标签里面的内容），在上例中是span这个DOM，这个新的DOM我们可以使用一个新的虚拟DOM来代替：['span',{},'hello']
+['div',{id:'abc'},['span',{},'hello']]
+这样就可以表示上面的DOM结构了，这就是一个虚拟DOM
+（5）、state发生变化
+（6）、数据+模板生成一个新的虚拟DOM：['div',{id:'abc'},['span',{},'world']]
+（js生成一个js对象性能消耗很小，如果js直接操作DOM调用的是一个高级别的API，性能损耗就会很大。因此生成新的虚拟DOM，极大地提升了性能）
+（7）、比较新旧虚拟DOM的区别，找到区别。此案例中的区别是span中的内容发生了改变hello——world（因为虚拟DOM是js对象，原始DOM是DOM对象，在这一步中对比中也极大的提升了性能）
+（8）、直接操作DOM改变span中的内容
+
+优化：将DOM的操作（生成和对比）转化成了js操作，极大的提升了性能
+
+4.5、深入了解虚拟DOM
+react底层真正的实现步骤：
+（1）、生成 state 数据
+（2）、生成jsx模板
+（3）、数据+模板结合生成虚拟DOM
+（4）、用虚拟DOM的结构生成真实的DOM，来显示
+（5）、state发生变化
+（6）、数据+模板生成新的虚拟DOM
+（7）、比较新旧虚拟DOM，并找到区别
+（8）、直接操作DOM，改变内容
+
+首先jsx+state——先变成了虚拟DOM（js）——然后再变成真实的DOM：
+render(){
+return <div>item</div>
+}
+输出的结果和：
+render(){
+return React.createElement('div', {}, 'item')
+}
+输出的结果是一样的，createElement()这个函数接收三个参数：标签名、标签里面的属性、标签里面的内容。createElement这个函数完成的功能是吧js对象（虚拟DOM）直接变成一个真实的DOM
+
+而jsx帮我们完成了手动创建createElement这种方法，使代码看起来更加清晰简单
+
+虚拟DOM的优点：
+《1》、性能提升了
+《2》、它使跨端应用得以实现。react native因为原生应用中是没有DOM这种概念的，只有浏览器有。但是虚拟DOM是一个js对象，在浏览器和原生应用里都能被识别。在原生应用中将虚拟DOM转化成原生的组件就能在原生应用中使用。
+
+4.6、虚拟DOM中的diff算法
+两个虚拟DOM（js对象）比对的方式就是diff算法
+大大提升了比对性能
+同层比对（有一二三级）：如果第一级（父级）就不同，那么后面的二三级就不会再对比而是直接用新生成的替换原来的（直接替换的只是一段js代码，所以速度还是很快的）（算法简单，比对速度就会很快，虽然损耗了部分渲染的性能，但是缩短了比对时间）。
+在循环渲染中，key值如果用index也有可能增加diff算法的比对时间。使用item（使用一个稳定的name来作为key值）作为key值比较好
+
+4.7、react中ref的使用
+在react中我们使用ref操作DOM
+在react16中ref是一个函数，react建议我们使用数据驱动的方式而尽量不要用ref直接操作DOM，而且会遇到一些坑
+
+setState函数是异步函数，我们如何拿到该函数执行结束的结果？还接受第二个参数，是一个函数：
+this.setState((prevState)=>{
+            const list = [...prevState.list];
+            list.splice(index,1);
+            return{
+                list:list
+            }
+        },()=>{
+            console.log(1)
+        })
+这个函数会在setState这个函数里面按顺序执行
+
+4.8、react的生命周期函数：组件初始化——组件挂载——组件更新——组件剔除
+生命周期函数是指在某一时刻组件会调用并自动执行的函数
+initialization：组件初始化阶段，constructor就属于初始化过程，我们会在里面定义state这些东西
+mounting：组件挂载阶段，挂载阶段有三个步骤componentWillMount（组件即将被挂载到页面的时刻自动执行）——render（把组件render到页面上）——componentDidMount（组件被挂载到页面之后执行）
+componentWillMount、componentDidMount只会在挂载的时候被执行（第一次被执行）。重新渲染render的时候不会重新执行
+updation：组件更新阶段，组件更新过程中也有自己的生命周期函数。组件更新发生在什么情况下？props发生变化或者states发生变化都会触发组件更新。props发生变化和state发生变化组件执行的过程略有不同，props发生变化的时候在开始阶段比states多了一个步骤：componentWillReceiveProps，而states没这个过程，后边的四个步骤都一样。
+
+我们先讲peops和states发生变化时都会执行的函数：
+第一个函数：shouldComponentUpdate().组件被更新之前会自动被执行。这个函数要求返回一个布尔类型的执行结果（否则会报warn，这个函数可以理解为：你的组件需要被更新吗？）
+如果我们返回true则组件会继续执行下去，如果我们返回false则组件就不会继续执行下去，而是终止。决定组件是否更新。
+shouldComponentUpdate(){
+        console.log('shouldComponentUpdate');
+        return false
+    }
+
+如果shouldComponentUpdate返回true那么就会进入到第二个生命周期函数，如果返回的是false那么生命周期就会到此终止：componentWillUpdate
+
+第二个函数：componentWillUpdate()
+组件被更新之前会自动执行
+
+第三个函数：render
+执行完componentWillUpdate之后就可以确定数据或者props已经改变并且同意，此时render函数就会重新渲染虚拟DOM，渲染完虚拟DOM后然后渲染真实DOM,完成页面的更新
+
+第四个函数：componentDidUpdate()
+页面更新完成之后会自动执行这个函数
+
+
+props的第一个函数：componentWillReceiveProps()
+当一个组件要从父组件接受参数，只要父组件的render函数被重新执行了，子组件的componentWillUpdate这个生命周期函数就会执行（子组件第一次存在于父组件中，不执行。如果这个子组件之前已经存在于父组件中，才会执行）
+
+
+unmounting：组件从页面去除阶段：
+有一个函数：componentWillUnmount()
+当这个组件即将被从页面中剔除的时候，会被执行。在被移除前的一瞬间执行。
+
+
+4.9、react生命周期函数的使用场景：
+（1）、因为父组件的render函数在重新渲染的时候，他的所有子组件的render函数都会重新渲染。在案例中，我们在input框中每敲击一次键盘父组件的render就会重新渲染一遍，同时他所有的子组件也会重新执行一次render函数，这就会导致性能的浪费，因为我们只是在input输入框中输入内容，并没有涉及到子组件。怎么对这种情况进行性能优化呢？
+可以使用生命周期钩子shouldCompontentUpdate()这个函数来决定子组件是否进行更新。更合理的写法如下：
+shouldComponentUpdate(nextProps, nextState){
+        if (nextProps.item !== this.props.item){
+            return true
+        }else {
+            return false
+        }
+    }
+但是这种方法还是有一些问题，需要深入与研究。
+
+（2）、使用axios发送ajax
+我们发送ajax，根据生命周期需要把ajax函数放到componentDidMount()这个函数里面，这是因为这个函数只在组件第一次渲染结束的时候执行一次。根据实际生产情况我们做一个约定把ajax的获取只放到componentDidMount这个函数里面，这是最安全保险的。
+当组件已经挂载到页面上之后axios执行，更新state数据，数据更新之后重新渲染页面。
+
+首先在项目中安装axios：yarn add axios
+在react中使用axios：比如我们在TodoList这个页面里面发送一个ajax：
+import axios from 'axios'
+然后在componentDidMount这种调用axios：
+componentDidMount(){
+        axios.get('/api/todolist').then(()=>{
+            console.log('success')
+        }).catch(()=>{
+            console.log('error')
+        })
+    }
+
+
+4.10、使用charles进行接口数据模拟
+从网上下载安装charles：https://www.charlesproxy.com/latest-release/download.do
+charles这个工具可以抓到我们的浏览器向外发送的请求，然后对一些请求进行处理。
+在桌面上创建一个todolist.json文件，然后在里面写：["dell","lee","imooc"]
+我们想要当请求http://localhost:3000/api/todolist这个路径的时候返回todolist.json里面的内容。我们需要使用charles这个工具来满足我们的需求：tools——map local——add——根据端口和需要返回的json文件进行配置
+然后：
+ componentDidMount(){
+        axios.get('/api/todolist').then((res)=>{
+            console.log(res);
+            this.setState(()=>({
+                list:res.data
+            }))
+        }).catch((err)=>{
+            console.log(err)
+        })
+    }
+
+不过在这还可以优化，我们可以把res.data打散然后放到[]中去：
+ this.setState(()=>({
+                list:[...res.data]
+            }))
+这样写可以避免对data产生不可预知的改变，正好这种方法也是data的拷贝，不会影响到原数据。
+
+
+4.11、react的css过渡动画
+<div className={this.state.show ? 'show' : 'hide'}>hello</div>
+                <button onClick={this.handleToggole}>toddle</button>
+
+handleToggole(){
+        this.setState({
+            show: this.state.show ? false :true
+        })
+    }
+
+css动画效果：
+forwards这个参数是为了保存最后一个状态
+.show{
+    animation: show-item 2s ease-in forwards;
+}
+.hide{
+    animation: hide-item 2s ease-in forwards;
+}
+@keyframes show-item {
+    0%{
+        opacity: 0;
+        color: red;
+    }
+    50%{
+        opacity: 0.5;
+        color: greenyellow;
+    }
+    100%{
+        opacity: 1;
+        color: deepskyblue;
+    }
+    
+}
+@keyframes hide-item {
+    0%{
+        opacity: 1;
+        color: red;
+    }
+    50%{
+        opacity: 0.5;
+        color: greenyellow;
+    }
+    100%{
+        opacity: 0;
+        color: deepskyblue;
+    }
+
+}
+
+4.12、react动画第三方模块：react-transition-group。使用这个模块我们可以更加方便的实现更加复杂的动画效果
+在GitHub中找到这个模块：https://github.com/reactjs/react-transition-group
+首先安装模块：yarn add react-transition-group
+（1）CSSTransition：
+首先引入CSSTransition这个模块到我们需要添加动画的文件里：import { CSSTransition } from 'react-transition-group';
+原理就是通过监听show这个state的值来在动态的切换css的样式
+
+
+
+五、redux
+redux = reducer+flux
+
+5.1、redux的工作流程
+TodoList这个组件需要一个数据来梳理工作流程：
+TodoList组件想要获取到store中的一个数据——通过ActionCreators语句向store发出请求——store接收到请求之后到Reducers中进行查询——Reducers收到store的查询命令返回对应的数据标签给store——store根据Reducers返回的数据标签把自身存储的数据发送给TodoList这个组件。
+改变数据流程一样。
+
+5.2、使用antd重新编写TodoList页面布局
+提炼自企业级中后台产品的交互语言和视觉风格。
+开箱即用的高质量 React 组件。
+使用 TypeScript 构建，提供完整的类型定义文件。
+全链路开发和设计工具体系。
+
+打开ant design的官网：https://ant.design/index-cn
+然后点击开始使用
+
+安装antd：yarn add antd
+
+然后开始使用antd：
+（1）、首先引入ant.css：import 'antd/dist/antd.css'
+我们想要写什么元素可以通过查看官网来找到对应的案例，如我们要使用一个input框：
+首先将input标签引入到我们的项目中：import { Input } from 'antd'   
+然后直接在render函数中使用引入的标签： <Input type="text" placeholder='todo input'/>
+这样一个自带样式的input框就写好了
+如果想修改样式：<Input type="text" placeholder='todo input' style={{width:'300px'}}/>
+<Input type="text" placeholder='todo input' style={{width:'300px', margin:'10px'}}/>
+                <Button type="primary" size='default'>提交</Button>
+                <List
+                    style={{width:'300px', margin:'10px'}}
+                    size="small"
+                    bordered
+                    dataSource={this.state.list}
+                    renderItem={item => (<List.Item>{item}</List.Item>)}
+                />
+
+
+5.3、redux中store的创建
+首先安装redux：yarn add redux
+然后我们在src目录下创建一个文件夹：store
+然后在store里面创建一个index.js文件，这个index.js就是store数据存放的位置。
+在index.js中编写代码：
+import { createStore } from 'redux'
+import reducer from './reducer'
+const store = createStore(reducer);
+// 这样我们就创建好了一个数据的公共存储仓库，然后把store暴露出去
+// 但是此时创建好的只是一个仓库没有对数据进行管理的功能，要想对仓库中的数据进行管理需要还需要reducer，
+// 在store文件夹下创建reducer.js,然后把reducer作为一个参数传入到createStore，数据管理在redecer中，store中只负责存储数据
+
+
+export default store
+
+在reducer.js中：
+const defaultState = {
+    inputValue:'',
+    list:[]
+};
+
+export default (state = defaultState, action) =>{
+    return state;
+    // state就是store这个仓库中存储的所有数据的信息，在这返回的必须是一个函数，因为我们在reducer中要做的就是对数据进行管理，
+    // 函数才能管理数据，我们可以在defaultState中定义好默认的数据的格式,这样store中存储的数据就可以定制化了。
+    // 意思就是从reducer中规定好了数据格式，然后保存到store中。到此数据仓库和管理就建好了
+}
+
+
+使用组件在store中获取数据：
+首先引入store：import store from './store/index' （如果引入的是文件下面的index那么还可以这么写： import store from './store',程序会自动加载index.js）
+然后在constructor函数里面将this.state赋值为store.getState（store给我们提供了一个方法，叫getState方法）：
+this.state = store.getState();
+        console.log(this.state);
+
+此时就可以通过修改this.state来进行数据的读取了：
+<Input type="text" placeholder='todo input' style={{width:'300px', margin:'10px'}} value={this.state.inputValue}/>
+                <Button type="primary" size='default'>提交</Button>
+                <List
+                    style={{width:'300px', margin:'10px'}}
+                    size="small"
+                    bordered
+                    dataSource={this.state.list}
+                    renderItem={item => (<List.Item>{item}</List.Item>)}
+                />
+
+创建好store和reducer之后赋值给this.state然后就正常使用。
+
+
+5.4、使用action和reducer操作数据
+首先下载一个chrome浏览器，帮助我们进行redux的调试：redux devtools
+
+首先写一个触发事件：
+<Input
+                    type="text" placeholder='todo input'
+                    style={{width:'300px', margin:'10px'}}
+                    value={this.state.inputValue}
+                    onChange={this.handleInputChange()}
+                />
+
+ handleInputChange(e){
+       console.log(e.target.value)
+    };
+
+接下来我们要做的事就是改变store中的inputValue改变成input框中的值
+首先我们需要在事件里面创建一个action，与store进行通信：
+action是一个对象，里面有几个元素：
+type：告诉react，我这个action要做的事情是什么，要做一个描述。这样定义type是为了方便我们维护，同时代码的功能更加清晰
+value：我们需要传递到store中的值
+handleInputChange(e){       
+        console.log(e.target.value);
+        const action = {
+            type: 'change_input_value',
+            value: e.target.value
+        }
+    };
+我们调用store的dispatch方法就可以把action传递给store：
+handleInputChange(e){        
+        console.log(e.target.value);
+        const action = {
+            type: 'change_input_value',
+            value: e.target.value
+        };
+        store.dispatch(action);
+    };
+此时action已经传递给了store，但是store没有数据处理的能力，所以此时的store需要拿着传递过来的action以及本身所保存的state转发给reducer去处理（redux中的store会自动进行这一步，也就是当store接收到了dispatch传递过来的数据之后就会连同自身的数据一起转发给reducer），我们可以在reducer中console一下来查看是否接收到了state和action：
+console.log(state,action);
+我们通过运行代码可以发现，确实已经接收到了我们在TodoList里面通过dispatch传递过来的数据。
+reducer此时已经拿到了store中的原始数据和input框中的最新数据，reducer要做的就是将新的数据更新store中的原始数据，并将修改过的数据返回给store，然后store就会用新的数据将原始数据替换掉。
+export default (state = defaultState, action) =>{
+    console.log(state,action);
+    if (action.type === 'change_input_value') {
+        // 我们首先要将原始数据做一份深拷贝
+        const newState = JSON.parse(JSON.stringify(state))
+        // 然后修改拷贝数据中对应的值
+        newState.inputValue = action.value
+        // 然后把修改好的值返回，在这实际上是直接返回给了store。
+        return newState
+
+        // 这是一种固定的写法，reducer有一个限制：可以接受state但是不能修改state
+    }else {
+        return state;
+    }
+}
+
+我们重启程序，发现当我们输入内容的时候store中的inputValue这个state确实和我们input框的值一样，但是此时input框中的值并没有改变。意思是我们已经成功的改变了store中的值，但是同步到页面上还需要做一些其他的处理：我们要在使用数据的地方订阅store，然后在store发生改变的时候才能同步到组件的state上。store.subscribe()只要store里面数据发生改变，就会触发subscribe，我们可以在subscribe里面定义一个函数，这样的话在store发生改变的时候就可以自动执行函数里面的内容：
+this.handleStoreChange = this.handleStoreChange.bind(this);
+        store.subscribe(this.handleStoreChange)
+当store发生变化的时候我们应该做的是更新组件里面的state，要想更新更新组件里面的state，那么就需要调用setState方法，在setState中传入最新的store中的数据：
+    handleStoreChange(){
+        const newState = store.getState();
+        this.setState(()=>{
+            return newState;
+        })
+        console.log(1111)
+    }
+
+此时每当store更新之后，就会触发handleStoreChange函数，而这个函数是先获取store中的最新数据，然后通过setState函数更新组件中的state。这样就实现了store与组件间的数据联动。此时就使用redux完成了input框的功能，接下来使用redux完成数据列表的渲染：
+
+首先要完成数据渲染，我们需要做的是当点击提交按钮的时候出发事件，这个事件是把input框中的值先添加到store的list数组中，然后更新组件中的state，从而完成组件中state数据的更新。
+handleItemAdd(){
+        console.log();
+        const action = {
+            type:'add_item',
+        };
+        store.dispatch(action)
+    };
+
+   if(action.type === 'add_item'){
+        const newState = JSON.parse(JSON.stringify(state));
+        newState.list.push(newState.inputValue)  // 因为newState本来就是拷贝出来的数据，所以此时可以直接使用push等数组方法对其直接操作。
+        newState.inputValue = ''
+        return newState
+
+    }
+
+到这，我们可以发现，在使用redux做为数据框架使用的时候，所有对数据的逻辑判断和处理转移到了reducer.js中。在组件中只负责触发函数，并传递数据的功能。当然还有一个subscribe方法刷新组件中的state。
+
+
+我们在这的列表使用的是antd组件渲染出来的，所以直接给小的item添加事件，然后把index传递给我们的reducer就好了：
+renderItem={(item,index) => (<List.Item onClick={this.handleDeleteItem.bind(this,index)}>{item}</List.Item>)}
+
+handleDeleteItem(index){
+        console.log(index);
+        const action = {
+            type:'del_item',
+            index: index
+        }
+    };
+
+ if (action.type === 'del_item'){
+        const newState = JSON.parse(JSON.stringify(state));
+        newState.list.splice(action.index,1);
+        console.log(newState)
+        return newState;
+    }
+
+
+actionType分离：就是将action中的type的值单独拿出来，这样做有助于项目的管理，也有助于及时查看到报错信息（当action的type我们拼写出错的时候因为是字符串，并不会因为在reducer中没找到而报错）
+我们在store文件夹下创建一个actionTypes.js文件，在这个文件中来定义types的变量：
+export const ADD_ITEM = 'add_item';
+export const CHANGE_INPUT_VALUE = 'change_input_value';
+export const DEL_ITEM = 'del_item';
+
+然后在组件中引入：
+import {ADD_ITEM, CHANGE_INPUT_VALUE, DEL_ITEM} from './store/actionTypes'
+然后替换action的type中的字符串
+
+然后在reducer中引入：（注意reducer和actionTypes在同一个文件夹下）
+import {ADD_ITEM, CHANGE_INPUT_VALUE, DEL_ITEM} from './actionTypes'
+并替换掉对应的字符串
+
+
+
+使用actionCreators统一创建action：
+一般我们会通过一个actionCreators来统一的定义某个页面所有的action，然后通过actionCreators来创建action这是一个比较正规的流程。如果业务逻辑非常复杂的话，那么页面就会到处都是action，管理和测试起来很不方便。
+
+我们在store下面创建一个actionCreators.js文件：（这个文件的作用就是把分散在页面中的action集中起来，里面的内容就是一个个根据业务逻辑封装好的action函数，使用的时候直接调用里面的函数就可以直接替代页面中的action）
+import {ADD_ITEM, CHANGE_INPUT_VALUE, DEL_ITEM} from './actionTypes'
+
+export const getInputChangeAction = (value) =>({
+    type:CHANGE_INPUT_VALUE,
+    value
+});
+创建的函数的名称可以直接根据我们的actiontypes来命名：get+types名+action
+然后我们在页面中使用：
+import {getInputChangeAction} from './store/actionCreators'
+handleInputChange(e){        
+        const action = getInputChangeAction(e.target.value);
+        store.dispatch(action);
+    };
+
+这样写提高了代码的可维护性，也有助于前端代码的测试工具进行自动化测试
+
+
+redux知识点复习补充：
+redux设计和使用的三项原则：
+（1）、store要求必须是唯一的
+（2）、只有store能够改变自己的内容。我们虽然是在reducer里面定义的数据处理的方法，但是我们把更改之后的数据还是返回给了store，store接收到reducer返回的数据之后才改变的数据，reducer只是处理了一下数据，并没有改变store里面的数据。
+（3）、reducer必须是纯函数。纯函数指的是：给定固定的输入，就一定会有固定的输出，而且不会有任何副作用。在reducer中体现的就是，当我们给定了确切的state和action那么reducer输出的结果永远是固定的。（不纯的函数比如：
+ // newState.inputValue = action.value
+        newState.inputValue = new Date();       
+        return newState
+此时就不是一个纯函数，因为Date()返回的是一个时间字符串，时刻在变化，此时输出的结果就不是一个固定的结果，还有类似的setTimeout（循环）、ajax请求等，那么他就不再是纯函数
+）所谓副作用就是对接收的参数直接做了修改，因此我们不要对传入的参数进行修改，直接使用就好。
+
+redux的API：createStore、store.dispatch、store.getState、store.subscribe
+
+
+六、react
+
+6.1、react中如何拆分UI组件和容器组件
+在开发过程中我们也把UI组件叫做傻瓜组件，容器组件叫聪明组件。
+UI组件指的是什么？就是render函数中返回的东西，UI组件负责页面渲染。
+而容器组件负责页面的逻辑（容器组件也就是和UI组件进行配合的函数）
+
+此时UI组件作为容器组件的子组件注入到容器组件中，两个组件之间的通讯通过props进行传递：
+属性和方法：
+value={this.props.value}  // 注意，子组件获取的属性名要和父组件传递的属性名一致，而不是和state中的属性名一致
+                    onChange={this.props.handleInputChange}
+通过父组件的属性：
+ value = {this.state.inputValue}           
+            handleInputChange = {this.handleInputChange}
+传递给UI子组件
+
+这里有一个关键点，我们在使用下面这个函数的时候：
+renderItem={(item,index) => (<List.Item onClick={this.handleDeleteItem.bind(this,index)}>{item}</List.Item>)}
+onClick函数要表达的意思是，绑定父组件的this，然后调用父组件的handleDeleteItem函数并传递index。但是当我们需要把这个函数传递给子组件的时候，就需要变化一下：首先我们要把handleDeleteItem这个函数通过属性方法传递给子组件，那么必须要绑定this，但是父组件中并没有index值，所以就需要在子组件中传递参数index，在父组件中：
+this.handleDeleteItem = this.handleDeleteItem.bind(this);
+handleDeleteItem = {this.handleDeleteItem}
+此时我们的子组件就能够接收到父组件的handleDeleteItem 函数了，然后子组件接收这个函数：
+onClick={this.props.handleDeleteItem}此时我们虽然接收到了父组件的函数，但是怎么传递index参数呢？我们需要定义一个匿名函数，然后在匿名函数中包含一个index参数，在匿名函数中去调用handleDeleteItem这个函数，并传递index参数：renderItem={(item,index) => (<List.Item onClick={(index)=>{this.props.handleDeleteItem(index)}}>{item}</List.Item>)}
+也就是：onClick={(index)=>{this.props.handleDeleteItem(index)}}
+这样的话就完美解决了
+
+UI组件就完成了，TodoListUi.js完整代码：
+import React,{ Component, Fragment } from 'react'
+import { Input, Button, List } from 'antd'
+import 'antd/dist/antd.css'
+
+
+class TodoListUi extends Component{
+    render(){
+        return(
+            <Fragment>
+                <Input
+                    type="text" placeholder='todo input'
+                    style={{width:'300px', margin:'10px'}}
+                    value={this.props.value}
+                    onChange={this.props.handleInputChange}
+                />
+                <Button type="primary" size='default' onClick={this.props.handleItemAdd}>提交</Button>
+                <List
+                    style={{width:'300px', margin:'10px'}}
+                    size="small"
+                    bordered
+                    dataSource={this.props.dataSource}
+                    renderItem={(item,index) => (<List.Item onClick={(index)=>{this.props.handleDeleteItem(index)}}>{item}</List.Item>)}
+                />
+            </Fragment>
+        )
+    }
+}
+
+export default TodoListUi
+
+UI组件又叫傻瓜式组件，只负责页面的显示而不负责任何业务逻辑。
+容器组件并不关注页面张什么样子，只关注业务的逻辑，是聪明组件。容器组件的完整代码：
+import React, { Component, Fragment } from 'react'
+import axios from 'axios'
+import store from './store/index'
+import {getInputChangeAction, getAddItemAction, getDelItemAction} from './store/actionCreators'
+import TodoListUi from './TodoListUi'
+
+class TodoList extends Component{
+    constructor(props){
+        super(props);        
+        this.state = store.getState();        
+        this.handleInputChange = this.handleInputChange.bind(this);        
+        this.handleStoreChange = this.handleStoreChange.bind(this);
+        this.handleItemAdd = this.handleItemAdd.bind(this);
+        this.handleDeleteItem = this.handleDeleteItem.bind(this);
+        store.subscribe(this.handleStoreChange)
+    }
+
+    render(){
+        return (
+           <TodoListUi
+            value = {this.state.inputValue}
+            dataSource = {this.state.list}
+            handleInputChange = {this.handleInputChange}
+            handleItemAdd ={this.handleItemAdd}
+            handleDeleteItem = {this.handleDeleteItem}
+           />
+        )
+    };
+
+    handleDeleteItem(index){
+        const action = getDelItemAction(index);
+        store.dispatch(action);
+    };
+
+    handleInputChange(e){
+        console.log('get input')
+        const action = getInputChangeAction(e.target.value);
+        store.dispatch(action);
+
+    };
+
+    handleItemAdd(){
+        const action = getAddItemAction();
+        store.dispatch(action)
+    };
+
+    // componentDidMount(){
+    //     axios.get('/api/todolist').then((res)=>{
+    //         // console.log(res);
+    //         this.setState(()=>({
+    //             list:[...res.data]
+    //         }))
+    //     }).catch((err)=>{
+    //         console.log(err)
+    //     })
+    // };
+
+    handleStoreChange(){
+        const newState = store.getState();
+        this.setState(()=>{
+            return newState;
+        },()=>{
+            console.log(this.state)
+        })
+    };
+}
+export default TodoList
+
+
+6.2、无状态组件：
+当我们的组件只有render函数的时候，我们就可以通过一个无状态组件来替换掉原来的普通·组件。那么无状态组件和普通的组件优势是什么呢？无状态组件性能比较高，因为他就是一个函数，而普通的组件是js中继承了Component的一个类，里面包含生命周期函数，render等函数，远比一个单纯的函数要多很多。所以一个普通组件的性能肯定比不上一个无状态组件的。以后如果看到一个组件只有render函数，那么直接使用无状态组件来定义这个组件，这样的话性能是最优的。无状态组件什么时候用呢?当我们定义一个UI组件的时候，该组件只负责页面渲染，没有做任何逻辑操作的时候，一般我们都可以用无状态组件定义。具体情况根据需求分析
+
+const TodoListUi = (props)=>{
+    return(
+        <Fragment>
+            <Input
+                type="text" placeholder='todo input'
+                style={{width:'300px', margin:'10px'}}
+                value={props.value}
+                onChange={props.handleInputChange}
+            />
+            <Button type="primary" size='default' onClick={props.handleItemAdd}>提交</Button>
+            <List
+                style={{width:'300px', margin:'10px'}}
+                size="small"
+                bordered
+                dataSource={props.dataSource}
+                renderItem={(item,index) => (<List.Item onClick={(index)=>{props.handleDeleteItem(index)}}>{item}</List.Item>)}
+            />
+        </Fragment>
+    )
+}
+也就是：
+const TodoListUi = (props)=>{
+    return(// jsx语法)
+}
+
+
+6.3、redux中发送异步请求获取数据：
+除了数据来源不一样，其他的和redux进行数据同步的步骤一样：
+ componentDidMount(){
+        axios.get('/api/todolist').then((res)=>{
+            console.log(res.data);
+            const action = getAxiosListAction(res.data);
+            store.dispatch(action)
+        }).catch((err)=>{
+            console.log(err)
+        })
+    };
+
+
+6.4、redux-thunk中间件进行ajax请求发送（redux-thunk是redux的中间件而不是react的中间件）
+当我们把大量的异步请求或者非常复杂的逻辑都放在页面里面的话会让代码显得非常臃肿，我们把这种大量请求摘出去才最好。redux-thunk是redux的一个中间件，在GitHub中搜索redux-thun：
+https://github.com/reduxjs/redux-thunk。
+（1）、首先安装redux-thunk：yarn add redux-thunk
+（2）、要想使用redux-thunk中间件首先要引入applyMiddleware，才能使用：
+import { createStore, applyMiddleware } from 'redux'
+（3）、引入thunk中间件：import thunk from 'redux-thunk';
+（4）、在store中的第二个参数传递：applyMiddleware(thunk)
+const store = createStore(
+    reducer,
+    applyMiddleware(thunk)
+);
+（如果要集成redux-devtools这个中间件和thunk一起使用的话可以去GitHub上查找redux-devtools里面的高级应用，注意，里面的compose需要从redux中引入）
+
+此时我们在项目中已经引入了thunk，接下来就是使用redux-thunk编写代码：
+我们把异步ajax代码从TodoList.js中移除，移动到actionCreators.js中去，当使用了redux-thunk之后，我们可以在actionCreators.js中返回一个函数，如：
+默认情况下我们是返回的一个对象：
+export const getAxiosListAction = (data) =>({
+    type:AXIOS_LIST,
+    data
+});
+
+当我们使用了redux-thunk之后：
+export const getTodoList =()=>{
+    return ()=>{
+        
+    }    
+}
+在这个函数里面我们可以做异步操作，把TodoList.js中的axios异步操作直接拷贝到actionCreators.js中去：
+export const getTodoList =()=>{
+    return ()=>{
+        axios.get('/api/todolist').then((res)=>{
+            console.log(res.data);
+            // const action = getAxiosListAction(res.data);
+            // store.dispatch(action)
+        }).catch((err)=>{
+            console.log(err)
+        })
+    }
+}
+现在我们的actionCreators.js返回的就是一个函数，因为我们的函数里面使用了axios，所以我们要把axios引入。
+然后我们把actionCreator.js里面的getTodoList 函数引入到TodoList.js中去：
+ componentDidMount(){        
+        const action = getTodoList();
+        console.log(action);        
+    };
+
+然后我们怎么将data数据传递给store呢，在上面代码中我们已经将函数传递过来了，然后就是调用store的dispatch将函数传递给store：
+ componentDidMount(){
+        const action = getTodoList();
+        store.dispatch(action)
+    };
+
+此时程序就会先执行getTodoList这个函数里面的代码：
+export const getTodoList =()=>{
+    return (dispatch)=>{
+        axios.get('/api/todolist').then((res)=>{
+            console.log(res.data);
+            const action = getAxiosListAction(res.data);
+            dispatch(action)
+        }).catch((err)=>{
+            console.log(err)
+        })
+    }
+}
+因为我们是通过store来调用的，所以可以在返回的函数里面接收到dispatch参数，这样的话，在把数据传递给store的时候就可以直接使用dispatch(action)，逻辑就是在组件渲染完成之后触发componentDidMount函数，在这个函数里面调用了 store.dispatch(getTodoList（）)，也就是把
+getTodoList这个函数传递给了dispatch，我们在这个函数里面通过axios获取了数据，并且创建好了一个action= getAxiosListAction(res.data);然后把action传递给dispatch： dispatch(action)
+这样的话我们就把异步请求通过redux-thunk放到了actionCreators.js中：
+
+    componentDidMount(){
+        const action = getTodoList();
+        store.dispatch(action)
+    };
+
+export const getTodoList =()=>{
+    return (dispatch)=>{
+        axios.get('/api/todolist').then((res)=>{
+            console.log(res.data);
+            const action = getAxiosListAction(res.data);
+            dispatch(action)
+        }).catch((err)=>{
+            console.log(err)
+        })
+    }
+}
+
+
+我们之所以能在 dispatch里面传递函数store.dispatch(getTodoList（）)，就是因为我们使用了redux-thunk（如果去掉redux-thunk就会报错dispatch必须是一个对象）
+外层的dispatch派发的是一个函数（这个函数是进行逻辑处理生成里层的对象），里层的dispatch派发的是一个对象（这个对象直接派发给了store）
+我们借助redux-thunk可以将原先写在生命周期函数中的复杂业务逻辑分离出去，这样能使项目更加便于管理，否则的话生命周期函数里面逻辑就会非常多导致结构臃肿代码复杂。借助redux-thunk我们就可以把逻辑放到actionCreator.js里面去了，放在这里管理还一个好处就是在做自动化测试的时候，去测试一个函数getTodoList会比测试一个生命周期函数简单的多
+
+当我们删除的时候会有一个报错：报错原因在这： renderItem={(item,index) => (<List.Item onClick={(index)=>{props.handleDeleteItem(index)}}>{item}</List.Item>)}
+首先renderItem是一个函数，里面有两个参数item和index，这个函数直接返回了一个标签<List.Item></List.Item>
+在这个标签里面我们定义了一个onClick函数：
+(index)=>{props.handleDeleteItem(index)}
+这个函数实际上是接收不到index参数的，因为我们并没有给onClick这个函数传递参数，所以上面的写法是错误的，正确的应该是：
+()=>{props.handleDeleteItem(index)}
+直接从renderItem里面的函数来继承index，因此完整的写法应该是：
+renderItem={(item,index) => (<List.Item onClick={()=>{props.handleDeleteItem(index)}}>{item}</List.Item>)}
+
+
+6.5、什么是redux中间件：
+中间件指的是：谁和谁的中间
+redux-thunk指的就是action和store中间。当dispatch接收到不同的参数的时候会做不同的事情，如果参数是对象那就会直接传给store，如果参数是函数那么就把函数执行完。
+
+6.6、redux-saga中间件的使用：
+在实际项目中常用对异步进行处理的就是redux-thunk和redux-saga这两种模式，把这两种模式掌握了那么市面上的项目绝大多数都可以直接上手
+在saga中我们会把异步逻辑放到一个独立的文件中去管理
+、
+
+首先打开GitHub，搜索redux-saga：https://github.com/redux-saga/redux-saga
+（1）、首先安装redux-saga：yarn add redux-saga
+（2）、然后引入一个方法createSagaMiddleware：import createSagaMiddleware from 'redux-saga'（createSagaMiddleware就是一个帮我们创建中间件的一个方法）
+（3）、创建一个saga中间件：const sagaMiddleware = createSagaMiddleware()
+（4）、然后把sagaMiddleware 传入到store中：
+const store = createStore(
+    reducer,
+    applyMiddleware(sagaMiddleware )
+);
+（5）、在store文件夹中创建一个sagas.js文件，并将这个文件引入到store的index.js中去：
+（6）、然后调用sagaMiddleware 的run方法，把saga执行起来：
+sagaMiddleware.run(mySaga)
+然后重启服务器
+（7）、重启后报错，因为sagas.js里面没有内容。写下如下内容：
+generator函数
+function * mySaga() {
+    
+}
+
+export default mySaga;
+、
+这样项目就会正常启动
+
+（8）、把异步函数写入到sagas.js中去：
+
+
+非常大型的项目使用redux-saga更加合理，一般的项目使用redux-thunk就好
+
+
+
+6.7、react-redux的使用
+react-redux是一个第三方的模块，可以帮助我们在react中更加方便的使用redux。使用react-rudex重新编写TodoList功能
+（1）、我们如果想用react-redux那么我们需要先按照react-redux：yarn add react-redux
+然后重启服务器
+（2）、打开index.js，引入TodoList：
+import React from 'react'
+import ReactDOM from 'react-dom'
+import TodoList from './TodoList'
+// 引入项目中的文件是要加./这种相对路径才行：'./TodoList'，佛则的话就是在
+// package.json中注册过的才能直接不加相对路径而直接引入：'react-dom'
+
+
+ReactDOM.render(<TodoList />, document.getElementById('root'));
+// 因为render函数里面接收的是两个参数，而且是jsx语法，所以不需要加引号
+（3）、编写TodoList.js文件
+按照格式和逻辑顺序编写代码（先将代码闭合再填充内容（建完class之后先写export再补充class里面的代码）），这样可以有效的避免遗漏和代码出错，该加分号的地方按照格式要求加好。
+为了方便调试和查看效果，先用虚拟数据将代码逻辑和页面布局补充完整，这样方便调试，然后再用对应的语法替代虚拟数据：
+import React, { Component } from 'react';
+
+class TodoList extends Component{
+    constructor(props){
+        super(props);
+
+    };
+    render(){
+        return(
+            <div>
+                <div>
+                    <input type="text"/>
+                    <button>提交</button>
+                </div>
+                <div>
+                    <ul>
+                        <li>dell</li>
+                        <li>hello</li>
+                        <li>world</li>
+                    </ul>
+                </div>
+
+            </div>
+        )
+    };
+}
+
+export default TodoList
+
+（4）、上边我们已经创建好了静态模板，接下来就是创建数据，我们项目中的数据尽量都保存在store当中，因此我们需要创建一个store：
+《1》创建一个store文件夹
+《2》在文件夹下创建index.js文件：
+首先从redux引入createStore函数，然后使用这个函数创建一个store并暴露出去：
+import { createStore } from 'redux';
+
+const store = createStore();
+// 因为我们在这是调用了createStore这个函数创建了一个store而不是继承或者自己写了一个函数，
+// 所以只需要直接调用并传入对应的参数就行
+
+export default store
+（5）、我们在上面创建好了store，但是store并不会自己管理数据，我们需要创建一个reducer.js来帮助store管理数据：
+在store文件夹下创建reducer.js
+reducer是一个纯函数，所以直接export出去就行了，这个函数接收两个参数，state和action：
+export default (state,action)=>{
+    return state;
+    // 这个函数必须有一个返回值，要么是原始的state要么是修改后的新state
+}
+
+然后把这个函数作为一个参数传入到index.js的store函数中去：
+import reducer from './reducer'；
+const store = createStore(reducer);
+
+此外我们还可以在这给store中的数据定义一些初始值，并把出事数值通过es6语法赋值给state：
+const defaultState = {
+    inputValue:'1111',
+    list:[1,2,3,4,5]
+};
+
+export default (state=defaultState,action)=>{
+    return state;
+    // 这个函数必须有一个返回值，要么是原始的state要么是修改后的新state
+}
+
+（6）、使用react-redux使store中的数据和页面进行通信
+此时store已经创建好了，页面中相关的静态内容也已经填充好，接下来就是利用store将静态页面的死数据变成可以与store进行交互的数据。
+《1》首先找到项目的入口文件index.js，
+RctDOM.render(<TodoList />, document.getElementById('root'));
+在默认的index.js文件中我们是直接把<TodoList />渲染到了root这个DOM节点上。但是我们要使用react-redux就需要对其进行改造：
+首先引入react-redux的一个接口：
+// react-redux，首先引入Provider组件，这个组件是react-redux的一个核心API
+import { Provider } from 'react-redux'
+import store from './storeNew'
+// 然后定义一个APP组件,这个组件等于一个jsx，jsx是写在小括号里面的函数。
+const App =(
+    <Provider store = {store}>
+    {/*其实provider就是一个组件，然后我们把TodoList组件放到这个组件里面*/}
+        <TodoList/>
+    </Provider>
+);
+// 然后把App这个组件传入到reactDOM的render函数中，此时表达的含义就是reactDOM渲染的是App组件，
+// App组件实际上就是一个jsx的语法，这个语法里面最外层是一个provider组件
+// （本质上就是把provider组件传入到了render函数中代替了原先的TodoList组件），
+// provider组件来自于react-redux，然后我们在这个文件中引入store.然后我们在provider这个组件上添加一个属性，
+// 该属性的值就是我们刚刚引入进来的store：store = {store}.到现在代码的效果是：provider这个提供器链接了store
+// （provider和store做了关联），此时provider组件里面的所有子组件都能获取到store中的数据，
+// 此时provider已经把store提供给了他的所有子组件
+
+ReactDOM.render(App, document.getElementById('root'));
+
+此时子组件已经能拿到store里面的数据了，然后就是到子组件中去获取store中的数据并渲染到页面
+
+（7）、使用react-redux与store进行数据交互：
+《1》首先引入react-redux的connectAPI：import { connect } from 'react-redux'
+《2》使用connect这个方法与store进行数据交互
+之前我们直接导出的是TodoList组件：export default TodoList。但是当我们使用react-redux之后就需要修改一下：导出组件的时候使用connectAPI进行操作：
+export default connect(null,null)(TodoList)
+这句话的表达的是用TodoList这个组件通过connect这个方法API和store进行连接。
+《3》我们在使用connect方法与store进行连接的时候要有一定的连接方式，从而衍生出connect的第一个参数，我们命名为：mapStateToProps，他是一个函数，接收一个参数state（也就是store中的数据），返回的是一个对象。然后我们把mapStateToProps这个函数作为参数放到connect的第一个参数位置：
+const mapStateToProps = (state) =>{
+    return{
+        
+    }
+};
+
+export default connect(mapStateToProps,null)(TodoList)
+
+mapStateToProps 这个函数实现的效果是：将store中的state数据映射给组件变成组件的props，而state就是store的数据：
+
+const mapStateToProps = (state) =>{
+    return{
+        inputValue: state.inputValue
+    }
+};
+组件中获取inputValue数据：<input type="text" value={this.props.inputValue}/>
+inputValue这个key就对应的props中的key，而state.inputValue就是从store中获取的数据
+
+（8）、使用react-redux将组件里面的值更新到store中
+用组件中改变的值去更新store中的值，这就引出了connect方法的第二个参数：mapDispatchToProps，mapDispatchToProps这个函数接收一个参数dispatch，依旧需要返回一个对象，不过对象里面的内容是一个个组件中定义的函数，然后把mapDispatchToProps作为connect方法的第二个参数传入进去：
+const mapDispatchToProps = (dispatch) =>{
+    return{
+
+    }
+}
+export default connect(mapStateToProps,mapDispatchToProps)(TodoList)
+
+mapDispatchToProps ：dispatch是发布也就是store.dispatch，这个函数是把store.dispatch挂载到组件的props上，这样的话我们如果想要将数据更新到store中去只需要调用mapDispatchToProps 这个方法里面的dispatch方法，具体写法如下：
+<input type="text" value={this.props.inputValue} onChange={this.props.changeInputValue}/>
+const mapDispatchToProps = (dispatch) =>{
+    return{
+        changeInputValue(e){
+            console.log(e.target.value)
+        }
+    }
+};
+
+此时已经能通过props和dispatch进行关联了，接下来就是在对应的函数里面创建action，并使用dispatch进行派发出去：
+const mapDispatchToProps = (dispatch) =>{
+    return{
+        changeInputValue(e){            
+            const action ={
+                type:'change_input_value',
+                value:e.target.value
+            };
+            dispatch(action);
+        }
+    }
+};
+
+然后在reducer中进行逻辑判断处理，reducer.js中：
+export default (state=defaultState,action)=>{
+    if (action.type === 'change_input_value'){
+        const newState = JSON.parse(JSON.stringify(state));
+        newState.inputValue = action.value;
+        return newState;
+    }
+    return state;
+    // 这个函数必须有一个返回值，要么是原始的state要么是修改后的新state
+}
+
+取值是通过mapStateToProps函数将state的值映射到props，然后通过this.props在组建中拿到store的值
+传值是通过mapDispatchToProps函数将dispatch映射到props，然后通过this.props触发函数，在函数中调用dispatch进行传值
+
+（9）在删除item的时候，因为我们要传递index参数给delListItem这个函数，所以写法需要改变：
+因为：return(<li key={index} onClick={this.props.delListItem}> {item} </li>)
+这种写法是没有办法传递函数的，this.props.delListItem这句话的含义是当点击li元素之后，会将指针指向mapDispatchToProps这个函数里面的delListItem这个函数，并且执行函数，如果我们改成这样就会报错，所以正确的方法是改成这种写法：
+
+我们首先整理一下js代码运行的逻辑
+ <button onClick={this.props.changeListItem}>提交</button>
+{this.props.list.map((item,index)=>{
+                            return(<li key={index} onClick={this.props.delListItem(index)}> {item} </li>)
+                        })}
+在jsx渲染成模板的时候其实会对js进行翻译，如onClick={this.props.changeListItem}这句话会把这段js：this.props.changeListItem指向mapDispatchToProps里面的changeListItem函数，此时只是指针，并没有触发函数，只有onClick事件触发之后才会执行函数
+而onClick={this.props.delListItem(index)}在翻译这句话的时候因为我们直接使用了this.props.delListItem(index)这种语法，翻译的时候就会变成不止指针会指向mapDispatchToProps里面的delListItem函数，而且因为有小括号就代表的是直接引用而不是指向，此时还会触发函数，也就是在每次jsx渲染的时候即使onClick没有触发但是在翻译的时候带有小括号就会指向并执行该函数，所以在每次state发生变化的时候delListItem这个函数就会自动执行一次。
+而onClick={()=>{this.props.delListItem(index)}}这句话在jsx翻译的时候翻译的是()=>{this.props.delListItem(index)}会指向一个匿名函数，但是匿名函数并没有被执行，而是指针指向了这个函数，当onClick触发的时候，会执行匿名函数，而这个匿名函数执行的时候才会触发里面的delListItem（index）函数
+
+onClick={()=>{this.props.delListItem(index)}}
+这样的话我们定义的delListItem函数就可以传递参数，并且能正确的获取到参数。
+
+
+（10）、让代码变得更加优雅：
+我们可以使用解构赋值，让this.props.inputValue这种比较蠢的写法变得更加精简：
+ const { inputValue, changeInputValue, changeListItem, delListItem} = this.props;
+        // 这是解构赋值等价于 inputValue = this.props.inputValue
+<button onClick={changeListItem}>提交</button>
+return(<li key={index} onClick={()=>{delListItem(index)}}> {item} </li>)
+即使是带有参数的函数也可以这样使用，只不过需要delListItem(index)这样写。
+
+我们在观察代码发现TodoList里面只有一个render函数，而且功能只是一个渲染功能，因为我们已经使用react-redux把逻辑部分放到了mapDispatchToProps函数里面，此时的TodoList就相当于是一个UI组件，只负责页面的渲染，不负责任何的业务逻辑。同时这个UI组件里只有一个render方法，那么如果一个组件只有render方法，那么我们可以把它写成一个无状态组件，无状态组件是一个函数，这个函数可以接收一个props参数，我们直接把render里面的内容直接拷贝到函数里面（return和里面的内容直接粘贴到函数里面就可以正常使用了，如果使用了解构赋值则可以一起拷贝过去），然后把class类之间删除。：
+import React, { Component } from 'react';
+
+
+// 使用react-redux与store进行数据交互，首先引入connect核心API
+import { connect } from 'react-redux'
+
+
+const TodoList = (props)=>{
+    const { inputValue, changeInputValue, changeListItem, list, delListItem} = props;
+    // 这是解构赋值等价于 inputValue = this.props.inputValue
+    return(
+        <div>
+            <div>
+                <input type="text" value={inputValue} onChange={changeInputValue}/>
+                <button onClick={changeListItem}>提交</button>
+            </div>
+            <div>
+                <ul>
+                    {list.map((item,index)=>{
+                        return(<li key={index} onClick={()=>{delListItem(index)}}> {item} </li>)
+                    })}
+                </ul>
+            </div>
+
+        </div>
+    )
+};
+
+const mapStateToProps = (state) =>{
+    return{
+        inputValue: state.inputValue,
+        list:state.list,
+
+    }
+};
+
+const mapDispatchToProps = (dispatch) =>{
+    return{
+        changeInputValue(e){
+            const action ={
+                type:'change_input_value',
+                value:e.target.value
+            };
+            dispatch(action);
+        },
+        changeListItem(){
+            const action ={
+                type:'add_item'
+            };
+            dispatch(action)
+        },
+        delListItem(index){
+            const action ={
+                type:'del_item',
+                index:index
+            };
+            dispatch(action)
+        }
+    }
+};
+export default connect(mapStateToProps,mapDispatchToProps)(TodoList)
+
+使用了react-redux之后，因为export出去的是通过connect方法，所以这个无状态组件没有render函数也可以直接使用
+但是当我们用到生命周期函数的时候是否还能抽离成无状态组件呢？好像不能，因为生命周期函数需要写在render函数中
+
+export default connect(mapStateToProps,mapDispatchToProps)(TodoList)我们可以分析得出，实际上TodoList只是一个UI组件，但是当我们用connect（把UI组件和数据、业务逻辑进行结合）联系起来之后export default返回的内容就变成了一个容器组件
+export default导出的实际是connect执行的结果，也就是一个容器组件
+
+
+七、项目实战：
+从零开始利用之前学的知识开始一个新的项目
+7.1、项目生成、目录搭建。
+（1）、首先使用create-react-app脚手架工具初始化一个项目。打开官网（https://reactjs.org/docs/create-a-new-react-app.html）
+npx create-react-app jianshu
+
+（2）、css文件在一个文件里面引入了之后就会全局生效，所以最好不要在项目中直接引入css（import './index.css';），会造成高度耦合，造成样式冲突。建议使用一个第三方的插件：
+yarn add styled-components  
+styled-components  他可以让自己的样式只对自己生效
+为了方便我们编写代码可以给webstrom安装Styled Components插件：
+在settings——plugins——搜索Styled Components——下载——applay这样我们在使用style.js的时候webstrom就能识别里面的css样式了。
+
+安装完这个插件之后，我们引入样式的方式就发生改变了：
+《1》把index.css改成style.js（css文件变成js文件）并引入到需要使用样式的文件中（样式文件一般放在所有impor最下面便于优化加载速度）：import './style'
+《2》在styled-components  里面想写全局样式，首先需要从styled-components  里面引入injectGlobal方法：import { injectGlobal } from 'styled-components'
+然后调用injectGlobal方法，后面跟一个表示段落的字符串：
+injectGlobal`
+    body{
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+        background: yellow；
+    }
+`;
+
+（3）、因为不同浏览器对html标签的解释可能存在差异，为了让我们的pc网站在所有浏览器里面表现一致，我们需要使用一个rest.css来初始化html的默认样式：
+百度rest.css（https://meyerweb.com/eric/tools/css/reset/）
+将里面从css初始化代码拷贝到我们的style.js里面的injectGlobal方法里面去：
+injectGlobal`
+    html, body, div, span, applet, object, iframe,
+    h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+    a, abbr, acronym, address, big, cite, code,
+    del, dfn, em, img, ins, kbd, q, s, samp,
+    small, strike, strong, sub, sup, tt, var,
+    b, u, i, center,
+    dl, dt, dd, ol, ul, li,
+    fieldset, form, label, legend,
+    table, caption, tbody, tfoot, thead, tr, th, td,
+    article, aside, canvas, details, embed, 
+    figure, figcaption, footer, header, hgroup, 
+    menu, nav, output, ruby, section, summary,
+    time, mark, audio, video {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-size: 100%;
+        font: inherit;
+        vertical-align: baseline;
+    }
+    /* HTML5 display-role reset for older browsers */
+    article, aside, details, figcaption, figure, 
+    footer, header, hgroup, menu, nav, section {
+        display: block;
+    }
+    body {
+        line-height: 1;
+    }
+    ol, ul {
+        list-style: none;
+    }
+    blockquote, q {
+        quotes: none;
+    }
+    blockquote:before, blockquote:after,
+    q:before, q:after {
+        content: '';
+        content: none;
+    }
+    table {
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+`;
+
+7.2、简书头部组件布局编写
+《1》首先在src目录下创建一个common文件夹来存放公共组件
+《2》我们在common下创建一个header文件夹，用来存放header相关组件的内容。
+《3》在header下创建一个index.js文件，也就是我们的组件主体：
+import React, { Component } from 'react';
+class Header extends Component{
+    render(){
+        return(
+            <div>header</div>
+        )
+    }
+}
+export default Header
+
+先搭建好骨架，然后再丰富内容
+《4》在header文件夹下创建style.js文件：
+我们在header组件下面使用的style.js只是header组件自己用，不会和其他组件产生交集（公共样式在根目录的index中去引入），所以我们需要引入styled-components，重命名为styled：
+import styled from 'styled-components'
+然后我们使用styled来创建带有样式的标签：
+export const HeaderWraper = styled.div`
+    height: 58px;
+    border-bottom: 1px solid #f0f0f0;
+`;
+这段话的含义是：我们通过styled-components这个插件创建了一个名字叫HeaderWraper的div标签，这个标签拥有自己的样式。
+然后在组建中引入标签：import { HeaderWraper, } from './style'
+并使用： <HeaderWraper>header</HeaderWraper>
+
+这样一个带有样式的标签已经创建好了。
+
+《5》编写简书右侧的logo样式，首先这个logo是个图片，我们保存为png格式，我们在项目的src文件夹下创建一个static文件夹用来存放我们的静态文件，把logo图片放到这个文件夹下面
+那么我们如何将logo图片布局到我们的项目中呢？
+还是像HeaderWraper一样作为一个组件引入到项目中，在style.js中定义Logo组件：
+通过分析知道，这个logo实际上是一个a标签，图片我们通过背景方式放置：
+background:url('../../static/logo.png');这种写法是肯定不对的，因为webpack在打包的时候，不知道我们的工程目录是什么样的，会把这个url里面的内容当做一个字符串处理，识别不出来是路径。我们需要首先通过import将图片引入并赋值给一个变量：
+import logoPic from '../../statics/jinli.png'  通过这种语法webpack会自动找到png并打包到项目文件，
+然后再通过jsx语法将logoPic这个变量引入到自定义标签中去：${}这种语法引入js变量
+background:url(${logoPic});
+
+background-size:contain;   以使其宽度和高度完全适应内容区域。
+
+export const Logo = styled.a`
+    display:block;    
+    width:100px;
+    height:56px;
+    background:url(${logoPic});
+    background-size:contain;     
+`;
+
+因为是a标签，就有一个跳转链接，我们可以直接在Logo标签上写：<Logo href='/'/>
+也可以在style.js定义Logo组件的时候写：
+export const Logo = styled.a.attrs({
+    href:'/'
+    })`
+    display:block;    
+    width:100px;
+    height:56px;
+    background:url(${logoPic});
+    background-size:contain;     
+`;
+标签可以接收一个attrs，属性可以以对象的形式在里面进行定义：
+a.attrs({
+    href:'/'
+    })
+
+7.3、写header组件里面的中间nav组件。
+因为每个组件都是由各种不同的标签组成的，按照styled-components的思想我们就需要创建若干个带有样式的标签组件就好了，然后再通过在index.js中对标签组件进行嵌套组合。
+nav组件，可以发现里面包含四项：首页、下载app、Aa、登录、以及一个搜索框，其中前四项字体样式、pading等相同，所以那四项可以用一个组件来代替：
+<Nav>
+                    <NavItem>首页</NavItem>
+                    <NavItem>下载App</NavItem>
+                    <NavItem>Aa</NavItem>
+                    <NavItem>登录</NavItem>
+                </Nav>
+
+然后组件之间又因为有左右浮动，所以可以给每个item组件各添加一个className来定义样式进行区分。
+ <NavItemWrapper>
+                        <NavItem className='home active'>首页</NavItem>
+                        <NavItem className='download'>下载App</NavItem>
+                    </NavItemWrapper>
+我们给首页添加了active样式名，我们在style.js中这样添加样式：
+export const NavItem = styled.div`
+    margin:10px;
+    background:green;
+    &.active{
+    color:red
+    }
+`;
+也就是：
+&.active{
+    color:red
+    }
+通过这种语法对class样式名添加样式
+
+然后就是根据自己习惯的布局方式对样式进行布局
+
+《1》在编写搜索框的时候，我们可以看到两边是半圆状态，所以border-radius为19px（是长方体高度的一半）
+box-sizing:border-box;灵活使用，使用后padding不会将容器撑大
+outline:none：使元素的轮廓不会出现，如input切圆角之后不设置这个属性当被选中之后就会出现一个长方形的选中框
+当我们想要改变placeholder的样式的时候可以通过下面这种形式改变：
+&::placeholder{
+        color:#999;
+    };
+export const NavSearch = styled.input.attrs({
+        placeholder:'搜索'
+    })`
+    width:160px;
+    height:38px;
+    border-radius:19px;
+    background:#eee;
+    border:none;
+    font-size:14px;
+    padding:0 20px;
+    box-sizing:border-box;
+    outline:none;
+    &::placeholder{
+        color:#999;
+    };
+    `;
+《2》我们在写左右布局的时候可以利用flex的space-between然后设置父容器长度来调整子元素位置分布：
+export const NavItemWrapper = styled.div`
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    &.navLeft{
+        color:#333;
+        width:300px;
+    };
+    &.navRight{
+        color:#969696;
+        width:80px;
+    };    
+`;
+
+《3》编写header右侧的注册写文章模块。
+因为是附加显示的模块，所以我们把wrapper的元素起名为Addition。
+里面有两个元素提取公共样式。
+注意：灵活使用line-height：可以直接定义元素的高并文字垂直居中
+
+当我们完全按照设计稿来做布局的时候，不见得会是对称的情况，这时候就需要按照设计稿的像素去布局，此时如果遇到元素重叠的情况（float：right之后和右侧的元素重叠）这时可以通过给父元素设置padding-right：70px把重叠的子元素向内挤，从而把重叠空间给留出来，但是这样设置之后必须设置box-sizing：border-box；只有这样才能保证父元素不会被撑大而子元素被向左侧挤的效果。
+
+7.4、将icon-font集成到项目中：
+首先进入阿里的iconfont图标库：（http://www.iconfont.cn/）
+创建一个项目（为了方便管理）。然后选取所需要的图标添加到项目，之后下载。
+在我们项目源码src文件夹下的static文件夹下创建一个文件夹iconfont，然后把我们下载下来的文件里面的.eot/.svg/.ttf/.woff/.css文件拷贝到iconfont文件夹内
+
+然后我们首先需要打开iconfont.css将它改为iconfont.js并再把iconfont开头iconfont开头的前边加上相对路径  如：url('./iconfont.svg?t=1532598163378#iconfont') format('svg'); /* iOS 4.1- */
+
+然后引入injectGlobal把这个css文件改成全局的js文件并引入到src根目录下的index.js文件里面
+
+接下来就是在需要使用iconfont的地方使用，使用Unicode方法使用对应的icon图标：<i className="iconfont">&#xe6a4;</i>
+注意因为我们是使用的jsx语法，所以，class必须要改成className，然后在内容对应区域使用对应的unicode编码
+
+ <SearchWrapper>
+                            <NavSearch/>
+                            <i className="iconfont">&#xe6cf;</i>
+                        </SearchWrapper>
+我们如果想给SearchWrapper标签里面的iconfont这个class写样式，只需要在SearchWrapper下面通过.符号获取到i标签，并定义样式：
+export const SearchWrapper = styled.div`    
+    position: relative;
+    .iconfont{
+      background-color: red;      
+    }
+`;
+
+熟记line-height用来垂直居中。
+
+
+7.5、头部搜索框展开动画代码编写：
+input框聚焦的时候会变长，失去焦点的时候会变短，中间有一个过渡效果。
+按照常规的思路是当input框聚焦的时候去操作dom使input框的长度变长，但是在react中尽量去避免操作dom，不让操作dom但是我们怎么让页面跟着变化呢？去定义数据，当数据改变的时候页面跟着变，因此我们要从这个角度出发。
+
+《1》我们可以通过给元素切换不同的class类名来达到不同显示效果：
+首先定义一个state变量，然后通过事件来触发函数，通过函数改变state的值，来达到切换不同class类名的效果：
+constructor(props){
+  super(props);
+  this.state = {
+    focusd: false  
+  }
+}
+然后在标签里面定义class类名：如果focusd是true那么就给className赋值为focusd，否则的话不赋值
+className = {this.state.focusd ? 'focusd' : ''}
+
+然后我们需要定义class类名为focusd的样式，在style.js中，找到NavSearch自定义标签，在里面写：
+&.focusd{
+  width:300px;
+}
+（其实我们还可以再style.js中使用一个小技巧：如果某个元素是focusd的子元素，那么我们就可以通过focus来控制其子元素在focused之后变化情况：
+    &.focused{
+      width:300px;
+      .iconfont:{
+      
+      }
+    }
+这段话的含义是当我们赋予给某个元素focused这个class样式名之后，具有focused元素的子元素也进行相应的样式改变
+）
+
+但是我们布局的时候i标签和input标签并不是父子关系而是并列关系，我们可以通过炮制方法，也给i元素一个className动态赋值：
+<i className={this.state.focused ? 'iconfont focused' : 'iconfont'}
+                            >&#xe6cf;</i>
+
+然后到style.js中找到SearchWrapper的.iconfont样式（我们并没有自定义i标签，所以直接找到其父元素然后使用.符号就可以了），并进行修改：
+export const SearchWrapper = styled.div`    
+    position: relative;
+    .iconfont{   
+      line-height: 30px;
+      width: 30px;
+      border-radius:15px;
+      display: inline-block;
+      text-align:center;
+      position: absolute;
+      right: 2px;
+      top: 4px;
+      &.focused{
+        background-color: #777;
+      };
+    }
+`;
+这段话的含义是.iconfont是一个公共样式，但是如果里面有&.focused，也就是iconfont这个元素还有另外一个类名focused，那么就会在默认样式下新增或者覆盖成focused里面的内容，&.className表示的是标签自身的class样式名
+
+
+然后回到index.js中给NavSearch添加OnFocus和OnBlur事件，在这我们先用原始的方法写，绑定this（后面对代码进行优化的时候再使用react-redux模块）。然后在这两个事件中去修改state里面的focusd是true还是false，从而完成对NavSearch这个搜索框长度的修改：
+ onFocus={this.handleInputFocus}
+注意在jsx语法中这this.handleInputFocus是对函数的引用，并不是直接触发函数，所以不需要加括号（jsx语法解析规则）
+
+然后定义handleInputFocus函数：
+因为我们是在类里面定义函数（和constructor、render函数并列），所以就必须按照类的规则来定义（和constructor、render定义函数的方法一样），而不是在类外面自定义函数那个样式。
+handleInputFocus(){
+        console.log(1)
+    }
+
+又因为setState是这个类的方法，所以必须要使用this才能引用到：
+ handleInputFocus(){
+        this.setState({
+            focused:true
+        })
+    };
+
+又因为setState这个方法已经是使用this绑定的了，所以里面的focused:true就不需要使用this再次引用了，直接使用并赋值就行
+
+
+
+以此类推，所有的页面中动画都可以通过动态修改class类名的方式实现不同css样式变化的修改
+
+《2》在style.js中：
+.className{} 指的是自定义元素标签子元素的类名样式编写
+&.className{}指的是自定义元素自身类名样式编写（一个标签可能会用到多个地方，而className可以根据需求自定义设计）
+&::placeholder{} 指的是input框中placeholder属性的样式
+
+
+《3》使用react-transition-group插件写css简单动画：
+首先安装： yarn add react-transition-group（http://reactcommunity.org/react-transition-group/css-transition/）
+然后在需要css动画的页面引入CSSTransition ：import { CSSTransition } from 'react-transition-group';
+
+然后在需要添加动画的元素外面添加一个<CSSTransition></CSSTransition >标签，并设置对应的属性：
+ in={showValidationMessage}  in属性是state属性，为true的时候动画触发，控制动画出场入场
+              timeout={300}   timeout是动画持续时间
+              classNames="message"： className可以接受一个对象（查看官网）也可以接收一个字符串
+
+：
+<CSSTransition
+                                in={this.state.focused}
+                                timeout={200}
+                                classNames='slide'
+                            >
+                                <NavSearch
+                                    className={this.state.focused ? 'focused' : ''}
+                                    onFocus={this.handleInputFocus}
+                                    onBlur={this.handleInputBlur}
+                                >
+                                </NavSearch>
+                            </CSSTransition>
+
+注意： classNames='slide'而不是className
+
+此时附加在NavSearch上的动画组件就写完了，CSSTransition这个组件会在NavSearch这个组件被挂载之前会在NavSearch会在这个组件的外层添加几个css样式（css样式名分别叫做：slide-enter、slide-enter-active、slide-exit、slide-exit-active（slide是className样式名））所以我们利用这几个样式名就可以实现动画效果了（在类名里面写样式），因此我们到style.js中去，因为我们给NavSearch这个input自定义标签添加的css动画，所以在NavSearch这个自定义标签里面添加：
+export const NavSearch = styled.input.attrs({
+        placeholder:'搜索'
+    })`
+    width:160px;    
+    &.focused{
+      width: 300px;
+    };  
+    &.slide-enter{
+      width: 160px;
+      transition: all 300ms ease-out;
+    };
+    &.slide-enter-active{
+      width: 300px;
+    };
+    &.slide-exit{     
+      transition: all 300ms ease-out;
+    };
+    &.slide-exit-active{
+      width: 160px;
+    };
+    `;
+因为CSSTransition是给NavSearch 添加的class样式名，所以我们需要&.slide-enter（标签自己的class样式名）这种方式来添加
+
+同时：
+ &.focused{
+      width: 300px;
+    };  
+这段代码可以保证第一次动画结束之后保持在300px状态下不回归，如果是动画animation属性则可以通过animation-fill-mode：forwards来控制，动画在动作结束时保持该状态不变：
+animation: show-item 2s ease-in forwards;。但是transition没有那个属性。
+
+添加完这四个样式就完成了过渡效果。CSSTransition 标签的className有四个阶段，这个要记清楚
+
+
+7.6、使用react-redux优化代码
+在小型项目中我们把state写在组件内没有什么大问题，但是随着代码复杂度增加就必须要借助redux帮助管理数据才能更好的开发项目，
+在使用redux开发项目的时候应该把所有数据都放到redux中进行存储。
+《1》首先安装redux：
+yarn add redux
+yarn add react-redux
+《2》创建store文件夹
+在store文件夹下创建index.js和reducer.js
+index.js：
+import { createStore } from 'redux'
+import reducer from './reducer'
+const store = createStore(reducer);
+export default store;
+
+reducer.js：
+const defaultState={};
+export default (state=defaultState, action) =>{
+    return state;
+}
+
+《3》然后我们在App.js中使用provider使组件关联store，这样provider就把store提供给了里面的所有组件：
+import store from './store';
+import { Provider } from 'react-redux';
+
+return (
+      <Provider store={store}>
+        <Header/>
+      </Provider>
+    );
+
+《4》打开需要使用store的组件，使用connect将组件和store进行通信：
+import { connect } from 'react-redux';
+
+const mapStateToProps = (state)=>{
+    return{
+
+    }
+};
+
+const mapDispatchToProps = (dispatch)=>{
+    return{
+
+    }
+};
+export default connect(mapStateToProps,mapDispatchToProps)(Header)
+
+然后通过mapStateToProps 拿到store里面的数据：
+const mapStateToProps = (state)=>{
+    return{
+        focused: state.focused
+    }
+};
+
+然后通过mapDispatchToProps使用dispatch去更新store里面的数据，return里面的函数只能是这样：
+
+handleInputFocus(){
+            const action={
+                type:'search_focus'
+            };
+            dispatch(action)
+        },
+
+然后在reducer.js里面去做逻辑判断，并对数据进行处理
+
+《4》优化项目代码
+我们通过使用react-redux把组件的逻辑处理放到了render函数外面，在数据存储框架里面进行存储，此时的组件就变成了无状态组件，此时我们可以直接把render函数里面的内容直接提取出来封装成一个函数：
+const Header = (props)=>{
+  return(
+  ...内容
+  )
+}
+
+
+7.7、
+如果一个文件的代码超过了300行就说明设计是有问题的
+因此如果我们把所有模块的reducer都写在一个文件里面，就会导致reducer.js很大，我们要把reducer拆分到各个模块中最后再在总的reducer.js中会合，达到拆分然后合并的效果
+
+
+
+redux提供了一个方法可以把分散的reducer合并
+《1》、打开common文件夹下的header组件，我们把header组件的数据处理放到header中，然后再在根目录下进行合并
+在header文件夹下创建一个store文件夹，然后在store文件夹下创建一个reducer.js，我们把根目录下面的store里面的reducer.js里面的内容拷贝到header下面的reducer.js。
+《2》、打开跟目下的reducer.js
+首先导入分散在各个模块的reducer.js
+import headerReducer from '../common/header/store/reducer'
+
+然后从redux中引入combineReducers方法来合并小的reducer：
+import { combineReducers } from 'redux'
+
+然后调用combineReducers这个方法，把小的reducer以对象的形式传递进去，并把combineReducers暴露出去：
+export default combineReducers({
+    header1: headerReducer
+})
+这样就已经整合好了分散的小reducer
+
+此时我们通过工具可以知道store树发生了改变，所以我们在组件里面和store进行交互的时候也需要根据store树进行对应的修改，此时header组件的store内容已经已到combineReducers下面的header1下面去了，此时我们在获取数据就需要从header1下面进行数据交互：
+
+const mapStateToProps = (state)=>{
+    return{
+        focused: state.header.focused
+    }
+};
+此时我们要理清关系，header的store还是整个store的一个子元素，所以还是需要通过state.header来获取对应的数据。action不用变。
+
+我们梳理一下思路：如果reduce存放过多的数据处理，可能会造成代码的不可维护，那么我们把一个reducer拆分成多个子的reducer，最终在做一个整合，整合成一个大的reducer
+
+我们还可以进行优化！！！
+我们在引入子reducer的时候：import headerReducer from '../common/header/store/reducer'路径太长了，因此我们可以在header的store下面新建一个index.js，然后在index.js中导入同级目录下的的reducer，并暴露出去，之后直接引入index.js就可以了
+import reducer from './reducer'
+
+export { reducer }
+
+然后在总reducer里面这样引入：
+import { reducer } from '../common/header/store'
+但是此时引入的reducer和下面的代码重名了，所以我们借助es6的一个as语法，将自己引入的reducer改个名字：import { reducer as headerReducer} from '../common/header/store'
+完整的总reducer：
+import { combineReducers } from 'redux';
+import { reducer as headerReducer} from '../common/header/store'
+
+const reducer= combineReducers({
+    header: headerReducer
+});
+
+export default reducer
+
+
+7.8、分离action（为了代码管理更加清晰）
+在每个模块的store文件夹下创建一个actionCreator.js文件，用来返回对应的action，
+这个文件返回的就是一个对象，不过是通过函数返回的对象，
+export const searchFocus =()=>({
+   type:'search_focus'
+});
+
+然后在header的index.js文件中引入action
+import { searchFocus, searchBlur} from './store/actionCreator'或import * as actionCreator from './store/actionCreator'
+ handleInputFocus(){
+            const action= searchFocus();
+            dispatch(action)
+        },
+注意我们要调用函数，而不是作为函数的指针，因为我们要拿到函数里面的对象：
+ const action= searchFocus();
+还可以进一步精简：
+ handleInputFocus(){           
+            dispatch(searchFocus())
+或dispatch(actionCreator.searchFocus())
+        },
+        handleInputBlur(){            
+            dispatch(searchBlur())
+        }
+
+
+《2》将type的字符串用常量替代（这样可以有利于代码结构清晰，同时便于错误检测）
+在header组价下面的store文件夹下创建一个actionTypes.js文件，用来存放type：
+export const SEARCH_FOCUS= 'header/SEARCH_FOCUS';
+export const SEARCH_BLUR = 'header/SEARCH_BLUR';
+我们在字符串前边把这个字符串所在的路径加上，这样可以避免后续命名的冲突，起到一个命名空间的效果
+然后就是把这个常量引入到需要的文件里面：store下面的actionCreator.js和reducer.js
+import * as actionTypes from './actionTypes'
+
+export const searchFocus =()=>({
+   type: actionTypes.SEARCH_FOCUS
+});
+export const searchBlur =()=>({
+    type:actionTypes.SEARCH_BLUR
+});
+
+然后还可以进行优化，就是我们在引入store中的actionCreator和actionTypes的时候入口太深了，我们最好只有store/index这一个入口文件，所以需要整合一下store下的index.js：
+import reducer from './reducer'
+import * as actionCreator from './actionCreator'
+import * as actionTypes from './actionTypes'
+export { reducer, actionTypes, actionCreator }
+这样所有store的出口就变成了一个index.js，此时我们再引入store文件夹下的内容的时候就可以直接通过下面这种方式引入：import { actionCreator } from './store'这样就可以直接使用actionCreator下面的内容了
+
+此时header所有关于store的出口就变成了index一个
+
+此时我们才把功能拆分完毕，梳理一下项目结构：
+此时header这个组件结构就很明晰了：
+首先header组件下面的style.js里面放的是自定义UI组件和组件所有的样式
+index.js是header组件的主体内容，UI组件的框架（此处的UI组件是一个无状态函数，实际编译过程中是先经过connect函数处理之后返回之后才能形成真正的react组件）、和react-redux处理业务逻辑的容器组件的入口函数
+所有逻辑处理的函数都在store文件夹下的reducer.js文件里面（包括默认初始的state数据内容）。
+这样的好处是所有的业务都在一个文件里面而不是分散，查找定位问题更加简单
+
+7.9、immutable.js是一个第三方模块，是Facebook三年开发出来的，会为我们生产一个immutable对象（immutable的意思是不可变更）
+可以有效的避免我们在reducer中直接改变state数据的失误：
+if (action.type === actionTypes.SEARCH_FOCUS){       
+        newState.focused = true;
+        return newState;
+    }
+上面的方法习惯性思维直接就改变了state的值，是错误的做法，虽然运行可能不报错，正确的方法应该是下面这种：
+if (action.type === actionTypes.SEARCH_FOCUS){
+        const newState = JSON.parse(JSON.stringify(state));
+        newState.focused = true;
+        return newState;
+    }
+首先深度拷贝state中的值，然后修改拷贝出来的值，之后再返回修改完的值
+
+但是我们使用immutable.js之后这个库就会帮我完成深拷贝的工作，我们只需要按照语法要求，将新数据传递进去就好了。
+
+immutable可以把普通的js对象变成不可改变的immutable对象
+其实核心是吧store里面的数据state变成不可改变的immutable数据，然后在和state有交互的地方配合immutable数据进行修改（按照immutable的语法和immutable数据进行交互）
+
+《1》在项目中安装immutable.js:
+yarn add immutable
+打开GitHub（https://github.com/facebook/immutable-js）
+《2》在reducer中引入immutable，并使用，按照运行逻辑进行分析：
+首先就是使用fromJS方法把state变成immutable对象，引入
+import { fromJS } from 'immutable'
+然后把js对象作为一个参数传入到到fromJS：
+const defaultState=fromJS({
+    focused:false
+})
+此时store里面的默认state数据就变成了immutable对象
+
+然后就是打开组件header下的index.js文件，因为我们会在index.js里面获取store里面的数据，但是store里面的数据已经变成了immutable对象，所以获取的时候需要修改方法：
+默认的写法是focused: state.header.focused
+state.header是数据结构树，只有focused才是结构树下面的数据，此时要改成：focused: state.header.get('focused')才能正确的获取到focused数据
+此时获取immutable数据就改造完成了
+我们在header组件下的reducer将默认state改成了immutable对象，也就是：state.header.get('focused')这段代码中state是js对象，因为我们并没有把state变成immutable对象，而state.header是immutable对象，因为我们在header中进行了修改，而state.header.get('focused')是state.header这个immutable对象调用了get方法获取到了state.header里面的数据
+
+
+
+但是我们如何修改immutable里面的数据呢？就需要我们到reducer.js里面通过immutable语法去修改immutable数据：
+默认写法：
+const newState = JSON.parse(JSON.stringify(state));
+        newState.focused = true;
+        return newState;
+改成：
+ return state.set('focused',true)
+state的set函数，接收两个参数，一个是key（用字符串表示），一个是value
+这是因为set方法内部给我们进行了处理（结合以前的数据返回了一个新的数据），而不是我们直接修改了store里面的数据，所以只需要调用set方法就可以了。
+
+7.10、使用redux-immutable插件对代码进行规格统一化
+我们打开header组件下面的index.js文件，可以看到，当我们获取store里面的数据的时候使用的是：focused: state.header.get('focused')，这个语法不安全，因为在这句代码中state是js对象，而state.header是immutable对象，我们即使用了js语法又使用了immutable语法，安全起见，要把他进行统一，都是用immutable对象和语法，所以我们需要把state也变成immutable对象，来达到统一的目的。
+首先安装一个插件redux-immutable：
+yarn add redux-immutable
+
+然后在根目录下的store下面的index.js中引入redux-immutable这个插件里面的combineReducers这个方法（redux-immutable对redux里面的combineReducers方法进行了再封装，使其返回的是一个immutable对象）
+
+因为此时我们的state也变成了immutable对象，所以在header组件里面获取数据的时候就需要使用immutable语法：focused: state.get('header').get('focused')，这句话的意思是我们从state这个immutable对象里面的header组件下获取focused数据，也可以改成下面这种写法：
+focused: state.getIn(['header','focused'])和上面那句话效果一样
+
+要想了解更多可以查找immutable.js文档，里面有详细介绍
+
+
+至此所有的框架都搭建完成了，剩下的就是在框架里面丰富内容。
+
+7.11、热门搜索模块编写：
+组件的显示和隐藏除了可以通过<SearchInfo className={props.focused ? 'show' : 'hidden'}>
+这种方式外，还可以通过另外一种方式来实现：
+定义一个函数，函数接收一个参数，如果参数为true那么就返回一段jsx代码（也就是小组件的样式代码），如果参数为false就返回null。（这种方式的思路是将小组件分离出去，然后通过函数来返回）
+
+7.12、使用ajax获取数据
+《1》首先打开header组件下面的store文件夹下的reducer.js，给默认数据添加一项：
+const defaultState=fromJS({
+    focused:false,
+    list:[]
+});
+因为此时我们的数据有了两个focused和list
+《2》通过梳理业务逻辑
+当我们的input框聚焦的时候应该获取ajax数据，也就是在onFocus={props.handleInputFocus}，
+handleInputFocus这个函数中触发ajax获取数据。
+我们获取ajax数据的时候一般不会直接写在index.js里面，会把异步的操作使用redux-thunk中间件放到action里面去处理（在实际项目中常用对异步进行处理的就是redux-thunk和redux-saga这两种模式）
+使用redux-thunk（）进行ajax请求：
+首先安装redux-thunk：yarn add redux-thunk
+redux-thunk是使我们在action中可以写函数,这个中间件是指的action和store之间，实际上是对dispatch方法的一个升级，应该在创建store的时候被使用，也就是在根目录下的store文件夹下的index.js中使用（因为我们在这里面定义的store），
+
+要想使用redux-thunk中间件首先要引入applyMiddleware，才能使用：
+import { createStore, applyMiddleware } from 'redux'
+引入thunk中间件：import thunk from 'redux-thunk';
+在store中的第二个参数传递：applyMiddleware(thunk)
+const store = createStore(
+    reducer,
+    applyMiddleware(thunk)
+);
+
+此时redux-thunk就已经应用到项目当中了，然后就是我们在代码中安装业务逻辑编写ajax代码：
+首先就是在触发handleInputFocus函数的时候使用dispatch发送一个action，然后到actionCreator.js里面去定义这个action的内容：
+handleInputFocus(){
+            dispatch(actionCreator.getList());
+            dispatch(actionCreator.searchFocus())
+        },
+以前的actionCreator里面的函数都是返回一个对象，但是我们要请求ajax，所以借助redux-thunk我们可以返回一个函数（这就是redux-thunk的意义return () =>{}），用来处理请求
+export const getList = ()=>{
+    return () =>{}
+};
+同时这个函数还能接受一个dispatch参数：
+export const getList = ()=>{
+    return (dispatch) =>{
+
+    }
+};
+getList 就是为了返回一个带有dispatch参数的函数：
+(dispatch) =>{
+
+    }
+在函数里面我们就可以进行很多操作了
+安装axios：yarn add axios
+在需要使用axios的地方引入axios：mport axios from 'axios'
+然后在函数中使用：
+export const getList = ()=>{
+    return (dispatch) =>{
+        axios.get('/api/headerList.json').then((res)=>{
+
+        }).catch((err)=>{
+            console.log(err)
+        })
+    }
+};
+
+我们先借助creat-react-app这个脚手架工具的一个特性（底层是node起的一个服务器，当访问某个路径的时候会先到src目录下寻找，如果没有则会到public目录下寻找对应的文件输出出来），在项目中创建一个假数据：
+在项目目录的public文件下创建一个api文件夹，然后在api文件夹下创建一个headerList.json文件
+（在上线的时候把public目录下的api文件夹删掉，这样才会以后端接口的文件为准）：
+{
+  "success":true,
+  "data":["区块链","三十六骑","小程序","我和咸鱼之间","三生三世","vue","毕业","PHP","故事","flutter","理财","美食","投稿","手帐","书法","PPT","穿搭","打碗碗花","简书","姥姥的澎湖湾","设计","创业","交友","籽盐","教育","思维导图","疯哥哥","梅西","时间管理","golang","连载","自律","职场","考研","慢世人","悦欣","一纸vr","spring","eos","足球","程序员","林露含","彩铅","金融","木风杂谈","日更","成长","外婆是方言","docker"]
+}
+注意json文件中的对象里面的key要用双引号包裹起来，要是用单引号会报错，
+
+我们已经使用ajax获取到数据了，接下来就是将获取到的数据同步到store中，
+发送action：我们首先在actionCreator中创建action：
+const getHeaderList = (data)=>({
+    type:actionTypes.GET_HEADER_LIST,
+    data
+});
+
+然后在axios中发送dispatch：
+export const getList = ()=>{
+    return (dispatch) =>{
+        axios.get('/api/headerList.json').then((res)=>{
+            const data = res.data;
+            console.log(data);
+            dispatch(getHeaderList(data.data))
+        }).catch((err)=>{
+            console.log(err)
+        })
+    }
+};
+
+然后在reducer中将发送过去的数据更新到store中：
+在这我们要注意，immutable对象里面的list数组其实也被改造成了immutable对象，所以给list赋值的时候也要用immutable对象去赋值，但是我们直接传递过去的数据实际是js对象，并不是immutable对象，所以需要对传递过来的数据改变成immutable对象之后才能正常使用：
+    if (action.type === actionTypes.GET_HEADER_LIST){
+        return state.set('list', fromJS(action.data))
+    }
+
+然后我们把同步到的store中的数据，在页面中获取到并展示出来：
+首先在index.js中获取到list数据
+return{
+        focused: state.get('header').get('focused'),
+        list: state.getIn(['header','list'])
+    }
+
+然后在UI组件中使用jsx语法循环数据展示出来（immutable也提供了一个map方法可以进行循环）：
+<div>
+                                {
+                                    props.list.map((item)=>{
+                                        return  <SearchInfoItem key={item}>{item}</SearchInfoItem>
+                                    })
+                                }
+                            </div>
+
+7.13、代码优化
+上边代码已经把一个组件基本的功能和结构实现了，接下来就是一些代码的调优：
+《1》首先在actionCreator.js中将不需要暴露出去的函数位置放到最上边，这样代码结构看起来比较清晰（上面是自己用的，下面是导出给别人用的）
+《2》在代码中如果多处用到this.props.* 那么可以在使用es6解构赋值语法进行优化：
+const { focused, list} = this.props;
+《3》在reducer.js中，我们可以发现使用了大量的if语句，我们可以使用switch语句进行替换：
+将：
+if (action.type === actionTypes.SEARCH_FOCUS){
+        return state.set('focused',true)
+    }
+    if (action.type === actionTypes.SEARCH_BLUR){
+        return state.set('focused',false)
+    }
+    if (action.type === actionTypes.GET_HEADER_LIST){
+        return state.set('list', fromJS(action.data))
+    }
+    return state;
+
+替换成：
+switch (action.type){
+        case actionTypes.SEARCH_FOCUS:
+            return state.set('focused',true);
+        case actionTypes.SEARCH_BLUR:
+            return state.set('focused',false);
+        case actionTypes.GET_HEADER_LIST:
+            return state.set('list', fromJS(action.data));
+        default:
+            return state;
+    }    
+注意switch语法中的case里面一般都会有一个break；但是我们在这直接使用的是return语法，后面的代码就不执行了，所以就不需要break语句了
+
+7.14、编写换一批功能：
+分析逻辑，默认显示的是10个内容，点击换一换按钮之后切换另外10个，我们通过换页来实现这个功能。
+《1》首先要解决的是input框失去焦点的时候但鼠标聚焦在list上的时候list不消失的问题，这样才能保证我们能够点击到换一换这个按钮（原理是当input聚焦或者鼠标在list里面任何一个情况成立的情况下list都不消失）：
+先在reducer的默认state中定义一个变量（这个变量控制list的显示还是因此与focused一样）：
+mouseEnter:false,
+
+然后在index里面的list组件上定义一个函数（用来控制mouseEnter是false还是true）：onMouseEnter，同时在定义一个onMouseLeave时间函数，
+<SearchInfo className={props.focused || props.mouseEnter ? 'show' : 'hidden'} onMouseEnter={props.listMouseEnter}>
+
+ listMouseEnter(){            
+            const action ={
+                type:'list_mouse_enter',
+            };
+            dispatch(action)
+        }
+然后在reducer.js中控制：
+case 'list_mouse_enter':
+            return state.set('mouseEnter',true)
+
+然后在reducer中定义一个变量用来保存当前的页数：searchPage:0,
+
+
+                                                                             （三）
+                                                            react开发大众点评实战
+
+一、开发环境搭建和准备
+1.1、建议开发项目的时候在跟目下下创建一个docs文件夹，然后里面存放README.md文件，用来存储项目说明文件。
+软件的三要素：程序+数据+文档
+
+1.2、尽量学会linux命令，因为在互联网公司里面，服务器上的代码大多数都是使用命令行来操作的
+
+1.3、是直接使用create-react-app开发还是自己从头开始搭建（webpack、react、redux等等）？
