@@ -1,0 +1,1052 @@
+打包+客户端热更新+服务器热更新
+服务器渲染
+eslint+editorConfig
+
+命名规范：
+文件命名用下划线命名法：my_file.js
+js中变量的命名用驼峰法：JavaScript 
+css语法用连字号连接：font-family
+
+一、初始化项目
+1.1、首先创建npm工程，使用npm管理工程
+新建一个空文件夹，执行npm init
+
+1.2、创建一个简单的项目，和项目目录，用来作为工程架构的骨架
+在根目录下创建文件夹：
+client（客户端源码）
+build（webpack 配置文件目录）
+dist（项目打包目录）
+server（服务器源码）
+
+1.3、创建客户端基本骨架
+（1）在client文件夹下新建index.js作为项目入口文件
+新建views文件夹，存储客户端页面
+
+
+（2）安装react、react-dom创建一个简单的react页面：
+npm i react react-dom -S
+
+（3）在views下新建App.jsx
+import React,{ Component } from 'react'
+
+class App extends Component{
+    render(){
+        return(
+            <div>工程架构骨架</div>
+        )
+    }
+}
+
+export default App
+
+（4）在index.js中将App.jsx挂载到reactDOM上
+注意在使用mac下的webstorm打开文件的时候尽量要将打开项目根目录而不是项目的父文件夹，因为会存在jsx语法不识别，默认的使用es6语法进行检查的
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx'
+
+
+ReactDom.render(<App/>,document.body)
+
+这样一个项目的简单骨架就搭好了，然后是打包
+
+二、项目客户端打包配置+html配置：
+2.1、安装webpack工具：npm i webpack -D
+
+2.2、在build文件夹下新建webpack.config.client.js配置文件
+因为我们的webpack.config.client.js不属于项目源码，而是在node服务器中使用的nodeJS模块。所以使用的common.js代码规范，而且我们的配置文件不是一个函数而是一个js对象
+
+module.exports ={
+    
+}
+因为我们需要用到path：const path = require('path')
+
+
+2.3、webpack配置项：
+（1）基础配置项：entry和output都是对象
+const path = require('path')
+
+module.exports ={
+    entry:{
+        app:path.resolve(__dirname,'../client/index.js')
+    },
+    output: {
+        filename: `[name].[hash].js`,
+        path: path.resolve(__dirname,'../dist'),
+        publicPath: ""
+    }
+
+}
+
+2.4、配置文件写完了，我们需要在package.json中添加执行config文件的命令：
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build":"webpack --config build/webpack.config.client.js"
+  },
+
+执行npm run build 命令查看是否报错：
+如果是第一次编译会提示我们按照webpack-cli，之间选yes按照提示安装就ok，
+
+2.5、此时报错，因为webpack不认识jsx语法，所以我们要在config中配置jsx解析器将jsx语法转译成js语法，将es6语法转译成es5语法（因为es6语法有些浏览器不识别）：
+babel-loader是一个能够编译各种js（es6、es7、jsx（现在官方默认的编译工具就是babel））语法的工具，编译出来的结果是浏览器能识别的es5语法
+（1）、和entry同层级新建配置项module
+module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader:'babel-loader',                
+            },
+            {
+                test:/.js$/,
+                loader:'babel-loader',
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    }
+
+（2）、因为webpack中不包含babel，所以我们要单独安装配置：
+npm i babel-loader@7 -D、npm i babel-core -D
+（注意我们要安装babel-loader@7，因为出了babel8，不兼容）
+
+
+然后在项目跟目录下新建.babelrc文件，写入：
+{
+  "presets":[
+    ["es2015",{"loose":true}],
+    "react"
+  ]
+}
+presets项是表示babel支持的语法，现在把很多语法（jsx等等）都拆分出去了，所以需要在这指定需要被编译的语法
+
+然后安装需要被编译的语法：
+npm i babel-preset-es2015 babel-preset-es2015-loose babel-preset-react -D
+
+到此babel才能正常的编译jsx，es6语法成浏览器支持的es5语法
+
+执行npm run build 看是否报错
+这样就把react的简单demo成功编译并打包成功了，打开dist文件夹下面会找到打包好的文件
+
+2.6、打包好的js已经有了，还需要一个html页面才能让我们在浏览器中查看调试代码：
+安装npm i html-webpack-plugin -S
+然后在webpack.config.js中载入：const htmlPlugin = require('html-webpack-plugin')
+
+*plugins配置项（与entry同级）：
+ plugins:[
+        new HTMLPlugin()
+    ]
+
+这个配置项会生成一个html页面，同时把webpack打包好的那个js导入到这个html中
+
+运行代码：npm run build
+会发现dist下面多了一个index.html。js引入的路径就是publicPath配置的路径
+（<script type="text/javascript" src="/app.645b5f0f2dfaa31e99b5.js"></script>）。
+
+
+到这为止我们就已经将客户端的react代码完成了编译打包
+
+三、服务端渲染+服务端favicon
+react构建完成的app在node服务器进行渲染，将得到的内容返回给浏览器端，从而减少用户等待的时间，同时也方便搜索引擎进行SEO。
+
+原理：利用react-dom中的方法将react app在node端进行解析，然后获取到html文件将解析好的js和html进行组合然后返回给客户端
+
+服务端渲染的意义就是直接返回完整的页面，而不是返回html之后再进行js请求，再渲染页面。所以我们要在这之间返回的是一个已经渲染好了的完整页面。
+
+3.1、首先搭建服务器
+使用express搭建node服务器，因为express框架和webpack搭配更合适
+
+（1）在server文件夹下新建server.js文件（服务器入口文件）
+然后安装express框架：npm i express -S
+
+（2）在server.js下导入express
+实例化express（也就是创建服务器）
+然后调用服务器的get方法返回一个内容，用来检查服务器是否能正常启动
+将服务器挂载到本地电脑的端口上
+
+const path = require('path')
+const express = require('express')
+
+
+const app = express()
+
+app.get('*',(req,res)=>{
+    res.send('这是服务器demo')
+})
+（注意在这我们要写"*"，因为如果是空的话就不会所有的请求都返回这个结果）
+
+
+
+app.listen(8000,()=>{
+    console.log('server is started in 8000 port')
+})
+
+（3）在package.json文件中添加服务器启动命令（方便使用npm对项目进行管理）
+"start":"node server/server.js"
+
+启动服务器：npm run start
+访问http://192.168.183.129:8000/
+看是否正常启动
+
+
+3.2 修改客户端代码，为服务端渲染准备原料（jsx、html）
+（1）首先确定对哪些内容进行渲染
+在这我们直接对整个项目进行服务端渲染，在client下新建server_entry.js，作为服务端渲染的入口文件（index.js为客户端编译的入口文件）
+
+首先导入需要渲染的文件
+然后暴露出去
+（这样做是因为，如果我们想要修改渲染的文件，那么在这可以进行操作，而且不影响客户端的代码，解耦）
+
+import React from 'react'
+
+import App from './views/App.jsx'
+
+export default <App/>
+
+（2）对server_entry.js进行打包
+因为node服务器并不认识jsx类型代码，所以我们需要使用webpack将代码打包成es5，方便服务器使用
+
+首先在build下新建server.config文件
+打包的逻辑和客户端差不多，但是服务器独有的配置项需要我们进行配置
+
+*target配置项：target:'node'（表示的是webpack打包出来的这个js文件是在哪个执行环境中使用，参数还可以是web，表示的是在浏览器中执行，还可以是其他的，可以到官网中查看）
+
+*filename:"server-entry.js"（服务器没有缓存这个概念，所以在output的filename就不需要再使用hash值来区分，可以直接使用固定命名）
+
+*libraryTarget:'commonjs2'（表示的是我们打包出来的js使用哪种模块方案，如umd、cmd、amd、commonjs、global等。在这我们使用commonjs2这个方案，适用于node端。）
+
+const path = require('path')
+
+module.exports={
+    target: "node",
+    entry:{
+        app:path.resolve(__dirname,'../client/server_entry.js')
+    },
+    output: {
+        filename: "server_entry.js",
+        path: path.resolve(__dirname,'../dist'),
+        publicPath: "",
+        libraryTarget: "commonjs2"
+    },
+    module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader:'babel-loader'
+            },
+            {
+                test:/.js$/,
+                loader:'babel-loader',
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    }
+}
+
+（3）在package.json中添加config.server的运行命令：
+"build:client":"webpack --config build/webpack.config.client.js",
+"build:server":"webpack --config build/webpack.config.server.js",
+
+执行命令:npm run build:server 看是否打包正常
+
+（4）打包工作已经完成，然后针对这一块对代码和项目结构进行一些优化
+
+*将打包命令进行优化：
+npm i rimraf -D
+然后添加命令:"clear":"rimraf dist"
+然后清除命令+客户端打包+服务端打包整合："build":"npm run clear && npm run build:client && npm run build:server"
+
+*根据webpack要求，在打包的时候最好指明打包环境（development、production），否则会导致执行效率大大降低：
+"build:client": "webpack --mode production --config build/webpack.config.client.js",
+"build:server": "webpack --mode production --config build/webpack.config.server.js",
+
+运行npm run build 查看效果，此时命令行中不再有warn
+
+*配置webpack.config，让webpack认识在导入.jsx的时候不报错：
+resolve: {
+    extensions: ['.js', '.jsx']
+  },
+
+此时就可以在导入jsx的时候不加后缀了import App from './views/App'
+
+*因为config.client和config.server里面有大量重复代码，我们可以将公共代码进行分离，这样在修改文件的时候就不需要每个文件都修改一遍
+在build下新建webpack.config.base.js文件
+首先将client和server中公共的部分提取到base中：
+
+然后在client和server中导入webpack中专门用来合成config文件的工具：
+const webpackMerge = require('webpack-merge')
+因为webpack中已经不包含，所以要安装一下：npm i webpack-merge -D
+
+然后把base导入到client中
+
+使用webpackMerge 方法将两个config组合起来const config = webpackMerge(configBase,configClient) base要在前面，这样当client里面的配置项如果base中没有就会添加进去，如果有就会覆盖掉base中的配置项
+
+为了结构清晰，我们将config中配置对象存储在一个变量中，这样在使用webpackMerge进行组合的时候看着不那么乱
+
+
+base中：
+const path = require('path')
+module.exports ={
+    output: {
+        path: path.resolve(__dirname,'../dist'),
+        publicPath: ""
+    },
+    module: {
+        rules: [
+            {
+                test:/.jsx$/,
+                loader:'babel-loader',
+            },
+            {
+                test:/.js$/,
+                loader:'babel-loader',
+                exclude:[
+                    path.resolve(__dirname,'../node_modules')
+                ]
+            }
+        ]
+    },
+    resolve: {
+        extensions: ['.js','.jsx']
+    }
+}
+
+
+
+client中：
+const path = require('path')
+
+const webpackMerge = require('webpack-merge')
+const HTMLPlugin = require('html-webpack-plugin')
+
+const configBase = require('./webpack.config.base')
+
+const configClient = {
+    entry:{
+        app:path.resolve(__dirname,'../client/index.js')
+    },
+    output: {
+        filename: `[name].[hash].js`,        
+    },    
+    plugins: [
+        new HTMLPlugin()
+    ],    
+
+}
+
+const config = webpackMerge(configBase,configClient)
+
+module.exports =config
+
+
+执行npm run build看是否报错
+
+
+
+3.3 准备html原料
+首先在client文件夹下新建一个template.html文件，作为index.html的蓝本，在里面写入：
+
+<body>
+<div id="root">
+    <!--App-->
+</div>
+</body>
+
+ <!--App-->是一个占位符，方便我们在服务端将其替换掉。
+
+因为我们自己创建了html文件，这样可以自定义自己的一些元素，比html-webpack-plugin这个插件生成的单纯的html功能更加强大灵活，所以我们把客户端的代码也挂载到我们自定义的html上面，也会在服务器中使用。
+ReactDom.render(<App/>, document.getElementById("root"));
+new HTMLPlugin({
+            template: path.resolve(__dirname,"../client/template.html")
+        })
+注意在HTMLPlugin方法调用的时候我们传递进去的参数是一个对象，template对应的value是html的路径
+
+重新npm run build 就可以发现在dist中新生成的index.html就是一template.html为蓝本
+
+
+3.4 在服务器中，编写服务器渲染的代码
+（1）导入原料（打包好的js和html）
+
+《1》导入js：
+const serverEntry = require('../dist/server_entry').default（commonjs和es6语法变通）
+
+《2》导入html：
+因为node服务器不识别html语法和文件，所以我们借助fs模块实现：
+const fs = require('fs')
+const htmlPlugin = fs.readFileSync(path.resolve(__dirname,'../dist/index.html'),'utf8')
+注意要标注utf8格式
+
+
+（2）导入工具（react-dom的服务器版本，用来解析react工程）：
+const ReactSSR = require('react-dom/server')
+
+
+（3）加工
+首先将打包好的js用react-dom加工：const serverReact = ReactSSR.renderToString(serverEntry)
+然后将加工好的结果添加到html中：
+const template = htmlPlugin.replace("<!--App-->",serverReact)
+
+然后将结果返回给客户端：
+app.get('*',(req,res)=>{
+    res.send(template)
+})
+
+完整代码：
+const path = require('path')
+const fs = require('fs')
+
+const express = require('express')
+
+const ReactSSR = require('react-dom/server')
+
+const serverEntry = require('../dist/server_entry').default
+
+const htmlPlugin = fs.readFileSync(path.resolve(__dirname,'../dist/index.html'),'utf8')
+
+
+const app = express()
+
+
+const serverReact = ReactSSR.renderToString(serverEntry)
+const template = htmlPlugin.replace("<!--App-->",serverReact)
+
+app.get('*',(req,res)=>{
+    res.send(template)
+})
+
+
+app.listen(8000,()=>{
+    console.log('server is started in 8000 port')
+})
+
+重启服务器npm run start看是否报错
+
+此时服务端已经将react挂载到了html上，并返回给了客户端。打开浏览器：http://192.168.183.129:8000/ 查看项目结构，发现App.jsx里面的内容已经渲染到了html上
+
+同时app.hash.js返回的也是html那个渲染好的结果，这是因为服务器对所有的请求返回的都是template，app.hash.js也不列外，我们使用指定静态文件来解决这个问题
+
+
+（4）在服务器中给静态文件指定路径
+也就是当客户端请求某个路径下面的内容的时候我们将这个路径重定向，指向真实资源所在的路径，从而能正确获取到需要的资源
+app.use('/public',express.static(path.resolve(__dirname,'../dist')))
+而且这个静态文件的配置必须写在get("*")前面，这样的话路径就会先匹配/public，然后才是*
+（网页执行逻辑：template加载到页面，然后按顺序执行里面的代码，当执行到app.hash.js的时候匹配到/public路径，然后去dist下面获取到对应的资源）
+
+我们在服务器中指定了在固定路径下才能获取到真实资源，所以我们也要在index.html打包的时候就把静态资源的路径加进去，否则src="app.85767fffd9059ca9777d.js"还是匹配不到/public里面的内容
+
+修改config.base中output配置项：
+publicPath:"/public/"
+
+修改之后重新编译的html中请求js的时候路径就是：/public/app.hash.js,又因为服务端的html就是直接导入的dist下的index.html，所以此时服务端的template的script标签导入js的路径就是/public/app.hash.js，又因为服务端对/public路径下的静态文件进行了重定向，所以此时能正常获取到app.hash.js
+
+重新编译npm run build 然后运行npm start 查看结果，已经正常渲染，并且对应的资源加载正常。
+
+3.5、给服务器代码配置favicon图标：
+使用express的插件来完成favicon的加载：
+npm i serve-favicon -S
+
+制作favicon：（https://tool.lu/favicon/），直接放在项目根目录下就行
+
+然后导入到server.js中：const favicon = require('serve-favicon')
+
+然后使用工具加工：
+app.use(favicon(path.resolve(__dirname,'../favicon.ico')))
+（注意我们一定要在服务端渲染之前使用，因为服务端get方法默认是对所有路径都返回template，所以我们要在他之前就使用，使favicon的请求get不到。）
+
+
+
+四、开发时客户端热更新
+提高开发效率
+
+4.1、webpack-dev-server和hot module replacement
+webpack-dev-server是webpack的一个插件，作用是在本地开启一个node服务器（方便我们在本地用浏览器查看调试代码，就不用我们每次编译完成之后在再点击html查看代码效果了），此外还会监听代码变化，自动刷新浏览器。
+hmr到时候再查react工程架构那个文章
+
+4.2、安装webpack-dev-server
+虽然我们是直接在config中把devServer作为配置项，但是目前的webpack版本里面并不包含这个包
+npm i webpack-dev-server -D
+
+4.3、在config中区分开发环境还是生产环境
+这样的话我们就可以根据不同的环境对config中的代码进行调整。有助于减少生产环境下的代码量，也不用担心开发环境的代码会对生产环境的代码造成影响。
+
+在webpack.config.client.js中声名一个变量，用来获取并保存环境变量的值：
+const isDev = process.env.NODE_ENV === "development"
+注意我们在这定义的变量是获取的webpack-dev-server这个启动命令中的变量，和build命令里面定义的--mode development没有关系
+
+4.4、编写devServer配置项：
+在使用webpack的时候常用devServer配置项，遇到问题可以去官方文档查看（https://www.webpackjs.com/configuration/dev-server/）
+
+
+if(isDev){
+    configClient.devServer ={
+        host:"0.0.0.0",
+        port:"8888",
+        contentBase:path.resolve(__dirname,"../dist"),
+        overlay:{errors:true}       
+    }
+}
+
+4.5、在package.json中添加启动命令并传入环境变量：
+"dev:client":"webpack-dev-server --config build/webpack.config.client.js"
+
+为了保证在不同操作系统下不出问题，我们使用cross-env这个包来完成：
+npm i cross-env -D
+然后使用cross-env将参数传递进去：cross-env NODE_ENV=development
+
+"dev:client": "cross-env NODE_ENV=development webpack-dev-server --config build/webpack.config.client.js"
+
+
+然后我们启动项目：npm run dev:client
+此时会发现我们请求不到app.hash.js报错404。
+
+4.6、完善devServer配置项：
+这是因为我们配置的devServer（contentBase: path.join(__dirname, '../dist'),）是在dist下面开启了一个服务，所以会在请求的时候默认js请求路径不挂public（js就在dist根目录下），而我们在使用webpack打包的时候默认给js添加了一个/public（src="/public/app.3030f9be4d1f160a1658.js"），导致了请求的时候找不到js文件。所以我们还需要对devServer进行配置，也给他加一个
+也是相当于对路由进行了一个重定向，将dist下面的js代码需要使用/public/js才能请求的到
+config.devServer={
+        host:"0.0.0.0",
+        port:"8888",
+        contentBase:path.join(__dirname,'../dist'),
+        overlay:{errors:true},
+        publicPath:"/public/",
+        historyApiFallback:{
+            index:'/public/index.html'
+        }
+    }
+
+为了我们的程序更加健壮，我们在给他添加一个historyApiFallback配置项，这一项的作用是当用户的url出错，或者在服务器没有对应的api的时候直接返回index页面而不是返回404错误界面。
+
+
+然后再运行：npm run dev:client
+发现js还是请求不到，这是因为在我们的项目中已经手动build生成了一个dist目录，把这个dist目录删掉，然后再刷新页面发现js就能正常的加载进来了。因为devServer会检测我们的项目中是否有这个目录，如果有的话就会直接访问dist里面的内容，所以public就不起作用了。删除dist之后由devServer自己运行项目就没问题了。
+
+
+4.7、优化
+在dev:client启动命令中在webpack-dev-server后面给他添加上编译的环境：--mode development（仿照webpack那种写法：webpack --mode production --config ）:
+"dev:client": "cross-env NODE_ENV=development webpack-dev-server --mode development --config build/webpack.config.client.js",
+
+可以大大提高代码编译速度
+
+
+五、开发时服务器渲染
+提高开发时效率
+这样我们在开发的时候就只关心业务逻辑，而不需要手动重启或者刷新服务以及页面了
+
+虽然我们在前边已经配置了生产环境下的服务端渲染，但是我们在开发的时候没有dist文件，我们也不会来回切换开发和生产环境
+
+因为服务端的渲染涉及到客户端的一些js，以及服务端包等内容，所以服务端不应该像以前一样，我们需要用别的方法获取到服务端需要用到的template和dist下面的其他文件，所以需要修改服务端的代码来实现上述功能。
+
+5.1、划分开发环境和生产环境
+和客户端一样：在server.js中
+isDev = process.env.NODE_ENV ==='development' 
+
+
+5.2、把生产环境中使用的代码放到！isDev模块中：
+
+
+if(!isDev){
+    const ReactSSR = require('react-dom/server')
+    const serverEntry = require('../dist/server_entry').default
+
+    const htmlPlugin = fs.readFileSync(path.resolve(__dirname,'../dist/index.html'),'utf8')
+    
+    const serverReact = ReactSSR.renderToString(serverEntry)
+    const template = htmlPlugin.replace("<!--App-->",serverReact)
+
+    app.get('*',(req,res)=>{
+        res.send(template)
+    })
+}
+
+
+5.3、在server文件夹下新建util文件夹，用来存储一些固定功能的模块
+在util文件夹下新建dev_render.js用来存放开发环境下服务器渲染代码的编写
+
+我们在dev_render.js中暴露出去一个函数，该函数接收一个app参数，这个app就是express的实例
+module.exports = function (app) {
+    
+}
+
+也就是我们在server.js中定义了一个函数用来处理服务器渲染的逻辑，然后为了结构清晰，我们把这个函数分离出来了。
+
+然后在server.js中使用这个函数：
+else {
+    const devRender = require('./util/dev_render')
+    devRender(app)
+}
+
+
+5.4、在dev_render.js中的业务逻辑和生产环境下的业务逻辑一样，但是资源获取的方式不同，
+首先，因为我们已经创建好了服务器，所以在这只需要编写get方法就行，因为生产环境和开发环境下get方法暴露出去的内容不一样，所以会用两个单独的get方法来处理。
+
+定义get方法
+然后获取原料
+加工原料
+使用get方法将加工结果返回给客户端
+
+module.exports = function (app) {
+    app.get('*',(req,res)=>{
+        res.send()
+    })
+}
+
+
+5.5、在服务器中获取index.html
+因为在开发环境下硬盘上没有dist文件，所以我们在这使用http请求去webpack-dev-server的服务里面读取index.html,因为webpack服务是本地服务，路径固定
+
+首先安装axios：npm i axios -S
+const axios = require('axios')
+
+然后定义一个方法来读取html文件：
+const getHtml = ()=>{
+        return new Promise((resolve,reject)=>{
+            axios.get('http://localhost:8888/public/index.html')
+                .then(res =>{
+                    resolve(res.data)
+                })
+                .catch(reject)
+        })
+    }
+这样的话我们就可以通过webpac-dev-server实时拿到最新的template
+
+
+5.6、在服务端获取到server_entry.js
+因为在开发的时候没有dist这个文件夹，所以我们要获取到server的bundle，也就是server_entry.js，而且客户端在改动了内容之后都会重新build，我们不能获取到一个版本不动的包
+
+在这使用的方法是在服务器里面重新启动一个webpack的服务器，从而实时监听里面文件的变化，获取到最新的server_entry.js
+
+（1）将webpack和config文件导入到服务器中（原材料）
+const webpack = require('webpack')
+const configServer = require('../../build/webpack.config.server')
+
+（2）通过webpack和他的配置文件启动一个webpack服务（compiler是汇编的意思）
+const webpackCompiler = webpack(configServer)
+
+（3）监听这个服务的变化，他有一个watch方法，这个方法接收一个配置参数，我们在这不需要配置，所以直接传入一个空对象：
+ webpackCompiler.watch({},(err,stats) =>{
+        if(err) throw err       
+    })
+出现err我们就把err扔出去
+stats是webpack在打包过程中输出的信息（启动webpack后在命令行输出的内容）
+
+（4）读取实时的server_entry.js
+首先我们要获取到server bundle的路径：
+const path = require('path')
+
+const bundlePath = require.join(
+            configServer.output.path,
+            configServer.output.filename
+        )
+也就是serverconfig配置文件中的output配置项的path+filename
+
+
+（5）在这我们已经拿到了server的bundle的实时编译后的路径，但是我们并不想在dev_static中的compiler输出出去，因为我们就是为了要拿到server包的路径，不需要其他的操作，而compiler输出出去是占硬盘位置的，而且写到硬盘的这个过程是比较耗时的，降低我们的工作效率
+
+我们安装一个工具：npm i memory-fs -D
+memory-fs 作用是在内存里面去读写文件（node服务器中的fs是在硬盘中读取文件）
+
+然后把这个工具导入到dev_static.js中：const MemoryFs = require('memory-fs')
+然后创建一个memory-fs实例：const mfs = new MemoryFs
+然后serverCompiler.outputFileSystem =mfs（outputFileSytstem 是webpack给我们提供的一个配置项）这样的话以前通过fs在硬盘上读取的文件，我们都可以使用mfs在内存中读取了（这样的话速度回非常快，因为在内存中读写比在硬盘上读写快多了）
+然后我们使用mfs通过前面获取的路径就能将bundle读取出来了：
+const bundle = mfs.readFileSync(bundlePath,'utf-8') 但是此时我们读取出来的是string内容并不是我们能在js中使用的内容,我们要指定读取过来的文件的编码
+
+如何把不能使用的内容转化成我们能使用js调用的内容，在这根据作者介绍使用一种比较绕的方法，整个方法只需要理解，不需要记忆，用的时候直接拿过去用就行：
+首先定义一个变量，用来存储module.constructor：const Module = module.constructor（这点module对应于页面中使用的module.exports中的module，而module.constructor就是module的构造方法，我们使用这个方法重新构造一个module）
+然后在需要使用的地方实例化一个moduel：const m = new Module()
+然后调用module的_compile方法来解析我们读取出来的bundle包：m._compile(bundle)会给我们生成一个新的模块，这个模块生成之后我们把它放到函数外面的全局里面去，方便调用：let serverBundle 
+
+然后在函数里面给serverBundle赋值：serverBundle = m.exports.default我们需要default才能获取到我们真正要使用的内容
+
+
+我们拿到了能用js操作的bubndle之后就像服务端里面一样需要用reactSSR渲染，因此要讲reactSSR导入进来：const ReactSSR = require('react-dom/server')
+
+
+（6）到现在template和serverBundle都有了，我们接下来就是对他们进行加工：
+首先我们要调用函数获取到template（获取template我们是封装了一个函数并没有调用），获取到template之后用reactSSR解析serverBundle，：
+
+module.exports = function (app) {
+    app.get('*',(req,res)=>{
+        getTemp().then(template =>{
+            const appString = ReactSSR.renderToString(serverBundle)
+            const serverTemplate = template.replace("<!--App-->",appString)
+            res.send(serverTemplate)
+        })
+        
+    })
+}
+
+（7）在package.json中修改server的启动命令，添加环境变量：
+将start命令替换成："dev:server": "cross-env NODE_ENV=development node server/server.js",
+
+因为我们需要再webpack-dev-server中获取到template，所以我们需要先启动dev:client,然后再启动dev:server
+
+
+
+（8）此时发现服务器已经正常启动了，但是刷新页面发现没有内容，查看network发现app.hash.js返回的是html页面，这个问题和我们在生产环境的问题一样，在生产环境下面我们使用的是static解决的问题app.use('/public',express.static(path.resolve(__dirname,"../dist")))
+
+但是在这，所有东西都是在内存里面，并没有在硬盘里面，读取不到，我们使用一个工具
+npm i http-proxy-middleware -D（这个工具是express的中间件，用来做代理的）
+
+首先在dev_static中引入：const proxyMiddle = require('http-proxy-middleware')
+
+因为客户端的js全部是在webpack-dev-server里面存储的，是通过一个http服务export出来的，
+我们在这里就通过代理的方式当我们编写的这个服务端请求静态资源的时候就将请求的资源地址指向webpack-dev-server生成的服务里面的静态文件，实现代理：
+ app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+也就是public下面的内容都是静态文件里面的内容代理到http://localhost:8888下面，proxyMiddle接收一个对象参数，其中target项就是http需要代理到的位置
+
+
+先启动dev：client 然后再启动dev：server
+两个服务启动都正常，返回的内容也是正确的。同时客户端的热更新正常，也会同步到服务端
+
+完整代码：
+
+const path = require('path')
+
+const axios = require('axios')
+const ReactSSR = require('react-dom/server')
+
+const webpack = require('webpack')
+const proxyMiddle = require('http-proxy-middleware')
+const MemoryFs = require('memory-fs')
+
+const configServer = require('../../build/webpack.config.server')
+
+
+const mfs = new MemoryFs
+
+let serverBundle
+// 定义一个全局变量将函数里面的值拿出来
+
+const webpackCompiler = webpack(configServer)
+// 创建一个webpack服务用来获取里面的bundle
+
+
+webpackCompiler.outputFileSystem = mfs
+// 使用memory-fs将weback服务限制在服务器内，而不是写到硬盘上
+
+
+webpackCompiler.watch({},(err,stats) =>{
+    if(err) throw err
+
+    const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+
+    const bundle = mfs.readFileSync(bundlePath,'utf-8')
+    // 根据文件路径，使用mfs读取内存中的bundle，格式是utf-8（默认内存中的数据格式是二进制）
+
+    const Module =module.constructor
+    const m = new Module()
+
+    m._compile(bundle,'server_entry.js')
+
+    serverBundle = m.exports.default
+    // 使用module构造函数，将获取到的字符串转化成我们能直接使用的模块
+
+})
+
+const getHtml = ()=>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:8888/public/index.html')
+            .then(res =>{
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+// 使用axios获取到本地webpack服务器中的html
+
+
+module.exports = function (app) {
+    app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+    // 使用http代理，将'/public'路径转发到8888端口
+
+    app.get('*',(req,res)=>{
+        getHtml().then(template=>{
+            const serverEntry = ReactSSR.renderToString(serverBundle)
+            const serverTemplate = template.replace("<!--App-->",serverEntry)
+            console.log('开发环境')
+            res.send(serverTemplate)
+        })
+    })
+}
+
+在这浏览器中会报一个warn，我们把template.html里面改成<div id="root"><!--App--></div>没有空格就可以了。
+
+这一块到时候直接复制，然后修改一下文件名那些就可以了
+
+
+六、服务器热更新
+我们在上面配置了开发和生产环境下的服务器渲染，在这配置一下服务器热更新，当服务端代码发生变动的时候自动更新，不需要我们再手动去启动
+
+6.1、安装nodemon
+npm i nodemon -D
+这个工具是让我们写一个配置文件，当这个服务下面的任何文件有改动，就会自动重启服务
+
+6.2、编写nodemon配置文件
+在项目根目录下创建nodemon.json文件
+{
+  "restartable":"rs",
+  "ignore":[
+    ".git",
+    "node_modules/**/node_modules",
+    ".eslint",
+    "build",
+    "cilent"
+  ],
+  "verbose":true,
+  "ext":"js",
+  "env":{
+    "NODE_ENV":"development"
+  }
+}
+
+
+*"restartable":"rs", 这个配置项的意思是进行了这样配置才能在修改代码之后重启我们的服务。（但是刚才没有配置的时候也重启了）
+*"ignore":[
+    ".git",
+    "node_modules/**/node_modules",
+    ".eslintrc",
+    "build",
+"client"]  这个配置的目的是让我们忽略某些文件的变化，不去重启服务器，因为我们只需要server下面的文件变动的时候启动服务器
+
+* "verbose":true  这个配置的意思是，让他输出的信息特别详细，便于查找报错问题
+
+*"ext":"js" 这个配置的意思是我们可以规定哪些文件类型的文件变化了重启服务器
+
+*"env":{}, 这个配置的意思是环境变量，因为我们在之前启动服务的时候，我们判断了服务器质性的环境（是开发还是线上const isDev = process.env.NODE_ENV === 'development';），这个变量是从package.json中获取的，但是我们在使用nodemon的时候是不会直接这么传的，我们需要在nodemon的配置文件中去写：
+"env":{
+    "NODE_ENV":"development"
+  },
+
+
+6.3、在package.json中编写启动命令
+"dev:server": "nodemon server/server.js",
+（因为我们在nodemon.json中配置了env，所以在这之间将cross的去掉就行）
+
+
+这样就好了，然后我们启动服务：npm run dev:server 查看效果
+
+同时我们修改一下App.jsx，并重新npm run serverbuild之后服务器也会重启，这样在服务端渲染进行调试的时候就比较方便了。
+
+同时运行npm run dev:client也没问题
+
+
+七、eslint和editor-config配置
+7.1、eslint配置
+是随着ECMAScript版本一直更新的js lint工具，插件丰富，并且能够套用规范，规则非常丰富，能够满足大部分团队的需求。
+eslint可以配合git：为了最大程度控制每个人的规范，我们在git commit代码的时候使用git hook调用eslint进行代码规范验证，不规范的代码无法提交到仓库。
+
+（1）安装eslint：
+npm i eslint -D
+
+（2）在项目根目录下配置eslint：
+根目录下创建一个文件：.eslintrc（json格式）
+
+添加配置项：*"extends":"standard"  这个配置项表示的是整个项目都是用standard代码规范（extends是继承的意思）
+standard是标准js使用的一些规则，相对比较宽松，能够适用我们项目中的所有代码。
+
+（3）在client文件夹下配置client的eslint规则：
+*我们在client新建.eslintrc文件，用来规范客户端代码，因为客户端是用jsx语法来写的，和js规则不一样，我们需要定制更加详细和严格的规则来规范客户端代码。
+{
+  "extends": "airbnb"
+}
+在client里面使用的是airbnb坚持规则，airbnb是美国一个公司在使用的jsx检查规则，里面规范非常详细好用。
+
+*然后我们还可以在airbnb的基础之上定制更加符合我们要求的检查规则，在配置项rules中添加：
+{
+  "extends": "airbnb",
+  "rules": {
+    "semi":[0]    // "semi":[0]    表示的意思是在末尾不检查，表示的是我们写不写都不会报错，如果想强制用户不写，那么可以赋值为false
+  }
+}
+我们在rules中编写自定义的规则
+
+*eslint的parser配置项："parser": "babel-eslint"
+这个配置项是来指定eslint用什么工具解析js代码的（eslint默认有一个工具来解析，但是我们在这使用babel-eslint来解析，配合整个项目打包编译的时候使用）
+
+*eslint的env配置项：
+"env": {
+    "browser": true,
+    "es6": true，
+    "node": true
+  },
+这个配置项是高速eslint我们代码的运行环境，这样在eslint检查代码的时候就会把对应环境的语法包含进去而不会报错。因为webpack中可能会使用一些node的变量，所以我们把node也加进去。
+
+*eslint的parserOptions配置项：
+"parserOptions": {
+    "ecmaVersion":6，
+    "sourceType": "module"
+  },
+这个配置项中ecmaVersion是js的版本。sourceType是引用js文件的模式
+
+其他配置可以去eslint官网查看文档。
+
+配置完成之后我们就需要根据配置安装对应的包：
+npm i babel-eslint -D
+npm i eslint-config-standard-D
+因为airbnb有很多依赖文件，我们还是老老实实的使用npm安装把，否则的话会因为版本的问题报错，，，：
+npm i eslint-config-airbnb eslint-plugin-import eslint-plugin-jsx-a11y eslint-plugin-node eslint-plugin-promise eslint-plugin-react eslint-plugin-standard -D
+
+（4）配置代码每次在编译之前先使用eslint进行检查，逻辑也是先进行eslint检查，在进行jsx和js编译
+在config中进行配置：
+  module:{
+      rules:[
+          {
+              test:/.(js|jsx)$/,
+              loader:'eslint-loader'
+          },
+又因为我们需要在真正的执行编译打包之前先进行eslint检查，所以还要加一个参数：
+   {
+              enforce:'pre',
+              test:/.(js|jsx)$/,
+              loader:'eslint-loader'
+          },
+同时还要排除到nodemodules中的代码，因为那部分代码不是我们写的，所以不需要使用eslint检查：
+     {
+              enforce:'pre',
+              test:/.(js|jsx)$/,
+              loader:'eslint-loader',
+              exclude:[
+                  path.resolve(__dirname, '../node_modules')
+              ]
+          },
+resolve比join更好些
+把这部分代码也放到server.config下面，也需要用到
+
+
+*因为我们在这使用了eslint-loader所以我们也要安装这个包
+npm i eslint-loader -D
+
+
+
+然后启动项目，看eslint是否生效：npm run dev:client
+此时我们可以看到命令行中：
+D:\project\webpackDemo\project1\client\index.js
+。。。
+✖ 42 problems (42 errors, 0 warnings)
+  38 errors and 0 warnings potentially fixable with the `--fix` option.
+有若干个格式差不多的报错，这就说明我们的eslint应用成功了
+
+然后我们分析eslint的这些代码格式错误：
+*关于‘LF’的报错，这个就是因为不同操作系统格式上造成的问题，这个我们用eslint是没办法修复这个错误的，所以我们就需要使用editorconfig来解决问题了：
+
+
+关于webstorm代码格式化的问题：
+快捷键：ctrl+alt+l
+我们可以在settings——editor——code style ——JavaScript里面可以对格式化代码时候的操作进行修改（在这把within中的es6 import那一项勾选上，就可以在格式化代码的时候按照es6的语法导入文件）
+
+7.2、editorconfig配置：
+不同编辑器对文本格式化会有一定的区别，如果不统一这些规范，消除编辑器，系统之间的这些差异，会导致根别人合作的时候每次更新下来别人的代码就会报一大堆错误。
+editorconfig是一个插件，webstorm默认已经集成了。
+（1）在项目根目录下新建一个文件.editorconfig（txt文件就行）：
+root = true
+
+[*]
+charset=utf-8
+end_of_line=lf
+insert_final_newline=true
+indent_style=space
+indent_size=2
+trim_trailing_whitespace = true
+
+root = true  代表项目的根目录
+[*]  所有文件都应用这个规则
+charset = utf-8  编码模式
+indent_style = space  制表符是space
+indent_size = 2  制表符的步数，也就是按tab键的时候表示两个空格
+end_of_line = lf 行位结束的时候使用什么方式
+insert_final_newline = true 代码最后保存的时候默认最后一行是空行
+trim_trailing_whitespace = true  每行代码结束后面只留一个空格
+
+写完之后我们可以随意在一个文件中测试一下ctrl+alt+l格式化一下代码查看效果
+
+然后再根据错误提示逐个修改报错信息：
+因为我们使用了airbnb公司的react代码检查规则，所以也会为我们检查react代码语法的优化、精简等等（比如如果是傻瓜式组件，那么就会提示我们不要使用class方式来创建）
+
+
+*灵活使用eslint的帮助注释：
+单行注释 // eslint-disable-line  
+多行注释/* eslint-disable */
+alert('foo');
+/* eslint-enable */
+如我们在项目中引入了react-hot-loader，此时eslint会提示我们将hot安装到项目依赖中去，但是我们只是在开发的时候使用，所以这个问题我们不需要让eslint来报错，所以就使用注释语法让eslint跳过这行代码的检查：
+import { AppContainer } from 'react-hot-loader' // eslint-disable-line
+
+我们在调试的时候写的代码，因为不需要发布到线上，所以可以尽量避免eslint进行检查：
+如我们的调试代码中有require语法，eslint会报错提示我们将require放到项目最开始的位置，但是我们这段代码是为了调试用，并不需要发布到线上，所以可以直接使用eslint的帮助注释，直接将这行代码跳过检查，使用多行注释跳过eslint代码检查：
+/* eslint-disable */
+if (module.hot) {
+  module.hot.accept('./App', () => {
+    const NextApp = require('./App').default
+    ReactDom.render(<AppContainer><NextApp/></AppContainer>, root)
+  })
+}
+/* eslint-enable */
+
+
+*因为webpack在导入文件的时候会默认.js文件可以不加后缀名，但是.jsx不加后缀名就会报错，我们可以在webpack的config中添加一个配置项，让webpack认识在导入.jsx的时候不报错：
+在webpack.base.js中写入：
+resolve: {
+    extensions: ['.js', '.jsx']
+  },
+
+此时就可以在导入jsx的时候不加后缀了
+
+*禁用eslint的规则：还一个错误提示不让我们使用js的引用规则来引用jsx（import App from './App.jsx'会这个提示信息），这个是不必要的提示，我们就可以把这个规则给去掉：
+在client里面的.eslintrc中的rules配置项中添加配置：
+"react/jsx-filename-extension": [0]
+这就表示我们的eslint在检查代码的时候将不再使用该规则
+
+
+*函数传参或者对象里面换行写的时候末尾要添加,
+
+*如果我们想先开发业务逻辑，最后在对代码进行eslint检查，那么可以直接在config中将：
+{
+        enforce: "pre",
+        test: /.(js|jsx)$/,
+        loader: "eslint-loader",
+        exclude: [
+          path.resolve(__dirname, '../node_modules')
+        ]
+      },
+这段代码注释掉，那么就不会进行eslint代码检查了。
+
+
+7.3、在代码提交前先进行eslint检查：
+我们要严格规定一个开发顺序，就是在git到代码仓库的时候一定要先进行eslint检查，检查通过之后才能提交到仓库。
+（1）首先将项目变成一个git的项目
+当然电脑中没安装过git的要先安装git：（https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/00137396287703354d8c6c01c904c7d9ff056ae23da865a000）
+
+然后在项目根目录下执行命令git init，这样的话本地项目就变成了一个git的仓库（此时打开文件目录，会发现项目下多了一个.git文件）。
+
+（2）我们要git commit去执行，那么我们应该怎么做呢？给我们的git commit去加一个hock，直接写hook（钩子）需要脚本，太复杂了。我们有一个非常好用的工具husky：npm i husky -D
+
+（3）安装完成后我们在package.json中添加执行的命令
+*precommit命令：这是一个git的钩子，写在这里husky就会在调用git commit这个命令的时候先会去执行precommit这个命令，如果这个命令执行成功，才会真正的去执行git commit
+
+因为我们在这个命令中需要调用代码检查的命令，所以我们先添加一个代码检查的命令，在precommit上面先添加lint命令
+
+*lint命令：就是检测代码的命令
+"lint":"eslint --ext .js --ext .jsx client/" 
+这个命令是使用eslint检查client文件下所有的js和jsx为扩展名的文件
+
+* "precommit":"npm run lint"
+当我们执行git commit命令的时候程序就会来命令行里面查找precommit命令，并执行lint命令，当lint执行成功之后才会真正的去提交代码。
+
+（4）我们在命令行中使用git命令提交代码：git commit -m "asdf"
+会发现命令行会首先执行husky>npm run -s precommit这个命令
+然后就会使用eslint进行代码检查，并提示错误信息（会提示那些文件的哪些内容不符合eslint要求）
+
+然后把对应的报错信息祛除之后重新commit就会发现原来的报错信息消失了。
+
+这样提交到仓库的代码就会很标准，提高团队的开发效率。
