@@ -1,0 +1,239 @@
+一、react16的特点：
+（1）体积更小
+（2）可以捕获在渲染过程中的错误（新的生命周期componentDidCatch用来捕捉渲染过程中的错误）
+（3）允许我们在render中返回一个数组或者string
+（4）portals 
+我们可以在render里面，创建一个portal，这个portal可以放在dom节点的任意位置，而不是当前组件下面
+比如我们想做一个浮层，和当前节点在dom层级上是没有任何关系的，而且这种方式有一个好处就是里面的数据都是实时更新的
+（5）
+
+二、使用material-UI组件库开发界面
+（官网：https://material-ui.com/getting-started/installation/）
+交互的效果和移动端的很类似，兼容性IE10+
+
+2.1、客户端material使用
+关于服务端渲染，我们需要做一些设置
+因为这个组件库是使用自己的一套东西，我们写的所有样式都是在js中编写的，没有css文件，我们写的css最终会被编译然后生成一个style标签插入到组件的heade中，这样有一个好处就是样式表的className是自动生成的，可以有效避免重名的问题，而且还会对className进行压缩（如果我们在写css的时候className比较长，则再编译的时候会被压缩）
+
+（1）首先将这个组件安装到我们的项目中
+根据官网教程：
+npm i @material-ui/core -S
+npm i @material-ui/icons -S
+
+（2）首先在客户端进行配置
+material可以配置主题，虽然可能用不到，但是记录下来，将来使用的时候便于查阅
+
+在index.js中
+首先导入设置主题的组件和颜色
+然后根据导入进来的工具创建一个主题配置项
+然后将组件包含在主题组件内部
+
+
+import {MuiThemeProvider,createMuiTheme} from '@material-ui/core/styles'
+import {pink,blueGrey} from '@material-ui/core/colors'
+
+const theme = createMuiTheme({
+    palette:{
+        primary:blueGrey,
+        accent:pink,
+        type:'light'
+    },
+    // 主题样式primary主色调，accent辅助色调，type风格，查看官网
+    typography: {
+        useNextVariants: true,
+    }
+    // 最新的字体变体设置，使用旧版本有警告
+})
+
+<Provider appState={new AppState(initialState.appState)}>
+        {/*在初始化的时候将服务端的store传递给客户端进行数据同步*/}
+        <BrowserRouter>
+            <MuiThemeProvider theme={theme}>
+                <App/>
+            </MuiThemeProvider>
+        </BrowserRouter>
+    </Provider>
+
+到现在主题已经应用到了项目中
+
+（3）在项目中使用组件编写页面
+将需要使用的组件导入到需要使用的组件中：
+import Button from '@material-ui/core/Button'
+我们使用哪个组件就导入哪个组件，按需打包，这样可以减小文件的体积
+<Button color="primary">这个是material的按钮</Button>
+<Button  color="primary" variant="contained">这个是material的按钮</Button>
+根据文档修改button的样式
+
+2.2、服务端渲染material使用
+现在页面加载的逻辑是先加载dom结构，然后加载style，到这才能将样式显示出来，如果样式文件加载速度比较慢，用户看到的就是原始的button按钮，我们要修复这个问题：
+在服务端渲染的时候做一些配置，能够在服务端渲染的内容里面就包含样式
+（1）首先安装工具：
+npm i react-jss jss jss-preset-default -S
+
+（2）然后在server_entry.js中：
+首先导入工具
+import {JssProvider} from 'react-jss'
+import {MuiThemeProvider} from '@material-ui/core'
+
+然后用这两个工具包裹App：
+道理就不解释了，看看注释，能看懂就理解，看不懂直接用（就是根据官方文档写的）
+
+export default (stores,routerContext,sheetRegistry,generateClassName,theme,sheetsManager,url)=>{
+   return(
+       <Provider {...stores}>
+           {/*因为我们可能会传入多个store，而且接收的格式是appState：AppStore，所以在这使用解构方式传入*/}
+           <StaticRouter context={routerContext} location={url}>
+               {/*context这个参数是进行服务端渲染的时候传入给router的一个对象，会在静态渲染的时候进行一些操作，
+               然后返回给我们一些有用的信息（比如让我们判断在客户端的router中是否包含redirect）*/}
+               {/*location是当前路由的一个url，我们可以通过req.url拿到*/}
+               <JssProvider registry={sheetRegistry} generateClassName={generateClassName}>
+                   {/*从外面引入registry和jss的参数*/}
+                   <MuiThemeProvider theme={theme} sheetsManager={sheetsManager}>
+                        <App />
+                   </MuiThemeProvider>
+               </JssProvider>
+           </StaticRouter>
+       </Provider>
+   )
+}
+
+
+（3）在server_render.js中：
+const SheetsRegistry=require('jss').SheetsRegistry
+const createMuiTheme = require('@material-ui/core/styles').createMuiTheme
+const createGenerateClassName = require('@material-ui/core/styles/createGenerateClassName').default
+const colors = require('@material-ui/core/colors')
+// 上面这一块是materialUI在服务端渲染需要用到的工具
+
+然后
+ const sheetsRegistry = new SheetsRegistry()
+        const sheetsManager = new Map()
+        const theme = createMuiTheme({
+            palette:{
+                primary:colors.blueGrey,
+                accent:colors.pink,
+                type:'light'
+            },
+            typography:{
+                useNextVariants:true
+            }
+        })
+        const generateClassName = createGenerateClassName()
+        // 上面这一块代码是服务端渲染中使用material的参数
+
+然后
+const app = createApp(stores,routerContext,sheetsRegistry,generateClassName,theme,sheetsManager,req.url)
+
+（4）服务端的app渲染完成了，我们要把样式放到template中去
+我们给ejs模板加一个变量：
+ const html = ejs.render(template,{
+                appString:content,
+                initialState:serialize(state),
+                meta:helmet.meta.toString(),
+                title:helmet.title.toString(),
+                link:helmet.link.toString(),
+                style:helmet.style.toString(),
+                materialCss:sheetsRegistry.toString()
+
+            })
+
+然后修改server.template.ejs文件：
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <%%- meta %>
+    <%%- title %>
+    <%%- link %>
+    <%%- style %>
+    <style>
+        <%%- materialCss %>
+    </style>
+</head>
+
+然后重启项目，查看网页源代码，发现服务器渲染的css已经加载进去了
+
+（5）这还存在一个问题，因为服务端渲染的时候已经把css加载进去了，但是客户端可能还会加载一次，这样会导致冲突，出现一些问题
+这样解决：
+
+首先改造server.template.ejs：
+<style id="jss-server-side">
+        <%%- materialCss %>
+    </style>
+
+然后在index.js中：
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx'
+
+import {BrowserRouter} from 'react-router-dom'
+import {Provider} from 'mobx-react'
+
+import { AppState } from './store/store'
+
+
+import {MuiThemeProvider,createMuiTheme} from '@material-ui/core/styles'
+import {pink,blueGrey} from '@material-ui/core/colors'
+
+const theme = createMuiTheme({
+    palette:{
+        primary:pink,
+        accent:blueGrey,
+        type:'light'
+    },
+    // 主题样式primary主色调，accent辅助色调，type风格，查看官网
+    typography: {
+        useNextVariants: true,
+    }
+    // 最新的字体变体设置，使用旧版本有警告
+})
+
+const initialState = window.__INITIAL__STATE__ || {}
+// 获取到服务端传递过来的store
+
+
+const createApp = (TheApp) =>{
+    class Main extends React.Component {
+        // Remove the server-side injected CSS.
+        componentDidMount() {
+            const jssStyles = document.getElementById('jss-server-side');
+            if (jssStyles && jssStyles.parentNode) {
+                jssStyles.parentNode.removeChild(jssStyles);
+            }
+        }
+
+        render() {
+            return <TheApp />
+        }
+    }
+
+    return Main
+
+}
+
+const NewApp = createApp(App)
+
+ReactDom.render(
+    <Provider appState={new AppState(initialState.appState)}>
+        {/*在初始化的时候将服务端的store传递给客户端进行数据同步*/}
+        <BrowserRouter>
+            <MuiThemeProvider theme={theme}>
+                <NewApp/>
+            </MuiThemeProvider>
+        </BrowserRouter>
+    </Provider>,
+    document.getEleme
+
+
+如果我们不添加createApp这个函数会发现在渲染出来的header中有    <style id="jss-server-side">
+标签，当我们添加了这个方法之后就没这个标签了。
+
+
+
+到这materialUI已经顺利的应用到了我们的项目中了
+
+
+
+
+
