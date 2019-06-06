@@ -1,0 +1,105 @@
+架构还是topBar+Route（container封装好后套在子元素上）+footer
+
+用到那个组件导入哪个组件
+
+还涉及到icon如何引用
+
+在react中传入多个className：<div className={`demo-infinite-container ${styles.root}`}>用字符串模板写
+
+
+*修改滚动条样式：（https://blog.csdn.net/hx_1199/article/details/80419062）
+/*滚动条样式*/
+.demo-infinite-container::-webkit-scrollbar {
+    /*滚动条整体样式*/
+    width: 4px; /*高宽分别对应横竖滚动条的尺寸*/
+    height: 4px;
+}
+.demo-infinite-container::-webkit-scrollbar-thumb {
+    /*滚动条里面小方块样式*/
+    border-radius: 5px;
+    -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    background: #06c5d2;
+}
+.demo-infinite-container::-webkit-scrollbar-track {
+    /*滚动条里面轨道样式*/
+    -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    border-radius: 0;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+
+
+
+配置图片加载的loader：
+npm install file-loader url-loader -D
+
+{
+    test: [/\.gif$/, /\.jpe?g$/, /\.png$/],
+    loader: 'url-loader',
+    options: {
+      limit: 10000, //1w字节以下大小的图片会自动转成base64
+    },
+}
+
+
+
+一、搭建环境
+（1）npm i antd -S
+
+（2）然后按照官方提示使用按需加载的方式来引用组件，在babelrc配置文件中添加：
+首先安装:npm i babel-plugin-import -D
+  "plugins": [
+    "transform-decorators-legacy",
+   ["import", {
+      "libraryName": "antd",
+      "libraryDirectory": "es",
+      "style": "css" // `style: true` 会加载 less 文件
+    }]
+  ]
+
+（3）然后在webpack.config.client.js中添加loader解析器，因为我们在项目中使用了css文件，但是jsx语法并不识别css语法，所以需要添加css的loader解析器：
+ {
+                test: /\.css$/,
+                loader: 'style-loader!css-loader'
+            },
+在这我们使用了style-loade和css-loader，所以我们需要在项目中安装：
+npm i style-loader css-loader -D
+
+
+（4）antd的环境配置已经完成，然后在需要添加组件的页面从antd中引入并使用组件：
+import { Button } from 'antd'
+<Button type="primary">Primary</Button>
+
+重启项目：npm run dev:client
+
+
+（1）、首先引入ant.css：import 'antd/dist/antd.css'
+我们想要写什么元素可以通过查看官网来找到对应的案例，如我们要使用一个input框：
+首先将input标签引入到我们的项目中：import { Input } from 'antd'   
+然后直接在render函数中使用引入的标签： <Input type="text" placeholder='todo input'/>
+这样一个自带样式的input框就写好了
+如果想修改样式：<Input type="text" placeholder='todo input' style={{width:'300px'}}/>
+<Input type="text" placeholder='todo input' style={{width:'300px', margin:'10px'}}/>
+                <Button type="primary" size='default'>提交</Button>
+                <List
+                    style={{width:'300px', margin:'10px'}}
+                    size="small"
+                    bordered
+                    dataSource={this.state.list}
+                    renderItem={item => (<List.Item>{item}</List.Item>)}
+                />
+
+
+4.1、在项目中引入antdesign库
+
+
+antd的环境配置已经完成，然后在需要添加组件的页面从antd中引入并使用组件：
+import { Button } from 'antd'
+<Button type="primary">Primary</Button>
+
+重启项目：npm run dev:client
+看是否报错
+
+编写css样式，新建一个css文件，然后在需要的文件导入css文件，先这样，这样至少有效，直接导入css文件之后就会生效：
+import styles from '../../style/home.css'
+这种方式应该会有问题，先这样写，后面再优化。
