@@ -1,0 +1,243 @@
+根据功能划分组件，比根据页面划分更加合理，因为这样我们可以在不同页面使用同一个功能模块
+app_bar.jsx
+
+
+
+
+
+在webpack.config.client.js中的if(isDev)首位置添加一个配置项：
+configClient.devtool='#cheap-module-eval-source-map',
+这是webpack的一个dev选项，能让我们在调试网页的客户端的时候，可以直接看到react源代码，而不是编译完成之后的html代码，方便定错，就像之前安装的一个chrome的插件一样
+
+
+<div className={classes.grow}/> flex:1这种方式来填充空间
+
+
+一、组件基本功能
+组件中使用自定义样式：
+在materialUI中有一个很好的编写样式的方案：
+（1）在class外面首先使用js创建了一个styles对象：
+const styles = theme => ({
+  button: {
+    margin: theme.spacing.unit,
+  },
+  input: {
+    display: 'none',
+  },
+});
+这个styles是一个方法，参数是them，这的them就是我们在index.js中定义主题的时候编写的那个them
+这个them就可以通过我们导入到页面的withStyles（import { withStyles } from '@material-ui/core/styles'）包含style，我们就可以用them上定义的变量，方法里面定义就和css定义一样：class名：{驼峰命名的属性：字符串或者them中的变量}
+然后
+export default withStyles(styles)(ContainedButtons);
+
+
+在暴露出去的时候使用withStyles将styles和我们的组件组合起来进行再次封装并传递出去
+封装的效果就是会给当前组件的props属性里面传一个classes属性，这个对象里面包含的就是我们在styles中定义的那些样式，然后在对应的标签上使用我们定义好的属性，
+className={classes.button}：
+classes={{
+                                    root: classes.inputRoot,
+                                    input: classes.inputInput,
+                                }}
+
+ const { classes } = this.props
+        // const classes = this.props.classes在这eslint会要求我们使用解构方式，
+        // 就像上面那样，这样写的好处是当props中有其他变量的时候，可以直接在括号里面使用
+
+        return()
+
+
+
+<Button variant="contained" className={classes.button}>
+        Default
+      </Button>
+
+
+
+（2）如果用不到them中的属性的时候我们直接定义一个对象也行，就不用定义一个带有them参数的函数了：
+const styles={
+    root:{
+        width:'100%'
+    },
+    flex:{
+        flex: 1,
+    }
+}
+其他写法一模一样
+
+
+二、使用react组件要检查传入的变量的属性：
+import PropTypes from 'prop-types'
+
+
+
+MainAppBar.propTypes={
+    classes:PropTypes.object.isRequired,
+}
+
+export default withStyles(styles)(MainAppBar)
+
+
+
+三、页面架构
+
+3.1、AppBar公共模块创建
+在layout文件夹下，新建一个app_bar.js用来编写页面顶部的导航栏
+import React,{ Component } from 'react'
+import PropTypes from 'prop-types'
+import { withStyles } from '@material-ui/core/styles'
+
+import AppBar from '@material-ui/core/AppBar'
+import Toolbar from '@material-ui/core/Toolbar'
+import Button from '@material-ui/core/Button'
+import Typography from '@material-ui/core/Typography'
+import IconButton from '@material-ui/core/IconButton'
+import HomeIcon from '@material-ui/icons/Home'
+// import {pink,blue} from '@material-ui/core/colors'
+
+
+const styles={
+    root:{
+        width:'100%'
+    },
+    flex:{
+        flex: 1,
+    }
+}
+
+class MainAppBar extends Component{
+    constructor(props){
+        super(props)
+        this.homeIconClick = this.homeIconClick.bind(this)
+        this.createButtonClick = this.createButtonClick.bind(this)
+        this.loginButtonClick = this.loginButtonClick.bind(this)
+    }
+
+    homeIconClick(){
+
+    }
+    createButtonClick(){
+
+    }
+    loginButtonClick(){
+
+    }
+    render(){
+        const classes = this.props.classes
+        return(
+            <div className={classes.root}>
+                <AppBar position='fixed'>
+                    {/*仿照官方文档，AppBar是组件封装好的bar组件*/}
+                    <Toolbar>
+                        {/*工具栏我们要使用这个标签包裹*/}
+                        <IconButton color='inherit' onClick={this.homeIconClick}>
+                            {/*icon的事件我们要添加在这，因为这个按钮有一个封装好的点击范围*/}
+                            <HomeIcon/>
+                            {/*这就是一个icon组件*/}
+                        </IconButton>
+                        <Typography type='title' color='inherit' className={classes.flex}>
+                            {/*字体排版，可自定义字体大小样式排版等*/}
+                            新闻一览
+                        </Typography>
+                        <Button variant='contained' color='secondary' onClick={this.createButtonClick}>
+                            {/*具体样式看官方文档，带不带框，颜色等等熟悉*/}
+                            新建话题
+                        </Button>
+                        <Button color='inherit' onClick={this.loginButtonClick}>
+                            登录
+                        </Button>
+                    </Toolbar>
+                </AppBar>
+            </div>
+        )
+    }
+}
+
+MainAppBar.propTypes={
+    classes:PropTypes.object.isRequired,
+}
+
+export default withStyles(styles)(MainAppBar)
+
+（2）将组件导入到App.jsx中
+因为AppBar是一个公共的组件，所有的页面都包括，所有我们将他放在App.jsx中
+又根据下面的分析，我们的App.js中架构应该是：
+AppBar+Route+Bottom
+剩下的内容都放在对应的子页面中，或者如果有其他所有页面共享的模块再拿到App.jsx中使用
+
+import React,{ Component } from 'react'
+import {Link} from 'react-router-dom'
+
+import Routes from '../config/router'
+
+import {withStyles} from '@material-ui/core/styles'
+
+import AppBar from './layout/app_bar'
+import AppBottom from './layout/app_bottom'
+
+const styles ={
+    root:{
+        // display:'flex',
+        // flex:1,
+        // flexDirection:'column',
+        // justifyContent:'space-between'
+    }
+}
+
+class App extends Component{
+    render(){
+        const {classes} = this.props
+        return (
+            <div className={classes.root}>
+                <AppBar key='top'/>
+                <Routes key='router' />
+                <AppBottom key='bottom'/>
+            </div>
+        )
+    }
+}
+
+export default withStyles(styles)(App)
+
+
+3.2、页面框架架构
+页面的主框架是如何定义的？应该拆分的更彻底
+主框架上面只包括一个AppBar，和Route，以及bottom
+而container应该归属到Route下面的子页面里面去，这样在主页面切换内容的时候会更加干净方便，不用来回切来切去，处理各种复杂的路由，也可以更方便的自由定义子页面的内容，而不用考虑主页面的影响（主页面就一个头，一个尾，中间是空白）
+
+而主页面的wrapper我们可以通过定义一个container来让所有子页面的保持格式上的统一，所有子页面都用一个container标签包裹
+
+（1）在layout下面新建container.jsx文件
+container标签是独特的，因为很多地方会用到它，我们把他当做一个容器来使用，有因为他只是一个容器，业务逻辑都在子页面里面，所有这个标签也是简单的
+因为没有业务逻辑，所以这个组件就是一个傻瓜式组件（没有业务逻辑），不需要class，只需要一个函数就行，这个函数接收的参数就是他的props，这个props我们可以使用解构的方式获取到里面的参数
+import React from 'react'
+import PropTypes from 'prop-types'
+
+import {withStyles} from '@material-ui/core/styles'
+import Paper from '@material-ui/core/Paper'
+
+const styles = {
+    root:{
+        margin:24,
+        marginTop:80,
+        // 数字会自动识别加上px
+
+    }
+}
+
+const Container = ({classes,children}) =>(
+    // 解构的方式拿到props里面的参数
+    <Paper elevation={4} className={classes.root}>
+        {/*elevation是paper这个标签的层级，可让这个标签里面的内容看起来有层次感*/}
+        {children}
+    </Paper>
+)
+
+
+Container.propTypes={
+    classes:PropTypes.object.isRequired,
+}
+
+export default withStyles(styles)(Container)
+
+
+明天用antDesign或者element试试，material虽然效果好，但是很多现成的组件没有，自己写的话比较麻烦，而且效果还没人家的好，
