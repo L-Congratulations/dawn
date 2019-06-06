@@ -1,0 +1,253 @@
+AppID：wxc5d3651a8e722a88
+秘钥：170219f243dda9501d2add36f3b0fbec
+
+一、小程序流程：
+https://mp.weixin.qq.com/debug/wxadoc/dev/demo.html
+
+二、底部导航栏：
+教程：http://blog.csdn.net/u012118993/article/details/52943783
+图库：http://iconfont.cn/collections/index?spm=a313x.7781069.1998910419.d33146d14&type=3&page=1&sortType=icon
+
+三、小程序API：
+https://www.w3cschool.cn/weixinapp/weixinapp-event.html
+
+四、小程序路由：
+4.1、https://www.w3cschool.cn/weixinapp/route.html
+4.2、路由传参：https://www.cnblogs.com/jinxinblogs/p/6809981.html
+
+需要注意的几个点：
+4.2.1、index.wxml：
+        <view wx:for="{{array}}" class='list-content' bindtap='toDetails' id='{{index}}' data-hi="WeChat">
+        #这里不能给函数直接传参，要想拿到view的参数，需要使用event事件，从里面拿到参数：e.currentTarget.id
+4.2.2、index.js：
+      #在这调用url需要现在App.json中注册：
+ "pages":[
+    "pages/index/index",
+    "pages/logs/logs",
+    "pages/details/details"
+  ],注册完成后才能调用wx.navigateTo方法，然后再进行传参
+      toDetails: function(e){
+          wx.navigateTo({
+            url: '../details/details?detailsData='+JSON.stringify(this.data.array[e.currentTarget.id]),
+          });
+          // console.log(e)
+        }
+
+4.2.3、获取参数
+因为生命周期，在页面加载完成前数据为空，所以要想在页面加载完成之后能正常显示从路由传递过来的参数，需要使用setDate方法，将数据重新渲染：
+data: {
+    detailsData:null,
+    data:'ssssss'    
+  },
+onLoad: function (options) {
+    console.log("接收到的参数是detailsData："+options.detailsData);
+    this.setData({
+      detailsData: JSON.parse(options.detailsData)      
+    })
+  },
+
+五、修改子页面的title：
+其中  navigationBarTitleText 为设置导航栏名称，若是想子级页面和父页面的header页面不同，则在子级文件中新建一个配置文件.json 中配置
+如：在details文件夹内新建details.json，然后里面写入：
+
+{
+"navigationBarTitleText": "平台详情"
+}
+
+六、微信小程序设置高度为100%：
+page{
+  height: 100%;
+  display: flex;
+  flex-direction: column;  
+  background-color: #e6e6e6; 
+}
+
+七、使用按钮控制其他元素的css样式：
+因为点击某个元素并不能拿到其他元素的属性，但是可以通过把需要操控的css属性定义在data中，然后通过向绑定同步到html页面中。当触发事件的时候，通过js操作data中的值来变相的改变html页面里面显示的内容。
+如：想通过点击某个元素来控制另外一个元素的隐藏与显示
+首先给html中的元素绑定一个事件：repayshow
+<view class='repayment' bindtap='repayshow'>
+      <text>还款方式</text>
+      <view class='repayment-right'>
+        <text>{{repaymentWay}}</text>
+        <image class='repayment-img' src='../../images/more.png'></image>
+      </view>      
+    </view>
+
+然后给需要被控制的元素添加双向绑定的css样式：style='display:{{repaydisplay}}'
+<view class='repayWrap' style='display:{{repaydisplay}}'>           
+      <picker-view class='repayWay' indicator-style="height: 50rpx;" style="width: 100%; height: 240rpx;" value="{{value}}" bindchange="bindChangerepay">
+        <picker-view-column>
+          <view class='repayway-item' wx:for="{{repaymentWays}}" style="line-height: 50rpx">{{item}}</view>
+        </picker-view-column>    
+      </picker-view>
+    <view class='repaybtn' bindtap='hideRepay'>      
+        <text>确定</text>
+    </view>   
+  </view>
+
+然后在js中的data里面定义css的初始值：
+data: {   
+    repaydisplay:'none',
+  },
+
+最后使用js通过触发事件来改变data中的值：
+repayshow:function(){
+    this.setData({
+      repaydisplay: 'block'
+    })
+  }
+
+
+八、小程序日历和选项卡制作：
+https://www.w3cschool.cn/weixinapp/weixinapp-component-pickerview.html
+
+const app = getApp()
+const date = new Date()
+const years = []
+const months = []
+const days = []
+const repaymentWays = ['一次性还本息','按月付息到期还本','等额本息']
+for (let i = date.getFullYear() - 4; i <= date.getFullYear() + 10; i++) {
+  years.push(i)
+}
+
+for (let i = 1; i <= 12; i++) {
+  months.push(i)
+}
+
+for (let i = 1; i <= 31; i++) {
+  days.push(i)
+}
+const day = date.getDate() - 1
+const month = date.getMonth()
+
+Page({
+
+  /**
+   * 页面的初始数据
+   */
+  data: {
+    years: years,
+    year: date.getFullYear(),
+    months: months,
+    month: date.getMonth()+1,
+    days: days,
+    day: date.getDate(),
+    year: date.getFullYear(),
+    value: [4, month, day],
+    value1: [0, 0, 0],
+    repaymentWay:'一次性还本息',    
+    repaymentWays: repaymentWays,
+    repaymentWayValue:[0],
+    repaydisplay:'none',
+    timedisplay:'none'
+  },
+// 时间选项卡函数
+  bindChange: function (e) {
+    const val = e.detail.value
+    this.setData({
+      year: this.data.years[val[0]],
+      month: this.data.months[val[1]],
+      day: this.data.days[val[2]]
+    })
+  },
+  // 还款方式选项卡
+  bindChangerepay: function (e) { 
+    const val = e.detail.value
+    this.setData({
+      repaymentWay: this.data.repaymentWays[val[0]],
+    })   
+  },
+
+html：
+<view class='repayWrap' style='display:{{repaydisplay}}'>           
+      <picker-view class='repayWay' indicator-style="height: 50rpx;" style="width: 100%; height: 240rpx;" value="{{value1}}" bindchange="bindChangerepay">
+        <picker-view-column>
+          <view class='repayway-item' wx:for="{{repaymentWays}}" style="line-height: 50rpx">{{item}}</view>
+        </picker-view-column>    
+      </picker-view>
+    <view class='repaybtn' bindtap='hideRepay'>      
+        <text>确定</text>
+    </view>   
+  </view>
+
+  <view class='repayWrap' style='display:{{timedisplay}}'>          
+    <picker-view class='repayWay' indicator-style="height: 50rpx;" style="width: 100%; height: 240rpx;" value="{{value}}" bindchange="bindChange">
+    <picker-view-column>
+      <view class='startTime-item' wx:for="{{years}}" style="line-height: 50rpx">{{item}}年</view>
+    </picker-view-column>
+    <picker-view-column>
+      <view class='startTime-item' wx:for="{{months}}" style="line-height: 50rpx">{{item}}月</view>
+    </picker-view-column>
+    <picker-view-column>
+      <view class='startTime-item' wx:for="{{days}}" style="line-height: 50rpx">{{item}}日</view>
+    </picker-view-column> 
+  </picker-view>  
+  <view class='repaybtn' bindtap='hideTime'>      
+        <text>确定</text>
+    </view>    
+  </view>
+
+八、小程序获取input框中的value：
+通过给input绑定事件，然后通过e.detail.value获取到用户输入的值，将value值赋值给data中的一个变量，这样其他的地方就能拿到value值：
+<input class='investmentAmount-input' placeholder='默认10000' type='number' bindblur='capitalInput' value="{{searchinput}}"></input>
+capitalInput:function(e){
+    this.setData({
+      capitalValue:e.detail.value
+    })
+  }, 
+  counter:function(){
+    const capitalVal = this.data.capitalValue;    
+    console.log(capitalVal)
+  },
+
+
+
+
+
+清空input框只能通过给input绑定value属性，然后通过改变value的值来清空还是重置input框：
+<input class='investmentAmount-input' placeholder='默认10000' type='number' bindblur='capitalInput' value="{{searchinput}}"></input>
+通过修改data中的searchinput来清空input
+ restart:function(){   
+    this.setData({
+      capitalValue:0,    
+      rateValue:0,  
+      termValue:0,
+      searchinput: ''
+    })
+  }
+
+九、点击切换选项卡：
+null和0的区别
+
+十、修改data中数组对象的方法：
+第一步：先用一个变量，把(info[0].gMoney)用字符串拼接起来。
+
+　　第二步：将变量写在[]里面即可。
+var that=this;
+3       var up = "info[" + 0 + "].gMoney";//先用一个变量，把(info[0].gMoney)用字符串拼接起来
+4       that.setData({
+5         [up]:1
+6       })
+
+
+十一、点赞的逻辑：
+实际需求：在每个固定的评论下，每个用户只能点一次赞
+如何去记录这个用户是否在这个评论下面点过赞？
+记录了这个之后就可以做判断，点过赞的显示为红色点赞小手，没点过赞的显示为灰色小手。通过这个判断还可以控制用户的点击小手行为是否有效
+核心关键点就是记录某个评论下面每个用户是否点过赞
+
+操作方法，通过后台获取到点过赞的用户账号，存到数组里面，通过匹配数组中的数据，如果匹配到表示点过赞，如果没匹配到说明没点过赞。每个评论下面点赞的人都会有一个数组。
+
+每个对象中都定义两个变量（每个对象包含该用户该公司下面的所有评论信息）
+其中一个信息是被点赞的总次数如：dotTotalNum: 10
+另外一个信息代表的是该用户在该评论下是否点过赞，点过记录为1，没点过记录为0.
+
+
+
+十二、在页面上需要通过条件判断改显示哪个的时候尽量多用<view wx:if="{{condition}}"> True </view>语法来控制。这样在js界面就可以通过修改简单的几个参数就能控制页面了，而不需要在做大量的修改，——充分发挥数据驱动的优势
+
+十三、获取用户信息：
+http://www.jb51.net/article/133725.htm
+其中第一种方案只能获取到很少的用户信息，只有配合后台才能获取更加详细的用户信息。
