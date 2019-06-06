@@ -1,0 +1,979 @@
+项目目录+react-router+mobx+服务器代理
+
+我们在chrome安装一个插件react developer tools，这个插件可以解析出react源码结构。
+
+
+
+
+
+一、项目目录
+也就是client文件夹下面的目录结构
+1.1、views目录：
+存放项目功能模块的页面，需要根据路由配置情况分割子级目录
+
+一个功能模块（而不是业务模块）用一个文件夹存放，里面建一个index.jsx就是这个功能模块的入口文件，在引用的时候直接:import TopicList from './topic_list'就能引用到里面index.jsx
+
+1.2、config目录：
+存放一些配置目录，如第三方类库的引用，路由配置等
+
+1.3、store目录：
+用来存放项目store相关的文件
+
+1.4、components目录：
+用来存放公共的非业务组件
+
+
+
+二、路由配置
+react-router是react的路由插件
+
+2.1、安装
+npm i react-router-dom -S
+因为react-router里面包含浏览器react-router-dom和react-router-native两部分，我们只开放网页端的
+
+2.2、编写路由配置文件
+在config下面新建router.js
+
+首先导入React和Route
+然后导入需要展示的功能模块
+然后编写Route组件并将其暴露出去（本质上是在BowerRouter标签下渲染Route组件，在这只是摘出来了结构清晰些）
+
+import React from 'react'
+import { Route } from 'react-router-dom'
+
+import TopNav from '../views/top_nav'
+import FooterModule from '../views/footer_module'
+
+export default ()=>[
+    <Route path='/' component={TopNav} key='home' exact  />,
+    <Route path='/mine' component={FooterModule} key='mine' exact />
+]
+react中的数组要添加不同的key值
+exact是为了防止路径模糊匹配（如果不加我们在请求/detail的时候也会顺带把/目录下的内容返回）
+
+2.3、将路由挂在到react上
+根据规定，我们要想react-router生效，必须将<Route>标签包含在<Router>标签里面，我们在这配置的就是全局范围内的路由，所以直接用<Router>包裹住整个项目，从而从整体上控制项目的路由跳转关系。
+
+首先在index.js中导入Router（官方已经封装好的BrowserRouter标签）
+然后用官方封装好的BrowserRouter包裹整个项目
+
+import {BrowserRouter} from 'react-router-dom'
+ReactDom.render(<BrowserRouter><App/></BrowserRouter>,document.getElementById("root"))
+
+（使用BrowserRouter包含项目之后Router就挂载到了整个项目的最外层，Route标签控制的路由就能正常跳转了）
+
+此时就已经将react-router挂在到了整个项目上，然后就是在需要的地方，用规定的语法使用路由了
+
+
+2.4、在需要的地方使用路由
+
+首先将写好的Route组件导入到项目中
+然后将导入的内容填写到render函数中
+
+在App.jsx中使用
+import Routes from '../config/router'
+class App extends Component{
+    render(){
+        return [
+            <div key='page' >工程架构骨架</div>,
+            <Routes key='router' />
+        ] 
+    }
+}
+
+注意我们在App.jsx中的render函数中使用的是<Routes/>标签，而不是routes变量
+<Route />相当于是路由出口界面，路由导入的内容会在Route这个标签的位置显示。
+其实在这的<Routes /> 和直接使用<Route path='/' component={Home} exact />,
+    <Route path='/mine' component={Mine} exact />效果一样，都是在这渲染了两个Route标签。我们在这先这样写，把路由基础的配置跑通了，后面关于嵌套路由的写法再优化
+
+
+
+启动应用，看一下效果：npm run dev:client
+
+效果就是在对应的比如<Route path='/' component={Home} exact />位置render函数会生成一个新的<Home></Home>标签，里面渲染的东西就是对应的首页页面里面的内容。
+
+2.5、使用Link标签灵活进行路由跳转
+import {Link} from 'react-router-dom'
+class App extends Component{
+    render(){
+        return [
+            <div key='page'>
+                工程架构骨架
+                <Link to='/'>首页</Link>
+                <Link to='/mine'>我的</Link>
+            </div>,
+            <Routes key='router' />
+        ] 
+    }
+}
+
+启动项目npm run dev:client查看是否报错
+
+
+2.6、重定向
+在router.js中
+import { Route, Redirect } from 'react-router-dom'
+ <Route path="/" render={() => <Redirect to="/list" />} exact />
+
+当访问/路径的时候路由会自动跳转到/list路由下
+
+*然后在需要重定向的路由上添加一个render函数，这个函数可以接受一个组件，也可以接收一个函数
+
+
+
+三、mobx配置
+
+3.1、mobx文档（https://cn.mobx.js.org/refguide/observable.html）
+相比redux有mutation、action、dispatch等概念，mobx更符合对一个store增删该查的操作概念。
+
+执行效率相对于redux效率高一些（redux流程控制的比较死，对于流程化要求比较严格，而mobx流程则比较随意，如果能控制每个协作成员的书写规范，使用mobx更好些）
+
+我们还可以将应用分成一些小的store进行维护，如新建一个app_state.js用来存储和业务逻辑关系不大的数据，用来控制整个应用的展示和一些纯前端的交互数据
+
+3.2、安装和搭建mobx环境
+（1）npm i mobx mobx-react -S
+
+（2）因为mobx不是es6标准语法，所以我们需要配置babel对其进行解析
+在.babelrc中添加一个配置项"stage-1"，在plugins首位添加"transform-decorators-legacy"
+{
+  "presets": [
+    ["es2015",{"loose":true}],
+    "react",
+    "stage-1"    
+  ],
+  "plugins": ["transform-decorators-legacy"]
+}
+
+然后安装这两个包：
+npm i babel-plugin-transform-decorators-legacy babel-preset-stage-1 -D
+
+
+重启项目看是否报错：npm run dev:client
+
+
+3.3、编写store.js
+在store下创建store.js
+
+（1）创建一个store的class
+因为mobx的API放在class里面是最好的，而且定义一个class能更方便的组织我们的store，这样一个store就是一个class的实例，这样的话使用起来会比较方便，可以在里面使用各种this来调用
+
+首先引入mobx的api
+然后创建一个class，并在里面定义store的变量和方法
+然后实例化这个class 并暴露出去
+
+import {observable, action,computed} from 'mobx'
+
+class AppState{
+    @observable count=0
+    @observable name="zhangsan"
+
+    @action add(){
+        this.count +=1
+    }
+
+    @action changeName(name){
+        this.name = name
+    }
+
+    @computed get msg(){
+        return `${this.name} say ${this.count}`
+    }
+}
+
+const appState = new AppState()
+
+export default appState
+
+
+@observable来指定我们这个name是store的一个值，也就是当name更新的之后会实时的显示到视图层里面
+
+@computed这个api在mobx中负责给客户端返回一个结果，当他所依赖的值发生变化了之后，也会重新渲染页面中对应的值，而且虽然定义的是一个方法，但是在调用的时候直接是appState.msg而不是调用函数，但是实际上当我们这样调用之后他内部的逻辑就是去执行msg()这个方法
+
+@autorun它里面接收一个方法，也就是一旦我们的AppState有更新了，就会执行autorun定义的那个方法
+
+@action在AppState这个类里面定义action方法，用来修改store中的值，所有store里面值的修改我们都规定通过action方法，这样尽量去保证流程的规范
+
+
+此时我们的appState这个store就创建好了
+
+
+3.4、把store和react项目建立联系
+
+在index.js中导入mobx-react的Provider组件和需要建立联系的store
+用Provider包裹整个项目，并将store作为参数传入，在这我们使用的Provider属性名需要牢记，因为在使用的时候使用的是属性名而不是store的名
+
+import {Provider} from 'mobx-react'
+
+import appState from './store/store'
+
+ReactDom.render(
+    <Provider appState={appState}>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+
+3.5、在项目中使用store
+在需要使用store的页面首先导入mobx-react的组件observer和inject
+使用固定语法将页面和store建立联系
+获取store里面的方法在页面中使用
+
+import React,{Component} from 'react'
+
+import {observer,inject} from 'mobx-react'
+
+@inject('appState') @observer
+class TopNav extends Component{
+    constructor(props){
+        super(props)
+        this.changeName = this.changeName.bind(this)
+    }
+
+    changeName(e){
+        this.props.appState.changeName(e.target.value)
+    }
+
+    render(){
+        return(
+            <div>
+                头部导航模块
+                <br/>
+                <input type="text" onChange={this.changeName}/>
+                <div>
+                    {this.props.appState.msg}
+                </div>
+            </div>
+        )
+    }
+}
+
+export default TopNav
+
+@inject('appState')将appState注入到当前页面，拿到appState这个store中的值
+再通过@observer 将当前组件和store中的数据进行同步
+
+{this.props.appState.msg}获取store里面的数据
+
+
+发现在input中修改的内容能顺利的同步到store中并且动态渲染到msg方法中
+
+注意！！！修改数据的时候我们应该使用action去做，这样mobx会有一个数据变更的记录，我们是有办法查到的。所以标准的方法是我们用action方式去做。
+
+
+3.6、注意点
+（1）我们在这要使用const state = this.props先把props导入过来，否则的话eslint会报错（
+解决方案：render(){
+        const {msg,changeName} = this.props.stateStore）
+（2）在react的开发中有一个强烈的建议就是，每一组件我们用到的props都要声明他的类型，这样做的好处是能帮助我们排除一些不必要的错误。
+
+我们首先安装prop-types（react已经把他拆分出去了）：npm i prop-types -S
+
+然后在项目中引入：import PropTypes from 'prop-types'
+然后在项目中使用：
+TopNav.propTypes ={
+    appState:PropTypes.string.isRequired
+}
+
+这个方法花时间去自习了解一些，目前这个写法报错，但是验证格式是必要的，回头去看react-2018.07.06文档中找
+
+
+
+四、服务器代理
+当我们使用的API比较简单的时候，只需要向对应的API发起请求就能返回我们需要的数据，那么我们直接使用代理就能完成。
+
+但是，有些借口需要处理才能调用（比如登录之后才能调用），这时候就需要我们在自己写服务器代理的时候进行处理，现将客户登录的信息保存到服务器（客户端不安全），当客户发起请求的时候先去检查服务器里面的登录信息是否有效，如果有效直接发送请求，如果没有或者过期则提醒客户端需要重新登录
+
+
+
+
+我是不是也可以做一个播放器，一个人充会员之后可以有若干个人直接使用，自己编写代码进行代理？
+
+4.1、先进行简单的服务器代理逻辑编写
+（1）安装服务器代理时使用的一些自动化工具
+npm i body-parser query-string -S
+
+body-parser是用来将客户端请求的body转化成json格式的一个工具，便于我们使用
+query-string是将客户端请求时的参数转化成一个json格式的工具（由a=b转化成a:b）,这样在写服务器逻辑的时候比较方便
+
+（2）配置body-parser工具
+打开server.js
+
+首先引入
+然后使用use将这个工具注册到服务器上
+
+const bodyParser = require('body-parser')
+app.use(bodyParser.json()) 
+app.use(bodyParser.urlencoded({extended:false}))//对应http请求
+
+把application中json格式的数据转化成req.body上面的数据
+因为我们要接收客户端传递过来的请求，而请求的参数可能会存在几种形式进行传递（post请求的参数会存在application中，而数据格式可能是json也可能是formdata的格式；get请求可能会存在url中），上面两行代码的作用就是无论客户端传递到服务端是通过哪种方式传递的参数，我们都可以直接在服务端通过req.body中找到传递过来的参数。
+这样在服务端我们想要拿到客户端传递的参数的时候直接就可以通过req.body中拿到了，使我们编写代码的时候更加简洁。
+
+
+（3）编写业务逻辑
+在util文件夹下创建proxy.js文件，在这将所有客户端发送的请求都用服务端的请求代理出去。
+
+首先导入axios
+然后定义一个baseUrl用来存储所请求服务器的基础路径
+const axios = require('axios')
+const baseUrl = 'https://cnodejs.org/api/v1'
+
+
+然后编写一个函数，并暴露出去，这个函数里面写的就是代理的逻辑
+module.exports = (req,res,next)=>{
+首先拿到客户端请求的url（path）
+然后直接进行代理
+const path = req.path
+    
+    axios(`${baseUrl}${path}`,{
+        
+    })
+        .then(response =>{
+            
+        })
+        .catch(err=>{
+            
+        })
+
+
+
+}
+
+（4）处理axios的参数
+*method参数：
+method:req.method,
+*query参数：
+首先我们不确定客户端的请求是否有query参数，其次我们可能会再服务器自己加工一下query属性
+所以我们要将客户端的query获取到，然后进行加工，然后再传给axios的query参数
+const query = Object.assign({}, req.query)
+使用Object.assign深拷贝一个新的变量query出来
+
+在这举一个对query加工的例子：
+if(query.needAccessToken){
+        delete query.needAccessToken
+// 进行其他的操作
+    }
+在express中可以直接使用delete来删除对象里面用户自定义的属性
+因为needAccessToken是我们在客户端自己加上去的，为了在服务端进行处理的时候好判断，这个参数并不是API所需要的，所以我们在这直接将其删除，并进行后续的处理
+
+在axios中，传递query的参数是通过params这个键值来存储的：
+param: query,
+
+*data参数：
+data里面存放的是req的body（post和get方法的请求参数，我们在前面已经统一处理过了，所有的请求参数都会通过req.body拿到）
+
+我们在这也举个例子对请求参数进行加工：拷贝之后添加一项（我们已经用工具将参数转化成了json格式）
+
+const newData = Object.assign({},req.body,{accesstoken:user.accessToken})
+
+axios(`${baseUrl}${path}`,{
+        params:query,
+        data:newData        
+    })
+
+注意，在这${baseUrl}${path}对应的是index/ 而${baseUrl}对应的是index 少一个‘/’，在写接口的时候要看清
+ let url = `${baseUrl}`
+
+    if (path !== '/'){
+        url = `${baseUrl}${path}`
+    }
+
+*header参数：
+因为不同的服务器对接收参数的方式不同，在这axios默认发送的内容格式（contentType）是application格式的，而CNode的API有点无法接收这个格式，只能使用formData数据格式传输，所以我们在这通过对headers进行规定，将所有的数据请求都使用formData格式，这样CNode就能都接收了：
+headers:{
+            'Content-Type':'application/x-www-form-urlencoded'
+        }
+
+
+
+（5）到上边我们已经向真实服务器发送了请求，接下来就是处理返回来的结果
+axios(`${baseUrl}${path}`,{
+    method:req.method,
+    param:query,
+    data:Object.assign({},req.body,{
+      accesstoken:user.accessToken
+    }),
+    headers:{
+      "Content-Type":"application/x-www-form-urlencoded"
+    }
+  }).then(response =>{
+    if (response.status === 200){
+      res.send(response.data)
+    }else {
+      res.status(response.status).send(response.data)
+    }
+  }).catch(err =>{
+    if (err.response){
+      res.status(500).send(err.response.data)
+    }else {
+      res.status(500).send({
+        success:false,
+        msg:"未知错误"
+      })
+    }
+  })
+
+
+（6）将写好的代理服务器模块注入到app中：
+在server.js中
+在服务端渲染的代码之前将模块注入（因为服务端渲染代码是将所有请求都返回index页面，所有我们要先让api进行处理，那样api请求会将结果先返回）：
+app.use('/api', require('./util/proxy'))
+
+如果请求路径是'/api'，我们就将所有请求都转到proxy.js下面去执行。
+
+这样代理服务就全都写完了，我们测试一下：npm run dev:server
+
+访问http://192.168.183.129:8000/api/topics看是否能正确返回数据
+
+（7）写一个测试接口，来测试代理是否成功
+getTopics(){
+        axios.get('/api/topics')
+            .then(res =>{
+                console.log(res.data)
+            })
+            .catch(err =>{
+                
+            })
+    }
+
+
+我们在客户端中直接使用的是/api/这个路径，直接写是请求不到服务端代码的，我们需要在config中进行代理配置：
+if (isDev) {
+  config.devServer = {
+    // ...
+    proxy:{
+      '/api':'http://localhost:8000'
+    }
+  }
+}
+ 
+
+将客户端的/api这个接口代理到服务端的8000端口上去，这样客户端的请求才能正常使用服务端代理
+
+
+完整代码：
+
+
+const axios = require('axios')
+
+
+const baseUrl = 'https://cnodejs.org/api/v1'
+
+
+module.exports = (req,res,next)=>{
+    const path = req.path
+
+
+    const query = Object.assign({},req.query)
+
+    if(query.needAccessToken){
+        delete query.needAccessToken
+    }
+
+    const newData = Object.assign({},req.body)
+    console.log(1)
+
+    axios(`${baseUrl}${path}`,{
+        method:req.method,
+        param:query,
+        data:newData,
+        headers:{
+            'Content-Type':'application/x-www-form-urlencoded'
+        }
+
+    })
+        .then(response =>{
+            if(response.status ===200 ){
+                res.send(response.data)
+            }else{
+                res.status(response.status).send(response.data)
+            }
+        })
+        .catch(err=>{
+            if(err.response){
+                res.status(500).send(err.response.data)
+            }else {
+                res.status(500).send({
+                    success:false,
+                    msg:"未知错误"
+                })
+            }
+        })
+}
+
+
+4.2、需要登录之后才能访问的接口API代理
+
+
+
+
+代码压缩优化、代码部署到服务器等操作
+
+
+
+
+
+
+
+
+
+
+
+
+下面内容作废，详细步骤查看——精简完整版服务端渲染
+五、服务端渲染优化
+
+浏览器的请求过来之后我们要根据请求的路径返回不同的内容（用户可能从任意路由进入我们的网站，所以在服务端也必须处理路由跳转）
+
+store数据同步，在服务端渲染时，已经请求过对应的数据（返回给客户端的是一个完整的页面），所以要让客户端能直接使用，而不是通过API再请求一次，造成浪费
+
+
+5.1、打开server_entry.js
+
+因为我们要在服务器使用路由跳转，所以我们先导入router：import {StaticRouter} from 'react-router-dom'
+在这我们要使用的是服务器端的staticRouter而不是客户端的BrowserRouter
+
+因为我们要用store，所以我们要把mobx导入进来：import {Provider,useStaticRendering} from 'mobx-react'，同时我们还需要用到一个组件
+
+我们首先使用useStaticRendering：
+useStaticRendering(true)
+这一步做了什么呢：让mobx在服务端渲染的时候不会重复的数据变换，因为mobx每次数据变化都会造成其他一些数据的变化，反正就是为了防止在客户端频繁修改数据造成服务器内存溢出
+
+然后我们修改server_entry.js，将原来只暴露出<App/>改成暴露出去一个函数：
+
+export default ()=>{
+   return(
+       <Provider>
+           <StaticRouter>
+               <App/>
+           </StaticRouter>
+       </Provider>
+   )
+}
+
+因为我们用到了store，所以要把store导入进来，我们要在服务端渲染的时候生成store，因为我们可能根据功能不同写多个store，所以我们不可能渲染不同的页面的时候都使用一个store，
+
+一个store在使用的时候已经初始化一次数据了，第二次的时候我们又初始化这个store，此时会初始化另外一部分数据，这样会造成数据改来改去，
+
+所以每次store都会重新创建一个，我们从外面传入这个store。
+
+因为在Provider上面可以提供多个store，所以我们在export default（stores）=>{}
+
+而在Provider上传入store的方式是{key：value}的方式，所以我们使用解构：
+<Provider {...stores}>
+
+（1）<StaticRouter>接收两个参数
+*context={}这个参数是我们在服务端渲染的时候传个staticRouter的一个对象，他会在静态渲染的时候对这个对象做一些操作然后返回给我们一些有用的信息，让我们去做一些对应的操作。比如要做redirect（路由重定向），我们这个参数也从外面传进来：
+
+*第二个参数location={}就是现在这个请求的url，我们也从外面传进来，这个url我们可以通过req.url直接拿到
+export default (stores,routerContext,url)=>{
+   return(
+       <Provider {...stores}>
+           <StaticRouter context={routerContext} location={url}>
+               <App/>
+           </StaticRouter>
+       </Provider>
+   )
+}
+
+（2）我们要配合server_entry.js修改一下store.js
+
+首先我们不再需要直接在store.js中直接创建实例，我们直接把创建好的class暴露出去就行，在需要的地方再创建
+export default AppState （直接将class暴露出去）
+
+
+然后修改store.js
+我们把原先store.js里面的内容摘出去，把store.js作为一个所有store的出口：
+首先将appState这个class导入进来，以便处理：
+import AppStateClass from './app_state'
+然后将这个class保存在一个变量里面，因为我们要在后面生成一个他的实例
+const AppState = AppStateClass
+
+然后我们将这个保存有实例的这个变量直接暴露出去，给客户端使用
+export default { AppState, }
+
+然后我们还要给服务器暴露出去，定义一个方法：
+export const createStoreMap =() =>{
+  return{
+    appState:new AppState()
+  }
+}
+
+（3）在index.js中导入
+然后在需要使用store的地方导入class：
+import AppState from './store/store'
+然后在使用的位置直接创建一个实例：
+import AppState from './store/store'
+
+ReactDom.render(
+    <Provider appState={new AppState()}>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+这样写是因为我们在服务端渲染的时候每次都要生成一个新的实例，这样我们就可以直接用class生成
+
+
+
+（4）然后我们修改server_entry.js
+首先将createStoreMap这个方法导入进来：
+import {createStoreMap} from './store/store.js'
+
+然后我们还要将他暴露出去：
+export { createStoreMap }
+
+这样方便我们在服务端渲染的时候引用
+
+（5）修改dev_render.js（也就是开发时的服务端渲染代码，这一部分因为不是线上代码，所以不需要理解太深入，照抄不出错就行）
+
+首先将createStoreMap这个方法拿进来
+let serverBundle,createStoreMap
+createStoreMap = m.exports.createStoreMap
+为什么是通过这个方式拿进来，先暂时不去考虑，只需要知道需要这么做
+
+然后因为我们在项目渲染的时候添加了store和router，此时的在webpack服务器中拿到的serverBundle已经不能满足我们的要求了，我们要结合serverBundle+store+router动态生成一个bundle
+
+创建一个方法，根据这个方法来动态生成我们要渲染的内容：
+const app = serverBundle()
+然后传入store，store是通过调用createStoreMap()这个方法得到的
+第二个参数是routerContext，我们新建一个routerContext空对象
+第三个参数是req.url也就是当前页面的路由
+const app = serverBundle(createStoreMap(),routerContext,req.url)
+
+然后把app作为服务端需要渲染的内容传入进去：
+const serverEntry = ReactSSR.renderToString(app)
+
+到这一个大概的逻辑就完成了，启动项目:npm run dev:client npm run dev:server看看效果
+打开http://192.168.183.129:8000/top（因为我们在这调试的是服务端渲染，客户端是webpack自带的，我们没进行任何修改，所以我们在这只查看服务端渲染的代码）然后查看网页源码，发现我们渲染的东西都有（href，store等）
+
+（6）这只是一个最基本的服务端渲染的内容，我们还要考虑，路由如果中间有一个redirect，那么我们如何处理
+我们在打开router.js，我们已经把/这个路径redirect到了/top下
+当客户端代码有redirect，但是我们在渲染的时候没添加上时，这时的效果是只会加载/下面的内容，并不会加载/top下面的内容（打开http://192.168.183.129:8000/top查看网页源代码，会发现/top下面的内容，然后再访问/则不会加载/top下面的内容）
+我们希望，当服务器渲染完成之后返回的就是已经redirect之后的内容，
+
+我们首先在dev_render.js中判断一个routerContext，因为在有redirect情况下，
+StaticRouter（ <StaticRouter context={routerContext} location={url}>）会给routerContext上面添加一个url的属性，如果有这个属性的话，我们在服务端直接redirect掉：
+if(routerContext.url){
+                
+            }
+
+res.status(302).setHeader('Location',routerContext.url)
+res.status(302)是要重定向的头
+setHeader通过在header上面设置他的Location属性去让浏览器自动跳转
+
+然后res.end()结束这次请求
+
+然后return掉，否则会继续执行下面的代码，会报错
+if(routerContext.url){
+                res.status(302).setHeader('Location',routerContext.url)
+                res.end()
+                return
+            }
+
+我们把if判断拿到renderToString之后，因为在那之后才能拿到routerContext的值
+
+然后查看网页network，请求/的时候，是否是302，location是我们获取的routerContext.url的值/top
+
+这样我们在服务端渲染的时候做好了路由跳转
+
+（7）在服务端渲染的时候如果用到一些异步数据，我们需要拿到那些数据去渲染我们的内容。
+比如我要改变store中name这个值，而这个值改变是异步的，react本身就没提供这个能力，我们要安装一个组件，他可以帮我们解决这个问题
+npm i react-async-bootstrapper -S
+
+
+然后在dev_render.js中将包引入进去：
+const asyncBootstrap = require('react-async-bootstrapper').default
+
+然后使用：
+asyncBootstrap(app).then(() =>{
+                
+            })
+它是一个异步处理，执行完了之后在then里面执行其他函数：
+此时，先进行axios数据的异步渲染，然后执行then里面的东西，先tostring，然后判断redidrect，然后将serverBundle和html结合并返回给客户端
+asyncBootstrap(app).then(() =>{
+                const serverEntry = ReactSSR.renderToString(app)
+
+                if(routerContext.url){
+                    res.status(302).setHeader('Location',routerContext.url)
+                    res.end()
+                    return
+                }
+
+                const serverTemplate = template.replace("<!--App-->",serverEntry)
+                console.log('开发环境')
+                res.send(serverTemplate)
+            })
+
+
+
+
+六、服务端解决项目代码打包输出文件的问题和增加title等SEO标签
+6.1、因为webpack在打包的时候会把所有文件都打包到一个文件里面，包括我们的业务代码+mobx、react、router等类库代码，而每次改动代码重新编译的时候都会重新打包一次
+我们要对打包的内容进行划分，类库代码打包的一个文件里面，业务代码打包的一个文件里面
+
+我们在这首先解决服务端渲染中server_entry.js打包的问题
+在config.server.js中添加一个配置项：
+ externals:Object.keys(require('../package.json').dependencies)
+因为在服务端我们引用的包都可以在客户端打包好的文件中通过require引用到，所以我们就没必要把这些包再打包一遍，直接引用就可以了，这段代码的作用就是，服务端当想要使用某个包时直接去客户端打包好的代码中查找，而不需要自己重新打包一份
+
+
+不用去理解了，直接把代码抄过来，然后用，技术太复杂，而且是本地服务器渲染，不是线上的，就不用想那么多了。
+
+6.2、服务端渲染SEO解决方案：
+
+（1）首先安装npm i react-helmet -S
+
+（2）然后到页面中，top_nav的index.jsx中导入这个包：
+import Helmet from 'react-helmet'
+
+（3）然后在项目中需要使用的地方直接使用：
+
+return(
+            <div>
+                <Helmet>
+                    <title>this is topic list</title>
+                    <meta name='description' content='this is description'/>
+                </Helmet>
+                头部导航模块
+                <br/>
+                <input type="text" onChange={this.changeName}/>
+                <div>
+                    {this.props.appState.msg}
+                </div>
+                <button onClick={this.getTopics}>API请求测试</button>
+            </div>
+        )
+
+（4）title这些内容我们需要在服务端渲染完的时候就已经拥有，这样在seo的时候，才能起到很好地作用，要是等js加载完了之后再出现在页面上，就没有什么意义了。
+
+在服务器渲染的文件中dev_render.js中引入helmet：
+const Helmet = require('react-helmet').default
+
+然后在asyncBootstrap方法的then方法里面使用：
+在if语句后面：const helmet = Helmet.rewind()
+
+然后在ejs模板里面使用：
+meta:helmet.meta.toString()，
+title:helmet.title.toString()
+还可以增加style，link标签等：
+style:helmet.style.toString()
+link:helmet.link.toString()
+
+（5）我们在服务端进行了配置，然后需要到templat.ejs中进行修改，使配置文件能起作用，在template中的head标签里面添加：
+<%%- meta>
+<%%- title>
+<%%- link>
+<%%- style>
+
+等标签
+
+这样在客户端中我们添加的title等信息，在服务端渲染的时候也能正常显示出来
+
+
+七、在正式环境中使用服务器渲染等内容
+在开发和生产环境中都使用同一套代码进行服务端渲染
+
+7.1、在util下面新建一个文件server_render.js
+把服务端渲染的逻辑都放到这个文件里面
+（1）在这个文件中暴露出去一个函数，以便于在生产环境和开发环境下使用
+这个函数接收四个参数，分别是bundle（js包）、template（html）、req、res
+因为是异步，所以我们new一个Promise函数，并返回：
+module.exports = (bundle,template,req,res) =>{
+    return new Promise((resolve,reject)=>{
+        
+    })
+}
+
+里面的内容就是在dev_render.js里面get（‘*’）里面的逻辑：
+
+（2）然后将我们需要用到共用的模块（开发和线上都会用到的）都导入到server_render.js中去
+ const createStoreMap = bundle.createStoreMap
+        // 从bundle中拿到createStoreMap方法
+
+ const app = serverBundle(createStoreMap(),routerContext,req.url)中的serverBundle是创建app的一个方法，也就是bundle里面exports出来的内容，在这我们改成这样：
+ const createApp = bundle.default       
+      
+const app = createApp(stores,routerContext,req.url)
+
+然后把getStoreState拿到server_render.js中
+const getStoreState = (stores)=>{
+    return Object.keys(stores).reduce((result,storeName)=>{
+        result[storeName] = stores[storeName].toJSON()
+        return result
+    },{})
+}
+
+
+
+
+server_render.js完整代码：
+const serialize = require('serialize-javascript')
+const ejs = require('ejs')
+const asyncBootstrap = require('react-async-bootstrapper')
+const ReactDomServer = require('react-dom/server')
+const Helmet = require('react-helmet').default
+
+const getStoreState = (stores)=>{
+    return Object.keys(stores).reduce((result,storeName)=>{
+        result[storeName] = stores[storeName].toJSON()
+        return result
+    },{})
+}
+
+
+
+module.exports = (bundle,template,req,res) =>{
+    return new Promise((resolve,reject)=>{
+        
+        const createStoreMap = bundle.createStoreMap
+        // 从bundle中拿到createStoreMap方法
+        
+        const createApp = bundle.default
+        
+        const routerContext ={}
+        const stores = createStoreMap()
+        const app = createApp(stores,routerContext,req.url)
+        
+        asyncBootstrap(app).then(()=>{
+            if (routerContext.url){
+                res.status(302).setHeader("Location",routerContext.url)
+                res.end()
+                return
+            } 
+            
+            const helmet = Helmet.rewind()
+            const state = getStoreState(stores)
+            const content = ReactDomServer.renderToString(app)
+            
+            
+            const html = ejs.render(template,{
+                appString:content,
+                initialState:serialize(state),
+                meta:helmet.meta.toString(),
+                title:helmet.title.toString(),
+                link:helmet.link.toString(),
+                style:helmet.style.toString(),
+                
+            })
+            
+            res.send(html)
+            resolve()
+        }).catch(reject)
+    })
+}
+
+
+7.2、在dev_render.js中使用server_render.js中的方法：
+首先导入：const serverRender = require('./server_render')
+然后使用：
+app.get('*',(req,res,next)=>{
+        getHtml().then(template=>{
+            return serverRender(serverBundle,template,req,res)      
+            // serverRender的结果是一个promise，所以我们要想catch到必须要return
+        }).catch(next)
+    })
+
+
+
+
+
+
+
+完整代码：
+const path = require('path')
+
+const axios = require('axios')
+const webpack = require('webpack')
+const proxyMiddle = require('http-proxy-middleware')
+const MemoryFs = require('memory-fs')
+
+const serverRender = require('./server_render')
+
+const configServer = require('../../build/webpack.config.server')
+
+
+const getHtml = ()=>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:8888/public/index.html')
+            .then(res =>{
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+// 使用axios获取到本地webpack服务器中的html
+
+
+const NativeModule = require('module')
+const vm = require('vm')
+
+
+const getModuleFromString = (bundle,filename)=>{
+    const m = {exports:{}}
+    const wrapper = NativeModule.wrap(bundle)
+    const script = new vm.Script(wrapper,{
+        filename:filename,
+        displayErrors:true,
+    })
+    
+    const result = script.runInThisContext()
+    result.call(m.exports,m.exports,require,m)
+    return m
+}
+
+
+const mfs = new MemoryFs
+const webpackCompiler = webpack(configServer)
+// 创建一个webpack服务用来获取里面的bundle
+webpackCompiler.outputFileSystem = mfs
+// 使用memory-fs将weback服务限制在服务器内，而不是写到硬盘上
+let serverBundle
+// 定义一个全局变量将函数里面的值拿出来
+
+
+
+webpackCompiler.watch({},(err,stats) =>{
+    if(err) throw err
+
+    const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+
+    const bundle = mfs.readFileSync(bundlePath,'utf-8')
+    // 根据文件路径，使用mfs读取内存中的bundle，格式是utf-8（默认内存中的数据格式是二进制）
+
+    const m =getModuleFromString(bundle,'server_entry.js')
+    serverBundle = m.exports
+})
+
+
+
+
+module.exports = function (app) {
+    app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+    // 使用http代理，将'/public'路径转发到8888端口
+
+    app.get('*',(req,res,next)=>{
+        getHtml().then(template=>{
+            return serverRender(serverBundle,template,req,res)      
+            // serverRender的结果是一个promise，所以我们要想catch到必须要return
+        }).catch(next)
+    })
+}
+
+
+7.3、返回去编写template.ejs
+
+
+
+把整个过程按照逻辑写一个简单的文档，在需要的时候直接去使用，尤其是开发时服务器渲染的内容，把这部分也摘出来，不需要去详细理解，只需要知道原理就行，用的时候直接拿过去用
+
