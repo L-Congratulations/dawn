@@ -1,0 +1,267 @@
+因为是初学，所以选择django（jianggo）框架，以熟悉开发流程和python语法为目的
+（Django适合初学者或者小团队，Tornado适合高度定制。功能和性能更强大但也更复杂，先从简单的入手）
+
+
+流程：首先电脑安装python3 然后安装Django——使用Django创建一个工程——接下来就是使用Python3来操作，使用python3创建一个app（在manage.py的同级目录下创建app，查看当前目录下的文件在命令行中输入dir就可以查看当前目录下的文件）——
+将创建好的app名称添加到settings.py中的INSTALLED_APPS对象里面（将应用挂载到工程上面）——配置URL（为了合理清晰的处理大量的URL，将原始的在urls.py中进行配置的方法分离出去是个不错的解决办法）——创建templates文件夹，编写html文件——编写views.py文件（目的是引入模板）
+
+0：bug集锦
+
+0.1、在pycharm中.py文件使用import引入包报错：
+
+
+
+
+
+一、环境配置
+python3.x
+IPython：增强的python交互命令行，比python自带的功能更强大
+Django（pip3 install Django）
+检测Django是否安装成功：python3 -m django --version
+
+二、开始
+当用Django搭建好项目之后命令行里面就多了一个命令：django-admin
+我们就用它来创建我们的工程。
+2.1、使用Django创建工程：
+django-admin.py startproject myblog（django-admin startproject myblog ）
+
+2.2、启动Django项目：
+进入到项目目录：cd myblog
+使用python启动项目：python3 manage.py runserver 8000
+有点问题，很正常，根据提示，我们重新输入：
+python3 manage.py migrate
+然后再次启动python3 manage.py runserver 8000 发现没有报错信息。
+访问端口：localhost:8000浏览器已经能正常访问服务器，项目搭建成功
+（我们运行网站成功后会自动多出一个文件，是数据库文件）
+
+三、Django创建应用
+3.1、项目目录详解：
+（1）、manage.py:是总管家，几乎做所有的事情都需要找它（管理项目：包括数据库建立、服务器运行（python3 manage.py runserver 8000）、测试。。））
+查看manage.py的功能：在命令行输入python3 manage.py
+（2）、myblog目录下的文件详解：
+此处的myblog是项目的容器，这个名称和我们的工程名称是一样的，不建议修改。
+《1》、settings.py：项目的总配置文件
+里面包含了数据库、web应用，时间等各种配置
+整个网站的配置文件，
+我们通过查阅文档还可以进行额外的配置
+《2》、urls.py：url配置文件
+Django项目中所有地址（页面）都需要我们自己去配置其URL
+《3》、wsgi.py:python服务器网关接口
+Django（在本地运行是启动的服务器是一个小型的服务器，以方便程序员进行调试为主，要是将应用挂载到公网上的时候需要使用大型的服务器如Apache）和大型服务器的接口
+
+3.2、创建应用：在Django中如何创建一个应用
+Django中使用应用来分割功能，比如一个游戏网站需要包含四个模块（游戏新闻、游戏论坛、玩家博客系统、在线商城）
+说白了就是根据功能来划分代码模块，一个功能作为一个应用来处理。
+
+（1）、创建应用blog
+以博客模块为例使用Django创建一个应用
+打开命令行，进入项目中manage.py同级目录
+在命令行输入：python3 manage.py startapp blog
+（2）、添加应用名到settings.py中的INSTALLED_APPS里
+找到INSTALLED_APPS（是这个网站所有添加的应用，它里面会默认有一些Django自带的应用，比如后台管理应用等）
+在里面添加一个参数：'blog'
+
+3.3、自己创建的应用中的文件（blog应用中的文件介绍）：
+目录中包含_init_.py的就说明这是一个模块
+（1）、migrations：数据移植（迁移）模块。涉及到数据库的操作，暂时不管
+（1）、views.py:执响应的代码所在的模块。
+每接收一个请求都要进行响应，那具体响应什么东西，怎么响应，都是在这个模块中完成的。
+是代码逻辑处理的主要地点。
+项目中大部分代码均在这里编写。
+（2）、models.py：数据模块，因为Django涉及到一个ORM框架，详细介绍放到涉及到数据的时候再讲
+（3）、admin.py：该应用的后台管理系统配置。是当前应用的后台管理系统的配置文件，Django有一个特点是自带一个后台管理系统，所以每个应用下都有各自的配置文件
+
+（4）、test.py：自动化测试模块
+（5）、apps.py:当前应用的一些配置
+
+四、使用Django创建一个完整的博客系统：
+4.1、用hello来走一下整个流程：
+在Django中每一个请求都有一个函数来处理，所以在views.py中要创建一个函数
+首先要引入res：from django.http import HttpResponse
+然后定义一个函数：
+因为函数要处理请求，所以在函数中我们应该先接收到请求（定义一个参数，发起请求的时候通过给参数赋值来达到接受请求的目的）
+def index(request):
+      return HttpResponse('Hello world')
+      
+然后配置URL，打开urls.py：
+根据注释里面的说明：
+Add a URL to urlpatterns:  path('', views.home, name='home')
+
+path('url本身',响应函数,该url的名称)
+因为要引用响应函数，所以首先应该把函数import到该文件：
+import blog.views as bv
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('hello/', bv.hello),
+]
+
+4.2、配置URL
+为了合理清晰的处理大量的URL，将原始的在urls.py中进行配置的方法分离出去是个不错的解决办法。
+具体代码：
+from django.contrib import admin
+from django.urls import path, include#将include方法引入到文件中
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('blog/', include('blog.urls')),#注意，这要加引号
+#含义就是将blog.urls里面的view挂载到了路径为8000/blog的路由上，通常情况下我们会通过修改blog.urls里面的URL来满足需求（避免出现index/index这种路径），因为我们同一个网站可能会有不同的应用，这样在根目录那块便于区分。
+繁杂的URL路径匹配的逻辑代码都转移到了blog.urls里面，而不是在跟目录的urls.py里面
+因此需要在应用的根目录中（与views.py同级目录）新建一个urls.py文件来处理URL逻辑代码，因为都是处理url的文件，因此blog.urls里面的代码编写规则应该符合根目录中urls.py的规则。
+
+]
+blog.urls.py中的代码：
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.hello),
+]
+此时只有访问http://localhost:8000/blog/   才能正确返回hello world，
+
+4.3、开始编写template
+Django 找不到模版报错" django.template.exceptions.TemplateDoesNotExist: index.html":
+https://www.cnblogs.com/alan-babyblog/p/5828026.html
+
+（1）、Django自带一个模板引擎：DTL，因此一般开发我们直接用这个模板就行，如果想改用其他模板，需要在settings.py下修改TEMPLATES中BACKEND的值就行
+第一步在应用的根目录下（与apps.py同级目录）下创建一个templates的文件
+第二步在templates文件下创建所需要的html文件
+第三步在views.py中返回render()函数render函数有很多参数，我们一般情况下传递三个参数就行，前两个是必须的，第一个参数是req，第二个参数是html模板，第三个参数是我们传递到前端的数据
+
+（2）、DTL模板引擎中的render()函数中支持一个dict（字典，键值对形式）类型的参数，在模板中使用{{参数名}}来直接使用：
+传值：def hello(req):
+    return render(req, 'hello.html',{'msg':'直接从后台传递过来的值'})
+取值：
+<h1>hello blog{{ msg }}</h1>
+
+（3）、注意：因为Django查找templates的规则原因，在不同应用下templates目录中的同名.html会造成冲突
+解决方法：在应用的templates目录下创建一个以应用名为名称的目录，然后把HTML文件放到新创建的目录下
+然后把views中的HTML模板改成：
+return render(req, 'blog/hello.html',{'msg':'直接从后台传递过来的值'})
+
+4.4、models.py
+在Django中的models是什么？
+通常，一个model对应数据库的一张数据表
+Django中models是以类的形式表现出来的
+它包含了一些基本字段以及数据的一些行为
+因此我们只需要对类和类的数据进行操作就可操作数据库，不需要写任何SQL语句来和数据库直接进行代码上的交互
+这种方式（结构、框架）被称作ORM（对象关系映射object relation mapping）。
+ORM实现了对象和数据库之间的映射，隐藏了数据库访问的细节，不需要编写SQL语句。
+
+（1）、编写models
+《1》、首先在应用根目录下创建models.py，并引入models模块
+这一步Django在创建应用的时候已经帮我们实现了
+《2》、创建一个类，来继承models.Model，该类即是一张数据表
+《3》、在该类中创建字段（对应表的字段）
+因为该类对应的是一张数据表，所以类里面的属性（变量）就代表的是字段
+格式：变量名 = models下面的某个字段类（）
+#注意：字段类是可以传参数的，有些字段类的参数是必须的，但大多数都是可选的
+class Article(models.Model):
+    title = models.CharField(max_length=64,default='Title')
+#在CharField这个字段类中，max_length是必选参数，规定了该字段的最大长度，
+default参数是可选的，表示默认值
+关于字段类的具体说明可以参照官方文档：
+（2）、把模型映射成数据表：
+在manage.py同级目录下执行：python3 manage.py makemigrations blog（应用的名称，可选，如果不写应用名或默认为该项目下的所有应用）
+然后再执行python3 manage.py migrate。#migrate是迁移的意思
+此时的数据表就创建成功了
+（3）、查看生成的数据表
+当数据表创建成功之后Django会自动在app/migrations/目录下生成移植文件
+查看生成的那个数据表的SQL语句：
+在manage.py同级目录下执行：python3 manage.py sqlmigrate 应用名 文件id
+python3 manage.py sqlmigrate blog 0001
+因为我们使用的是Django默认的sqlite3数据库，所以数据库会在项目根目录下db.sqlite3的东西
+要想查看我们刚刚创建的数据库的内容，可以使用可视化工具
+使用可视化工具随便添加几条数据
+
+4.5、将数据从数据库中取出来并展现在页面上
+（1）、取出数据：
+我们在views.py中import models
+然后创建一个变量并赋值：
+article = models.Article.objects.get(pk=1) #models.py中的Article这个类.objects.get(这的参数就是我们需求取出的数据的标识，如title='hello1'，content=‘blog’，id=3等)
+然后通过render函数将数据传递给页面：
+render(request,page,{'article':article})
+如下：
+from django.shortcuts import render
+from django.http import HttpResponse
+from . import models
+# Create your views here.
+def hello(req):
+    article = models.Article.objects.get(pk=1)
+    return render(req, 'blog/hello.html',{'msg':article})
+
+因为我们返回的是根据索引值取回的一个对象形式的数据，所以在前端想要拿到具体的数值可以通过{{article.title}}形式获取到。
+<h1>hello blog{{ msg }}</h1>
+<h2>{{msg.content}}</h2>
+<h3>{{msg.title}}</h3>
+<h4>{{msg.id}}</h4>
+
+五、admin（管理）
+admin是Django自带的一个功能强大的自动化数据管理界面（其实就是自带的后台管理系统），它允许被授权的用户可以直接在admin中管理数据库。Django提供了许多针对admin的定制功能。
+5.1、配置admin
+（1）、创建用户（创建一个超级用户）：
+再manage.py同级目录下：
+python3 manage.py createsuperuser
+然后根据提示输入用户名（不要输入和系统相同的用户名，如ls）
+登录到后台默认的是英文界面，因此我们需要在settings.py中修改一个变量的值：
+LANGUAGE_CODE = 'zh_Hans'
+（2）、配置应用：（在后台管理页面使其有能力操作数据库）
+在应用（blog）中的admin.py引入自身的models模块（或直接引用里面的模型类）
+然后在admin.py中添加代码：admin.site.register(models.Article)
+如下：
+from django.contrib import admin
+from models import Article
+# Register your models here.
+admin.site.register(Article)
+（3）、修改数据默认显示名称：
+首先到应用下的models.py的Article类下添加一个方法
+因为我使用的是python3 所以使用：__str__(self)。在方法中返回self.title即可
+如下代码：
+class Article(models.Model):
+    title = models.CharField(max_length=64,default='Title')
+    content = models.TextField(null=True) #TextField字段类中所有的参数都是可选的，在这允许内容可以为空
+    def __str__(self):
+        return self.title
+
+
+六、写restful接口：
+ RESTful API 的总结： 
+1.每一个URL代表一种资源 
+2.客户端和服务器之间，传递这种资源的某种表现层 
+3.客户端通过四个HTTP动词，对服务器端资源进行操作，实现”表现层状态转化”。具体为： 
+GET用来获取资源，POST用来新建资源（也可以用于更新资源），PUT用来更新资源，DELETE用来删除资源。 
+
+6.1、
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+一次web访问的实质：就是客户发送HTTP请求到web服务器，然后web服务器返回HTML页面给客户
+4.1、URL配置：搭建路由系统
+建立URL与响应函数之间的关系
+
+4.2、视图views：
+响应客户HTTP请求，进行逻辑处理，返回给用户HTML页面
+
+4.3、模型models：
+我们访问的每一个博客实际是存储在数据库当中的，每次取也是从数据库中取出来返回给用户。
+描述我们服务器存储的数据（实际就是对应的数据库的表）
+我们来看一下：
+我们存一篇博客：
+要存他的题目（title）、内容（content）、访问数量（counter）、发布日期（pubDate）、作者（author）。dui
+4.4、模板templates：
+用来生成HTML页面，返回给用户的HTML是由数据（模型）和模板渲染出来的
