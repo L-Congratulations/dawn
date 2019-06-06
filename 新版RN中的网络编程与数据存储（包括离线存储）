@@ -1,0 +1,170 @@
+一、网络编程
+RN官方推荐我们在RN中用fetch进行网络请求。
+
+1.1、Fetch
+fetch API提供了一个js接口，用于进行网络操作，例如请求和相应。他还提供了一个全局fetch()方法，该方法提供了一种简单，合理的方式来跨网络异步获取资源。
+
+RN中引入了fetch，我们可以在RN中使用全局fetch方法进行网络请求，并且不需要自己做额外的导入。
+
+1.2、fetch需要注意的两点：
+（1）当fetch接收到一个代表错误的http状态码的时候，返回的Promise不会被标记为reject（404,500等状态码都不会被标记为reject），他会将promise状态标记为resolve，但是会将reolve的返回值的ok属性设置为false。当网络故障或者请求被阻止时，才会标记为reject。
+（2）默认情况下，fetch不会从服务端发送或接受任何cookies，如果站点依赖于用户session，则会导致未经认证的请求（要发送cookies，必须设置credentials选项）
+
+1.3、简单使用：
+fetch(url)
+  .then(res=>res.text()) // 将response中的data转成string
+  .then(resText=>{console.log(resText)})
+  .catch(err=>{console.log(err.toString()}) // 捕获异常
+
+在这使用了最简单的用法，只提供了一个残水用来指明想fetch到的url，然后返回一个包含响应结果的promise（一个response对象）；然后根据返回的内容通过text()等方法将response转化成string或者data
+
+1.4、fetch支持的请求对象
+fetch(input,init)
+
+input:是要获取的资源（可以是url，也可以是一个request对象）
+init：这个参数可选，是一个配置项对象，包含所有对请求的设置，注意这是一个对象。里面的参数可以是method、headers、body等等，包括cookie、cache等等一些功能
+
+1.5、请求错误与异常处理
+如果遇到网络故障，fetch 的promise将会调用reject，带上一个TypeError对象。
+注意：请求失败可能返回两种情况，一种是reject，代表的是网络故障，一种是resolve里面的response.ok为false，表示的是404、500等状态码的错误
+
+如：
+fetch(url)
+  .then(res=>{
+if(response.ok){
+return response.text();
+}
+throw new Error('network res was not ok')
+})
+  .then(resText=>{console.log(resText)})
+  .catch(err =>{console.log(err.toString())})
+
+1.6、RN的textInput输入框
+参照官网，常用的属性有defaultValue、onChange、onChangeText（当text变化的时候会调用这个属性里面的方法，我们在这可以用来接收用户输入的内容）、palaceholder
+
+<TextInput 
+style={styhle.input}
+onChangeText={text=>{this.inputValue = text}}
+/>
+
+然后定义一个方法，直接使用fetch，不用单独导入：
+loadData(){
+let url = `http....?q=${this.inputValue}`  // 定义一个url，我们可以直接使用字符串模板拼接url，也可以使用基础的url然后参数单独传入
+  fetch(url)
+.then(res => res.text())
+.then(resText=>{
+this.setState({})
+})
+.catch(err=>{console.log(err)})
+}
+
+
+二、数据存储技术
+通常情况下我们需要将网络上获取到的数据存储到本地，方便调用。
+
+数据存储是开发APP必不可少的一部分，比如页面缓存，从网络上获取数据的本地持久化等
+在RN中官方推荐我们使用AsyncStorage进行数据存储。
+
+2.1、AsyncStorage
+AsyncStorage是一个简单的异步的，持久化的key-value存储系统。官方推荐这种数据存储方式用来代替LocalStorage
+
+2.2、IOS下使用AsyncStorage存储
+分为两种情况：
+（1）如果存储的内容较小，那么AsyncStorage会将要存储的内容放在一个序列化的字典中。
+（2）如果存储的内容比较大，那么AsyncStorage会将要存储的内容放在一个单独的文件中。
+
+2.3、Android中使用AsyncStorage存储
+分为两种情况：
+（1）RocksDB
+（2）SQLite
+AsyncStorage会将数据存储两者中，具体存储在RocksDB还是SQLite中取决于设备支持那种存储方式
+
+2.4、使用AsyncStorage
+（1）导入AsyncStorage：
+import {AsyncStorage} from 'react-native'
+
+（2）存储数据
+setItem:存储数据
+getItem：获取数据
+removeItem：删除数据
+
+有几种方法，但是结构最清晰的还是使用下面这种方法（es6的方法）：
+因为AsyncStorage会返回一个promise，我们就可以利用这个promise通过他的catch方法来捕捉这次操作错误：
+KEY是存储的内容的索引，this.value是需要存储的数据
+存储：
+AsyncStorage.setItem(KEY,this.value)
+  .catch(err=>{err && console.log(err.toString())})
+
+获取：
+AsyncStorage.getItem(KEY)
+.then(value=>{
+this.setState({})
+console.log(value)
+})
+  .catch(err=>{err && console.log(err.toString())})
+
+删除：
+AsyncStorage.removeItem(KEY)
+  .catch(err=>{err && console.log(err.toString())})
+
+还可以使用ES7的await将上面那些方法转化成同步。
+
+（3）AsyncStorage其他常用的API（除了上面三个方法外的其他API）：
+mergeItem():改变本地已经存储过的数据，新数据会替换老的数据
+clear：
+getAllKeys：
+等等API，可以从RN官网中进行查看具体方法
+
+
+三、RN离线存储框架设计
+3.1、为什么要设计离线缓存框架？
+（1）提升用户体验：为用户提供流畅的APP操作体验，但我们无法保证所有用户的网络流畅度都是好的，所有我们需要离线缓存来提升用户体验。
+（2）节省流量：节省流量分为节省服务器流量和节省用户手机的流量（比如视频缓存）
+
+3.2、离线缓存的策略
+无外乎有以下三种策略：
+a、优先从本地获取数据，如果数据过时或不存在则从服务器获取数据，数据返回后同时将数据同步到本地数据库
+b、优先从服务器获取数据，数据返回后同时将数据同步到本地数据库，如果网络故障则从本地获取数据
+c、同时从本地和服务器获取数据，如果本地数据库返回数据则先展示本地数据，网络数据回来后再展示网络数据同时将数据同步到本地数据库
+
+3.3、离线缓存的实现
+上面几个策略是几个单独功能的排序：数据存储、数据请求
+（1）数据存储
+saveData(url,data){
+if(!data || !url) return;
+AsyncStorage.setItem(url,JSON.stringify(this._wrapData(data)))
+ .catch(err=>{err && console.log(err.toString())})
+}
+上面代码中，url作为缓存数据的key，接受一个object的参数data作为保存的value，但是因为AsyncStorage无法直接保存object，所以要用JSON.stringify序列化成json。
+
+（2）数据的有效期：
+我们要给存储的数据加一个时间戳：
+_wrapData(data){
+return {data:data,timestamp:new Date().getTime()}; // 在这获取的是本地时间作为时间戳，本地时间存在被篡改的风险，如果条件允许可以获取服务器的时间作为时间戳。
+}
+
+（3）获取本地数据
+fetchLocalData(url){
+return new Promise((resolve,reject)=>{
+AsyncStorage.getItem(url,(error,result)=>{
+if(!error){
+try{
+resolve(JSON.parse(result))
+} catch(err){
+reject(err)
+console.error(err)
+}
+}else{
+reject(error)
+console.error(error)
+}
+}
+
+})
+}
+
+（4）获取网络数据
+fetchNetData(url){
+return new Promise((resolve,reject)=>{
+})
+}
