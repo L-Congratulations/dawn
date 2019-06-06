@@ -1,0 +1,695 @@
+尽量全部使用const（声明常量），遇到需要修改变量的地方再把const改成let
+
+
+
+一、项目环境搭建
+
+二、工程编写
+2.1、安装官方提供的脚手架工具
+npm install -g react-native-cli
+
+react-native -v检查一下版本
+
+2.2、在文件夹中初始化rn项目
+react-native init demo1 创建了一个名字为demo1的rn项目(多个单词需要用驼峰法来命名）
+
+2.3、打开项目
+react-native run-ios
+或者
+用xcode打开，
+使用xcode打开ios目录下的demo2.xcodeproj
+可以在左上角选择设备
+两种方式都可以使用，使用xcode的好处是可以选择设备
+
+
+
+2.4、在项目根目录下
+（1）.flowconfig 是js代码类型的检查
+（2）.gitignore是在提交到git仓库的时候忽略哪些东西不要提交上去
+（3）.watchmanconfig是监听哪些文件改动
+
+此外还可以自己配置eslint等配置文件
+
+（5）大部分情况下我们只需要修改入口文件和相应的配置文件就好了，其他的工具先不去研究。
+App.js文件：
+导入模块-》extends继承调用render方法-》style编写-》将代码注册挂载到app，当app启动的时候这是入口
+
+2.5、使用react-native-vector-icons作为tabbar的icon图标
+《1》、首先安装icon库：npm i react-native-vector-icons -S
+
+
+《2》、只安装完图标库我们不能直接用，因为里面包含一些二进制文件，二进制的文件需要被挂载到工程当中去，才能加载使用这些模块：
+react-native link react-native-vector-icons
+
+在newsIos文件夹下的info.plist里面的Fonts里面有内容表示加载
+
+安装完icons之后需要重启一下项目，这样才能正确显示icon图标
+
+《4》、在项目中使用图标库：
+（图标库中图标：https://www.npmjs.com/package/react-native-vector-icons#ios）
+import Icon from 'react-native-vector-icons/Ionicons'
+Icon已经封装在了所有的图标库里面
+
+使用 <Icon name="ios-star-outline" size={20} color="#4F8EF7" />来检查库中是否有该图标，其实直接去官网，然后找到icon的名称，在iconName='ios-图标名称'就行，不加ios前缀会报错，找不到图标
+
+《5》、把TabBarIOS导入进来，然后使用
+ <TabBarIOS
+              tintColor='blue'
+              barTintColor='yellow'>
+</TabBarIOS>
+然后在TabBarIOS里面填充tab按钮：
+<Icon.TabBarItem
+                    title='home'
+                    // tab下面的文字显示
+                    iconName='ios-home'
+                    // icon图标的class名字
+                    selectedIconName='ios-home'
+                    // 选中之后icon图标的class名字
+                    selected={this.state.selectedTab==='home'}
+                    // 图标选中的条件
+                    onPress={()=>{
+                        this.setState({
+                            selectedTab:'home'
+                        })
+                    }}
+                    // 图标选中的操作事件
+                >
+                    <Text>aaaa</Text>
+                    {/*注意在TabBarItem标签里面必须包含而且只能包含一个子元素，否则会报onlychilde错误*/}
+                </Icon.TabBarItem>
+
+
+2.6、项目开发流程
+根据功能流程图开发页面，这样在后面开发的页面就可以调用到前面页面的接口了
+
+画一个流程图辅助开发（面试的时候是很好的加分项）：
+手机app图标（点击启动）——启动画面（对应配置文件）——过渡画面（倒计时，判断用户是否是第一次登陆等逻辑）——状态初始化（注册状态，本地数据状态）——轮播图（轮播组件）——首页（或者根据业务跳转到注册页面）——首页我们在这使用视频列表页（会请求数据，并根据滑动屏幕异步加载新数据）——详情页（一大堆内容）——tab按钮中的制作视频组件——tab的账户资料（头像（上传头像，修改头像，上传照片的进度条）、退出登录）——App的自动热更新，自动升级等
+
+根据是否是核心功能和开发的难易程度来排序开发的顺序
+
+首先先把地基弄好：列表页、制作页、账户页（也就是tab上对应的几个页面），把他们抽离出来放在独立的目录中，这样开发起来结构就比较清晰了
+
+然后伪造数据
+
+然后开发列表页、用户注册登录页、账户页
+
+然后开发app的启动画面和轮播页面
+
+最后开发最难的制作视频页面
+
+
+三、假数据制作
+常用假数据制作方法：本地固定json、本地起一个node服务器，编写一些简单的接口
+
+常用假数据制作的缺点：
+（1）因为是本地内网进行网络请求，所以不真实，没有网络延迟
+（2）需求改变时需要频繁改变后台接口，开发成本比较高
+（3）不能满足定制化的需求，如：随机返回数据的个数，返回不同图片的地址，返回变化的数据id，无法校验传参的正确性等
+
+使用市面上免费的服务，阿里使用的两个开源项目：rap和mockjs
+首先使用rap2（http://rap2.taobao.org/）
+注册登录，创建一个团队dawn，然后新建一个仓库。
+
+3.1、新建接口
+名称随便起一个名称，地址/api/list（也就是接口请求的路径，注意前面要加"/"）
+
+进入到新建接口里面
+3.2、编写请求参数
+也就是客户端发送请求时里面包含的参数
+
+请求参数——
+名称：accessToken，
+类型：String，
+简介：客户端请求时需要携带的参数，token
+
+当请求参数有多个时，还可以继续添加
+
+3.3、编写响应参数
+也就是返回给客户端时，所要返回的内容
+
+响应参数——
+名称：success，
+类型：Boolean ， 
+简介：请求是否成功
+名称：data，
+类型：Array， 
+简介：返回给客户端的数据
+
+3.4、然后点击保存，这样一个接口就编写完了，然后是访问该接口
+点击地址，会跳转到一个页面：http://rap2api.taobao.org/app/mock/119140/api/login。因为是get请求，所以我们可以在页面里面直接访问这个这个请求
+
+
+这里面的http://rap2api.taobao.org/app/mock/119140/就是公共请求的路径，/qpi/login就是我们项目中访问的api路径
+
+3.5、修改初始值
+在初始值里面修改就行
+
+3.6、添加数据
+（1）点击编辑，然后点击data旁边的“+”按钮，就会跳出一个表格，里面编辑的内容就是在data里面的子集
+
+如果我们要生成数组对象，那么就需要把data设置成Array类型，data里面的子集按照需求编写就行，一般都是string或者是number类型（因为data里面的子集就是具体数据了）
+
+（2）生成规则：参考官方文档，里面如果是数字范围，一般指初始值重复的次数的最大值和最小值，如果没有初始值，则会随机生成
+
+比如我们的data参数：
+类型：Array（数组）
+规则：10（根据规则文档，查看到当类型是Array时，规则是一个具体数字，那么就会随机生成10个数组）
+
+这样就在data里面生成了10个数组对象
+
+（3）初始值
+是规则重复的次数，可以是一个范围，也可以是一个固定的值，如：规则是5，初始值是：“1”,结果就是“11111”
+或者通过某些语法:@IMG(800,@color()/@color())其中@color()就是随机生成color编码
+@IMG是一个函数，里面填写的第一个参数是请求的图片的尺寸，第二个参数是随机生成的颜色的值，因为官网需要两个颜色值，所以第二个参数是@color()/@color()，要注意！
+请求的规则看文档（https://dummyimage.com）
+http://dummyimage.com/1280x800.png/7996f2/#b9f279)我们可以指定图片的尺寸，注意在这1280x800而不是1280*800
+
+
+3.7、Mockjs（http://mockjs.com/examples.html#Object）
+是用来解析rap2规则的，也就是我们在规则和初始值里面定义的规则的合集，语法是
+Mock.mock({rap2接口的响应内容里面的响应模板里面的值})
+解析出来就是我们点击链接里面返回的结果
+
+我们在rap2里面配置一个请求和响应的规则，然后通过mockjs来解析那个规则进而生成我们需要的数据
+因此我们可以通过mocjs中的规则来编写我们的接口规则来生成满足需求的数据
+
+3.8、使用mockjs中的规则来生成需要的数据
+打开mockjs，从示例中找到title：
+Mock.mock('@title(5)')可以看到mock里面的语法是@title(5)，这个就对应于rap2中的初始值，我们可以通过在mockjs中找这种类似的语法来生成我们想要的数据。
+如：在data里面再添加一个参数：
+名称：title
+类型：String
+初始值：@csentence(5)
+描述：视频的标题
+
+
+四、项目架构
+项目中好像虽然用React解析了jsx语法，但是文件全是js文件
+
+4.1、在项目根目录下新建一个文件夹app，用来存储所有我们编写的关于app的文件
+
+4.2、因为我们的项目主要分为三个主页面（tab分为三个页面）列表页、制作视频页、账户资料页
+所以我们在app文件夹下新建三个文件夹，用来存放三个主页面的内容。
+然后再建一个common文件夹，用来存放一些共用的代码片段
+
+然后在列表页、制作视频页、账户资料页里面分别建一个index.js，作为页面的主文件（入口文件）
+
+4.3、子页面模板，index.js而不是index.jsx，使用jsx识别不出来报错
+
+import React,{Component} from 'react'
+import {View, Text, StyleSheet} from 'react-native'
+import Icon from 'react-native-vector-icons'
+
+class Edit extends Component{
+    render(){
+        return(
+            <View style={styles.wrapper}>
+                <Text>
+                    edit
+                </Text>
+            </View>
+        )
+    }
+}
+
+const styles = StyleSheet.create({
+    wrapper:{
+        flex: 1,
+        backgroundColor:'blue'
+    }
+})
+
+export default Edit
+
+在App.js中导入：
+import Account from './app/account/index.js'
+
+
+五、编写app名字和启动画面
+
+5.1、修改app的名字
+在ios——demo文件夹（项目文件名文件夹）——info.plist（这个文件就是ios配置文件）
+把里面的：<string>en</string>改成<string>zh_CN</string>
+然后将：<string>demo</string>改成<string>新闻IOS</string>
+重启项目
+这样生成的app名字就改成了“新闻IOS”
+
+5.2、修改app桌面图标
+（1）首先制作桌面图标，因为在不同机型上（ipd、iphone、高清屏、非高清屏），图标的大小是不一样的，需要提供多种分辨率的图标，所以我们要制作多个图标来适应不同的机型。
+如果我们已经有了设计稿，那么我们可以通过ps导出不同分辨率的图标
+
+
+方法二：打开https://makeappicon.com/  点击中间左侧那个chose file，然后选择需要制作的icon图标，然后填写一些信息，之后就会出现预览图片，然后填写自己的邮箱，就会给邮箱里面发送一个文件，然后从邮件中下载下来，里面的内容基本上不用改的就可以直接使用
+
+（2）将制作好的图标应用到项目中
+找到项目下的ios文件夹——demo（项目名字文件夹）——images.xcassets文件夹——AppIcon.appiconset文件夹：
+里面已经包含了一个json文件，我们不用管这个文件，然后将制作好的不同规格的图标放到这个文件夹里面，
+
+因为我们上面已经在网站上制作了一套完整的icon，所以我们把下载下来的文件中的AppIcon.appiconset替换掉项目中的就可以了
+
+
+5.3、配置启动画面是一个图片
+在GitHub上面找到官方的f8项目（https://github.com/fbsamples/f8app）
+打开ios文件夹——打开f82017——Base.lproj——里面的文件就是配置文件，我们可以通过修改这个文件来改变启动画面，在这我们偷懒，直接使用f8里面的代码
+然后把图片命名为launchscreen.png放到ios文件下
+
+简单的改动可以直接修改原文件里面的<subviews>里面的两个<label>标签里面的text属性来观察效果
+
+5.4、启动画面启动之后，app会有一个初始的的过程，检测用户是否已经登录，开始会展现一个注册的页面，然后一瞬间又会消失，然后展现首页，这样会导致用户感觉不爽，因为有一个中断。除了原生的处理方式，我们还可以通过rn制作一个假的过程，也就是画面启动之后展现一个白屏，白屏上显示一个加载的loading，等app初始化完成之后，再去展现对应的页面
+
+我们打开项目的入口文件index.js，在这个文件里面增加一个状态：
+这个涉及到前面的逻辑，先缓一缓
+
+5.5、app第一次启动时添加轮播图
+在app文件夹下的account文件夹下新建一个slider.js，用来存储轮播图组件
+
+（1）首先安装npm i react-native-swiper -S
+并在文件中引入import RNSwiper from 'react-native-swiper'
+
+（2）然后阅读swiper的文档readme，里面有swiper的基本用法
+将Text换成自己需要的Image就行
+<RNSwiper
+                dot={<View style={styles.dot}/>}
+                // 没选中时点的样式
+                activeDot={<View style={styles.activeDot}/>}
+                // 选中之后点的样式
+                showsPagination={true}
+                // 是否显示点
+                paginationStyle={styles.pagination}
+                // 点的公共样式，在这我们规定离底部150，如果离底部为0的话就会被tab遮住
+                loop={false}
+                // 是否循环图片
+                style={styles.wrapper}
+                // 还有一些属性如是否显示箭头，是否自动轮播等，需要的时候去看文档
+                >
+                <View style={styles.slide1}>
+                    <Text style={styles.text}>Hello </Text>
+                </View>
+                <View style={styles.slide2}>
+                    <Text style={styles.text}>Beautiful</Text>
+                </View>
+                <View style={styles.slide3}>
+                    <Text style={styles.text}>And simple</Text>
+                    <Button title='按钮' onPress={this.next} style={styles.btn}>马上体验</Button>
+                </View>
+            </RNSwiper>
+
+
+5.6、在手机上跑我们编写的rn项目
+没成功，以后再尝试，先把项目大概框架完成
+（1）使用手机数据线连接macOS
+（2）保证手机的wifi和电脑的wifi是同一个
+（3）在命令行中使用ifconfig来确定当前wifi下的ip地址
+en0：。。。。192.168.183.129
+（4）在项目中找到ios文件夹下的——demo（项目文件名）——AppDelegate.m——找到jsCodeLocation变量，并把原来代码注释掉/**/
+然后将这行代码拷贝进去：
+jsCodeLocation = [[NSBundle mainBundle] URLForResource:@"index" withExtension:@"jsbundle"];
+
+（5）在ios文件夹下创建bundle文件夹，
+然后在项目命令行下执行下面命令：
+react-native bundle --entry-file ./index.js --bundle-output ./ios/bundle/index.jsbundle --platform ios --assets-dest ./ios/bundle --dev false
+
+（6）使用xcode打开项目
+
+
+六、编写注册登录页面
+6.1、页面结构：
+顶部标题栏+数据列表+底部的tabbar
+
+6.2、编写页面中的顶部标题栏
+
+6.3、使用rap2伪造注册登录的接口
+使用手机号登录
+（1）伪造注册登录的接口
+在rap2中，新建模块：注册登录页面
+
+（2）第一个接口：在这个模块中添加接口，第一个接口是填完手机号之后发送验证码，这个接口是一个发送验证码的接口：
+名称：发送验证码
+地址：/api/user/receiveCode
+类型：POST
+描述：发送验证码的接口
+
+进入到该接口中，添加请求参数：
+名称：phoneNumber
+类型：Number
+描述：用户的手机号
+
+添加响应参数：
+名称：success
+类型：Boolean
+描述：请求是否成功
+默认值：设置为true
+
+（3）第二个接口：
+用户收到验证码之后，点击登录按钮，会验证用户输入的验证码是否正确.然后返回给用户一个token，后面用户再发送请求的时候需要带上这个token
+名称：登录验证接口
+地址：/api/user/verify
+类型：POST
+描述：验证用户的验证码和手机是否匹配
+
+进入接口，添加请求参数：
+名称：phoneNumber
+类型：Number
+描述：用户的手机号
+
+第二个参数：
+名称：verifyCode
+类型：Number
+描述：用户输入的验证码
+
+添加响应参数：
+名称：success
+类型：Boolean
+描述：请求是否成功
+默认值：true
+
+第二个响应参数：
+名称：data
+类型：Object
+描述：用户信息
+
+在data下面添加子集：
+名称：avatar
+类型：String
+描述：默认用户头像
+初始值：@IMG(540x640.png,@color/@color)
+
+第二个子集：
+名称：nickName
+类型：String
+描述：用户昵称
+初始值：name()
+
+第三个子集：
+名称：accessToken
+类型：string
+描述：唯一的用户凭证
+生成规则：1-10(随机生成1到10个字母的字符串）
+
+当点击登录按钮的时候，会把用户的电话号码和验证码传到这个接口，我们会验证用户的电话号码和验证码是否成功，如果成功则返回success和data信息
+
+6.4、编写注册登录的页面
+（1）在account文件夹下新建一个页面：login.js
+搭建基本的组件结构
+
+（2）对于注册页面，我们首先要解决掉的不是组件的状态，也不是异步请求，而是视图DOM结构。
+我们先把样式写出来，然后再加状态和异步请求。
+<View style={styles.btn}><Button title={'登录'} color={'#ee735c'} onPress={this._submit}/></View>
+rn封装的Button组件不能在上面直接加style属性，需要在外面加一个View将样式加在View上面才会生效，button里面的内容需要通过title来指定，包含在button标签里面不管用
+
+首先编写样式：
+    render(){
+        return(
+            <View style={styles.wrapper}>
+                <View style={styles.signupWrapper}>
+                    <Text style={styles.signupTitle}>快速登录</Text>
+                    <TextInput
+                        placeholder='输入手机号'
+                        autoCaptialize={'none'}
+                        // 不纠正大小写
+                        autoCorrect={false}
+                        // 不纠正内容的对与错，因为这只是一个数字键盘
+                        keyboradType={'number-pad'}
+                        // 键盘的配置
+                        style={styles.inputField}
+                        // 键盘输入文本域的样式
+                        onChangeText={(text)=>{
+                            this.setState({
+                                phoneNumber:text
+                            })
+                        }}
+                        // 绑定事件，当输入文本发生变化的时候，拿到里面的text，
+                        // 然后把当前状态里面的phoneNumber设置成text的值
+                    />
+                    {
+                        this.state.codeSent
+                            ? <View >
+                                <TextInput
+                                    placeholder='输入验证码'
+                                    autoCaptialize={'none'}
+                                    // 不纠正大小写
+                                    autoCorrect={false}
+                                    // 不纠正内容的对与错，因为这只是一个数字键盘
+                                    keyboradType={'number-pad'}
+                                    // 键盘的配置
+                                    style={styles.inputField}
+                                    // 键盘输入文本域的样式
+                                    onChangeText={(text)=>{
+                                        this.setState({
+                                            verifyCode:text
+                                        })
+                                    }}
+                                    // 绑定事件，当输入文本发生变化的时候，拿到里面的text，
+                                    // 然后把当前状态里面的phoneNumber设置成text的值
+                                />
+                              </View>
+                            : null
+                        // 因为在登录页面中有两个状态，我们需要根据状态切换按钮的类型，来触发不同的操作
+                    }
+                    {
+                        this.state.codeSent
+                        ? <View style={styles.btn}><Button title={'登录'} color={'#ee735c'} onPress={this._submit}/></View>
+                        : <View style={styles.btn}><Button title={'获取验证码'} color={'#ee735c'} onPress={this._sendVerifyCode}/></View>
+                        // 因为在登录页面中有两个状态，我们需要根据状态切换按钮的类型，来触发不同的操作
+                    }
+                </View>
+
+            </View>
+        )
+    }
+}
+
+const styles = StyleSheet.create({
+    wrapper:{
+        flex:1,
+        padding:10,
+        backgroundColor:'#f9f9f9',
+
+    },
+    signupWrapper:{
+        marginTop: 30,
+    },
+    signupTitle:{
+        marginBottom: 20,
+        color:'#333',
+        fontSize:20,
+        textAlign: 'center',
+    },
+    inputField:{
+        height:40,
+        padding: 5,
+        color: '#666',
+        fontSize: 16,
+        backgroundColor: 'yellow',
+        borderRadius:4,
+    },
+    btn:{
+       padding:10,
+       marginTop: 10,
+       backgroundColor:'transparent',
+       borderColor:'#ee735c',
+       borderWidth: 1,
+       borderRadius: 4,
+       color:'#ee735c',
+    },
+})
+
+（3）然后编写业务逻辑，因为最开始的时codeSent时false，显示的页面是输入电话号码点击按钮获取验证码，所以我们需要处理点击获取验证码按钮之后的业务逻辑，拿到phoneNumber，然后根据这个phoneNumber向/api/user/receiveCode发送请求，请求完成之后会返回客户端seccess和验证码
+
+当点击获取验证码之后会跳转到
+
+
+
+
+
+
+七、列表页编写
+结构比较简单：最上面的标题栏——中间数据列表（有自己的结构：标题、内容、喜欢、评论）——底部的tabbar
+
+（1）先编写列表页最上面的标题栏
+<View style={styles.header}>
+                    <Text style={styles.headerTitle}>列表页面</Text>
+                </View>
+然后添加样式就行
+
+（2）编写中间数据列表
+我们使用FlatList组件（详细查看官方文档）
+<FlatList
+                    data={this.state.listData}
+                    renderItem={({item}) => <Text>{item._id}</Text>}
+                />
+这有一个注意点就是listData中的数据里面需要包含一个key值，否则的话在渲染的时候会提示。只需要在数据中有key就行，不需要渲染到dom结构中
+{
+                    "key":'lJ]gUm8',
+                    "_id": "lJ]gUm8",
+                    "thumb": "http://dummyimage.com/1280x800.png/f279bf/#79e2f2)",
+                    "video": "https://ke.qq.com/w&taid=2762780662970703"
+                }
+
+
+代码：
+<FlatList
+                    data={this.state.listData}
+                    automaticallyAdjustContentInsets={false}
+                    // 用来消除列表中第一个列表上面存在的空隙
+                    renderItem={({item})=>
+                        <TouchableHighlight>
+                            <View>
+                                <View style={styles.item}>
+                                    <Text style={styles.title}>{item._id}</Text>
+                                    <ImageBackground
+                                        source={{uri:item.thumb}}
+                                        style={styles.thumb}
+                                    >
+                                        <Icon
+                                            name='ios-play'
+                                            size={28}
+                                            style={styles.play}
+                                        />
+                                    </ImageBackground>
+                                </View>
+                                <View style={styles.itemFooter}>
+                                    <View style={styles.handleBox}>
+                                        <Icon
+                                            name='ios-heart-empty'
+                                            size={28}
+                                            style={styles.heart}
+                                        />
+                                        <Text style={styles.heartTitle}>喜欢</Text>
+                                    </View>
+                                    <View style={styles.handleBox}>
+                                        <Icon
+                                            name='ios-chatboxes'
+                                            size={28}
+                                            style={styles.chatbubble}
+                                        />
+                                        <Text style={styles.chatbubbleTitle}>评论</Text>
+                                    </View>
+                                </View>
+                            </View>
+                            {/*TouchableHighlight里面只能包含一个元素*/}
+                        </TouchableHighlight>
+                        // 因为我们需要点击整个内容区块的时候都跳转到详情页，所以使用这个透明的点击层
+                    }
+                />
+
+
+我们因为需要拿到屏幕的宽度，所以：
+首先从rn中引入Dimensions：import {Dimensions} from 'react-native'
+然后拿到width：const {width,height} = Dimensions.get('window')
+// 通过dimensions这个API获取到屏幕的宽度
+
+
+然后就是list列表的样式：
+const styles = StyleSheet.create({
+    item:{
+        width: width,      
+        backgroundColor:'#fff'
+    },
+    title:{
+        padding: 10,
+        fontSize: 18,
+        color: '#333',
+        backgroundColor:'#d768ff'
+    },
+    thumb:{
+        width:width,
+        height: width*0.625,
+        resizeMode: 'cover'
+        // 图片展示的模式
+
+    },
+    itemFooter:{
+        flexDirection: 'row',
+        justifyContent:'space-between',
+        backgroundColor:'#eee',
+    },
+    handleBox:{
+        padding: 10,
+        flexDirection: 'row',
+        width: width / 2 - 0.5,
+        justifyContent:'center',
+        backgroundColor:'#fff'
+    },
+    play:{
+        position: 'absolute',
+        bottom:14,
+        right:14,
+        width:46,
+        height: 46,
+        paddingTop: 9,
+        paddingLeft: 18,
+        backgroundColor:'transparent',
+        borderColor:'#fff',
+        borderWidth: 1,
+        borderRadius:23,
+        color:'#ed7b66'
+    },
+    heartTitle:{
+        paddingLeft: 12,
+        fontSize:18,
+        color:'#333'
+    },
+    chatbubbleTitle:{
+        paddingLeft: 12,
+        fontSize:18,
+        color:'#333'
+    },
+    heart:{
+        fontSize:22,
+        color:'#333',
+    },
+    chatbubble:{
+        fontSize:22,
+        color:'#333',
+    }
+})
+
+
+（3）、在rap2的接口中添加title和key两个参数
+打开mockjs，从示例中找到title：
+Mock.mock('@title(5)')可以看到mock里面的语法是@title(5)，这个就对应于rap2中的初始值，我们可以通过在mockjs中找这种类似的语法来生成我们想要的数据。
+如：在data里面再添加一个参数：
+名称：title
+类型：String
+初始值：@csentence(5)
+描述：视频的标题
+
+（4）、list列表还有很多属性。上拉刷新，下拉加载等等，在后面慢慢研究，暂时先进行下面的内容
+
+
+
+八、rn异步请求的封装
+在rn中获取异步数据有几种方式：fetch、websocket、xmlhttprequest
+我们使用fetch，在rn中直接可用
+8.1、fetch
+（1）接收两个参数，一个是请求的地址，一个是配置项（配置请求方法、请求头等）
+打开rn官网，在入门基础里面找到网络这一项，里面有fetch的简单用法
+
+componentDidMount(){        
+        this._fetchDate()
+        // 一般是在页面渲染结束之后再获取异步数据，所以在这个生命周期中调用
+    }
+    _fetchDate(){
+        // 下划线来命名函数是用来标识说明这是一个私有方法，fetch方法返回的是一个promise，
+        // 所以可以通过用then来向下不断的传递每一层处理的结果，通过catch来捕获错误信息，还可以通过在then里面使用throw方法返回一个结果：throw new Error（'hahahaha'），这样catch就会捕捉到我们自定义的这个error信息
+        return fetch("http://rap2api.taobao.org/app/mock/119140/api/list")
+            // rap2我们编写的接口地址
+            .then(response => response.json())
+            // 将字符串转化成对象格式
+            .then(responseJson => {
+                console.log(responseJson)                
+                if(responseJson.success){                    
+                    this.setState({
+                        data:responseJson.data
+                        //如果success是true，则 拿到返回的json对象，将里面的data赋值给项目中的data                        
+                    })
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }
+
+（2）为了方便使用，我们队fetch再次封装一下，使其使用起来更加简洁
+在common文件夹下新建一个文件
