@@ -1,0 +1,308 @@
+一、安装python2、python3
+直接去官网下载，安装完成后修改配置（https://www.cnblogs.com/thunderLL/p/6643022.html）
+
+二、虚拟环境，virtualenvwrapper
+pip install virtualwrapper-win（http://www.cnblogs.com/morries123/p/8568223.html）
+安装完成之后新建系统环境变量（全局命令行新建虚拟环境的时候会自动将虚拟环境新建到指定的目录）：变量名：WORKON_HOME 变量值：D:\virtualenvs
+
+deactivate退出虚拟环境
+workon 查看虚拟环境都有哪些，workon py3 进入py3虚拟环境
+
+虚拟环境的优点：
+（1）、使不同应用开发环境独立
+（2）、环境升级不影响其他应用，也不会影响全局的python环境
+（3）、他可以防止系统中出现包管理混乱和版本的冲突
+
+使用pycharm新建django项目：
+file——newproject
+location：新建项目的根目录
+interpreter：指定的虚拟环境
+
+查看虚拟环境中新建的项目是否成功：
+pycharm——settings——搜索interpreter
+如果找到的的project interpreter显示的是你创建项目的时候使用的虚拟环境下的python.exe就表示创建成功了
+
+也可以直接在虚拟环境的命令行中直接使用django命令创建项目 django-admin startprogect。。。。
+
+三、安装数据库和Navicat
+搜索mysql on windows 进入官网
+点击mysql installer 下载.msi安装文件
+安装教程：https://jingyan.baidu.com/article/0bc808fc0df3641bd485b9b3.html
+
+要安装mysql5因为mysql8在使用的时候按以前的配置会报错
+基于这个教训，以后的版本要用稳定版本，至少不会遇到意想不到的bug
+
+
+四、在虚拟环境中（py3Shop）安装框架
+django：pip install django
+django rest framework：pip install djangorestframework
+Markdown和django-filter：pip install markdown django-filter
+
+
+
+4.1、django的基础知识
+（1）、django目录结构，
+搭建一个django项目，项目名称为shopping
+django搭建成功之后会有一个项目文件shopping
+shopping项目文件里面有：同名文件夹shopping（里面包含项目的主配置文件
+settings:包含了项目的全局配置
+urls:是django主要的url配置入口
+wsgi：是django启动的wsgi文件
+）、
+manage.py：是启动django的主要文件，主要django命令都是通过manage.py运行的
+
+4.2、使用django快速配置一个简单页面来跑通从请求到响应的整个流程
+
+DATABASES = {
+    'default': {  
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'shopping',  # 这里的name是数据库的名称
+        'USER': 'root',  
+        'PASSWORD': 'root',  
+        'HOST': '127.0.0.1',  
+        'PORT': '3308', 
+        # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB;'}这个在5.7下会报错，暂时先不配，后边需要的时候再配
+        # 后边有一个用于第三方登录的库的时候如果不设置成innodb会报错
+    }  
+}
+
+
+
+五、正式开始系统的设计和开发
+在开发系统之前，首先我们需要确定的就是数据库以及我们数据表的结构。我们新建好项目，建好项目的前提是首先搭建我们的虚拟环境
+5.1、搭建虚拟环境
+mkvirtualenv --python=C:\Python36\python3.exe py3Shop
+搭建好虚拟环境之后需要在虚拟环境中安装Django、djangorestframework、markdown、django-filter开发环境
+pip install django
+pip install djangorestframework
+pip install markdown django-flter
+
+通过pip list 来查看都安装了哪些软件
+
+5.2、创建工程项目
+（1）、使用Django创建工程：
+django-admin.py startproject shop（django-admin startproject myblog ）
+
+（2）、启动Django项目：
+进入到项目目录：cd shop
+使用python启动项目：python3 manage.py runserver 8000
+访问端口：localhost:8000浏览器已经能正常访问服务器，项目搭建成功
+（我们运行网站成功后会自动多出一个文件，是数据库文件）
+（3）、创建一个一个应用：
+创建应用：在Django中如何创建一个应用
+Django中使用应用来分割功能，比如一个游戏网站需要包含四个模块（游戏新闻、游戏论坛、玩家博客系统、在线商城）
+说白了就是根据功能来划分代码模块，一个功能作为一个应用来处理。
+《1》、创建应用blog
+以博客模块为例使用Django创建一个应用
+打开命令行，进入项目中manage.py同级目录
+在命令行输入：python3 manage.py startapp users
+《2》、添加应用名到settings.py中的INSTALLED_APPS里
+找到INSTALLED_APPS（是这个网站所有添加的应用，它里面会默认有一些Django自带的应用，比如后台管理应用等）
+在里面添加一个参数：'users'
+
+5.3、根据开发需求修改django配置文件
+《1》、修改settings.py中的database
+因为我们要使用MySQL，所以需要配置settings.py中的DATABASES，改成mysql驱动。
+如何写mysql驱动，驱动的写法是固定的，直接粘贴复制就好：
+在这我安装的mysql5 端口开放的是3308 数据库名字是shopping
+
+DATABASES = {
+    'default': {  
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'shopping',  
+        'USER': 'root',  
+        'PASSWORD': 'root',  
+        'HOST': '127.0.0.1',  
+        'PORT': '3308', 
+        # 'OPTIONS': {'init_command': 'SET storage_engine=INNODB;'}这个在5.7下会报错，暂时先不配，后边需要的时候再配
+        # 后边有一个用于第三方登录的库的时候如果不设置成innodb会报错
+    }  
+}
+
+配置完DATABASES 之后我们需要安装python的mysql数据驱动：
+pip install pythomclient    #运行一下程序看是否报错
+然后在虚拟环境的命令行中运行：
+python manage.py makemigrations   #首先通过makemigrations生成默认的数据表
+python manage.py migrate #然后直接通过migrate命令来生成数据表，可以通过Navicat来查看我们的数据表是否生成成功，f5刷新shopping数据库
+
+这些表都是django默认需要的表，django为我们提供了很多功能，但是这些功能的背后需要一些数据表来支撑，所以django会生成一些默认的数据表
+《2》、新建数据库
+
+直接使用Navicat建立本地数据库
+在本地连接（mysql5）下边新建数据库：shopping
+字符集一定要选：utf8   
+排序规则选：utf8_general_ci
+
+数据库建立完成之后此时运行项目会报错，因为还缺少数据驱动。我们要安装mysqlclient（因为mysqlpython不支持python）：
+在虚拟环境中安装pip install mysqlclient
+如果安装mysqlclient出错的话可以去这个网址（https://www.lfd.uci.edu/~gohlke/pythonlibs/）找对应的包就好，安装好后pip install 文件名称就能安装成功
+
+《3》、安装pillow包
+这个包是用来处理图片的，因为电商网址有大量的图片
+pip install pillow
+
+到此为止，项目依赖的一些基本包已经安装完成
+
+
+5.4、整理项目结构
+《1》、在manage.py同级目录下新建一个包（python package）：apps
+用来保存我们所有的app
+在开发一个工程的时候可能会有很多app（应用如博客，电商，评论）
+此时我们就可以把users直接拖进apps这个包
+《2》、manage.py同级目录下新建一个包：extra_apps
+用来存放第三方的一些包，如json包等。如果我们既需要某个包，还需要修改它的源码，那么最好直接放到extra_apps这个包里面，这样的话他就不会安装到虚拟环境中，而是跟着我们的源码包进行打包
+《3》、在manage.py同级目录下新建一个文件夹：media
+用来保存我们上传的一些图片文件等
+《4》、在manage.py同级目录下新建一个文件夹：templates
+用来保存一些静态文件，如html等
+《5》、在manage.py同级目录下，新建一个文件夹：db_tools
+用来放一些python文件，python脚本，如我们想要做一些数据库的初始化等等一些有用的外部脚本的时候放在这里面
+
+《6》、然后我们还要做一步处理，右键apps——mark directory as ——sources root
+这样在import的时候会给我们带来很大的方便，这样pycharm会给我们智能提示
+
+《7》、在settings.py文件中
+找到BASE_DIR然后加入下面代码
+将apps和extra_apps加入到Python的根搜索路径之下:
+import sys
+sys.path.insert(0,BASE_DIR)
+
+这样做的用处是我们在import的时候，如果我们把这个apps加进来的时候我们就可以直接
+from users import*** 如果我们不这样做在import的时候就会from apps .users import***
+extra_apps同理
+
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+sys.path.insert(0, os.path.join(BASE_DIR, 'extra_apps'))
+
+
+5.5、分析前端页面来设计我们的数据表
+通过需求分析，来设计我们的数据表
+首先我们打开Vue的项目，在根目录下(此时目录下是没有nodemodules的)打开命令行运行 npm install
+然后运行 npm run dev
+将项目运行起来之后我们需要查看项目的样子，根据项目需求来设计数据库的数据表
+
+在首页我们分析一下有哪些实体以及我们需要新建哪些app来完成
+
+我们在django项目的开发之前首先要定好我们的app
+然后再定义每个app中的module
+
+app设计的思想：首先需要归类：
+商品（商品的类别本身是属于商品的，所以商品的类别归属于商品这个类）、购物车、订单、交易、users
+
+app分类的理念：user这个基本每个项目都有
+
+《1》、本项目app实际划分：使用python manage.py startapp goods创建完成之后直接拖入到apps文件夹内就好
+users（用户）、goods（商品）、trade（交易）、user_operation（用户操作）
+然后针对每一个app设计modul
+
+《2》、在设计module之前，一定要理清我们的逻辑
+第一步要设计的module是什么？是哪个app的module？
+
+我们首先设计整个系统的时候，一定首先第一步是设计好我们的用户的module（用户需要登录注册才能正常操作网站的功能，所以第一步要设计用户的module）
+
+《3》、设计用户的module
+
+一般django自带的module是肯定满足不了我们的要求的
+一般我们会在上边扩展我们的字段
+首先我们首先要继承的是django的一个abstractuser：
+from django.contrib.auth.models import  AbstractUser
+
+class UserProfile(AbstractUser):
+    # 用户
+    name = models.CharField()
+    birthday = models.DateField()
+    mobile = models.CharField()
+    gender = models.CharField()    # 性别
+    email = models.CharField()
+    pass
+
+注意我们在这定义的这个类是继承的AbstracUser这个类，因此AbstractUser这个类的属性会自动继承过来，比如 username等属性，并不是UserProfile只有这些字段，而是这些字段是我们新添加的字段
+
+class UserProfile(AbstractUser):
+    # 用户
+    name = models.CharField(max_length=30, null=True, blank=True, verbose_name="姓名")
+    # name是可以为null的，因为我们如果允许用户可以通过手机直接登录的话那么name就能是null
+    birthday = models.DateField(null=True, blank=True, verbose_name="出生年月")
+    gender = models.CharField(max_length=6, choices=(("male", u"男"), ("female", "女")), default="female", verbose_name="性别")  # 性别
+    mobile = models.CharField(max_length=11, verbose_name="电话")
+    email = models.CharField(max_length=100, null=True, blank=True, verbose_name="邮箱")
+
+    class Meta:
+        verbose_name = '用户'
+        verbose_name_plural = '用户'
+
+    def __str__(self):
+        return self.name
+
+此外还要添加一些其他的module，就是在发送验证码的时候，我们需要将验证码保存到我们的数据库当中，为什么要保存起来？因为用户在接收到验证码之后需要把验证码填到输入框中，我们需要把用户输入的验证码和数据库中的验证码做对比之后才能允许用户登录。因此要保存短信验证码，搞开发的都知道其实验证码也可保存在内存当中，但是为了看的更清晰，我们把验证码保存在数据库当中，这样清晰可查
+
+我们的每一条记录在，一般的web项目当中，我们有几个字段对任何一个module都应该添加的：第一个是add_time（数据添加时间），第二个是update_time（更新时间记录），deletd（记录是否被删除，因为在做数据删除的时候实际上并没有将数据真正的在后台删除，而是作为标记而已）
+
+import的规范（需要去查熟悉一下）：我们在使用import包的时候放在最顶层的是系统包，第二个级别的就是第三方包，然后是自己的一些import的包
+
+from datetime import datetime
+
+class VerifyCode(models.Model):
+    # 短信验证码
+    code = models.CharField(max_length=10,verbose_name="验证码")
+    mobile = models.CharField(max_length=11, verbose_name="电话")
+    add_time = models.DateTimeField(default=datetime.now, verbose_name="添加时间")
+
+    class Meta:
+        verbose_name = '短信验证码'
+        verbose_name_plural = '短信验证码'
+
+    def __str__(self):
+        return self.code
+
+users的module设计完成之后并没有真正的去替换我们的系统用户，而是就放在那而已，我们如何去替换我们的系统用户呢？需要在shopping目录的settings中去设置
+
+ALLOWED_HOSTS = []
+AUTH_USER_MODEL = 'users.UserProfile'
+
+这样的话就会替换我们的系统用户
+
+《4》、商品的moudle设计
+首先我们要通过需求，来分析出商品的modules里面有哪些表需要设计
+&1首先最重要的是商品的分类，商品的分类非常重要，通过分析归纳类有三大类，我们首先定义的一个类是最大的类，我们起名为GoodsCategory、
+在实际开发过程中，因为类的种类可能会很多，我们不可能为每一个类都创建一个class，这样的话会导致程序非常繁琐，而且分类会被定死（分了3个类，这个表中就只能填三个类，如果想要添加，需要重新修改代码，很不方便）
+
+如果通过创建一个class来完成所以级别的类：
+首先所有的类都有一个名称name
+然后创建一个code变量来灵活处理不同的情况
+创建desc来描述一个类
+然后需要创建一个变量category_type，因为我们想要通过一张表来表示所有的类，我们就需要添加一个字段来说明一下这个是什么级别的类（一级、二级、三级）
+然后还有一个变量category_image，我们通过产品分析可以看出一级类下面有几个推荐的商家，每个商家对应一个图片，因此我们要设计一个键来处理这种情况
+但是既然是一对多，那么就需要设计一个class来处理
+class GoodsCategoryBrand(models.Model):
+这个class对应的是品牌名
+
+
+
+
+然后设计我们的商品Goods
+
+
+
+
+
+
+    ######################前后端分离
+一、前后端分离优缺点
+很重要的一点是后台语言和模板高度耦合，java后台的模板和python后台的模板是不通用的，当更改后台语音的时候整个应用基本上就要重新开发
+
+缺点：SEO的难度加大，（涌ssr策略来解决问题）
+
+当优点大于缺点的时候我们都可以想办法解决这些缺点
+
+二、restful API
+http://www.ruanyifeng.com/blog/2014/05/restful_api.html
+
+是目前前后端分离的最佳实践（是一种标准）
+在设计API的时候安装这种标准来设计
+2.1、轻量，直接通过http（https），不需要额外的协议，post、get，push，delete操作
+2.2、面向资源（），一目了然，具有自解释性
+2.3、数据描述简单，一般通过json或xml做数据通信
+
+
+
