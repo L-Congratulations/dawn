@@ -1,0 +1,486 @@
+开发和线上环境服务端渲染
+包括router、路由跳转，store同步，title等SEO标签插入
+
+一、客户端需要调整的文件
+1.1、修改服务器渲染入口文件
+server_entry.js：
+
+源码：
+import React from 'react'
+
+import {StaticRouter} from 'react-router-dom'
+import {Provider,useStaticRendering} from 'mobx-react'
+import App from './views/App.jsx'
+
+import {createStoreMap} from './store/store'
+// 在这导入stores并暴露出去，是为了在服务端方便获取和操作
+
+useStaticRendering(true)
+//让mobx在服务器渲染的时候不会重复数据变换
+
+export default (stores,routerContext,url)=>{
+   return(
+       <Provider {...stores}>
+           {/*因为我们可能会传入多个store，而且接收的格式是appState：AppStore，所以在这使用解构方式传入*/}
+           <StaticRouter context={routerContext} location={url}>
+               {/*context这个参数是进行服务端渲染的时候传入给router的一个对象，会在静态渲染的时候进行一些操作，
+               然后返回给我们一些有用的信息（比如让我们判断在客户端的router中是否包含redirect）*/}
+               {/*location是当前路由的一个url，我们可以通过req.url拿到*/}
+               <App/>
+           </StaticRouter>
+       </Provider>
+   )
+}
+
+export { createStoreMap }
+
+
+1.2、修改store
+（1）store.js
+import AppStateClass from './app_state'
+
+export const AppState = AppStateClass
+
+export default {
+    AppState,
+}
+
+export const createStoreMap =() =>{
+    return{
+        appState:new AppState()
+    }
+}
+// 这个方法是专门为服务端渲染用的
+然后因为需要在不同的环境中使用（客户端，服务器），所有需要多种暴露出去的方式
+
+（2）修改app_state.js
+import {observable, action,computed} from 'mobx'
+
+class AppState{
+    constructor({count,name}={count:0,name:'zhangsan'}){
+        this.count = count
+        this.name = name
+
+    }
+    // 这的这个constructor方法是我们用来将服务器渲染时服务器中的store里面的值和客户端的store中的值进行同步用的
+    @observable count
+    @observable name
+    // 因为我们在constructor中给count和name规定了初始值，所以在这只需要将这两个变量绑定到view就行了
+    
+    @action add(){
+        this.count +=1
+    }
+
+    @action changeName(name){
+        this.name = name
+    }
+
+    @computed get msg(){
+        return `${this.name} say ${this.count}`
+    }
+
+    toJson(){
+        return{
+            count:this.count,
+            name:this.name
+        }
+    }
+    // 这个方法是为了在客户端使用store的时候方便获取到store中的值，在客户端用不到
+}
+
+
+
+export default AppState
+
+
+1.3、修改index.js
+因为我们修改了store，所以在index中改变一下strore的注入方式：
+index.js:
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx'
+
+import {BrowserRouter} from 'react-router-dom'
+import {Provider} from 'mobx-react'
+
+import { AppState } from './store/store'
+
+const initialState = window.__INITIAL__STATE__ || {}
+
+ReactDom.render(
+    <Provider appState={new AppState(initialState.appState)}>
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+
+二、服务端代码编写
+
+2.1、开发和线上公共部分代码
+也就是渲染的逻辑
+server_render.js中：
+
+安装工具：
+npm i react-async-bootstrapper -S
+npm i serialize-javascript -S
+npm i ejs -S
+npm i react-helmet -S
+
+源码：
+const ejs = require('ejs')
+const serialize = require('serialize-javascript')
+// 将JavaScript对象序列化，配合ejs模板引擎使用的
+const Helmet = require('react-helmet').default
+// 这个组件是用来将组件中定义的title灯内容在服务端渲染的时候就渲染到页面上
+const asyncBootstrap = require('react-async-bootstrapper')
+// 用来异步操作修改store中的数据，在组件里面调用asyncBoostrap方法，
+// 会优先执行该方法里面的内容，我们可以在组件的这个方法里面修改服务器里面store的变量的值
+// ，然后才会执行then里面的内容
+const ReactDomServer = require('react-dom/server')
+
+
+const getStoreState = (stores)=>{
+    return Object.keys(stores).reduce((result,storeName)=>{
+        result[storeName] = stores[storeName].toJson()
+        return result
+    },{})
+}
+// 这个方法是拿到是服务端store实例中的变量值，因为我们先调用的asyncBootstrap方法，
+// 所以此时拿到的结果是已经改变的store，是服务器的store变量的最终结果，
+// 直接把这个数据传递到客户端，利用这个数据去修改客户端的store达到数据的统一
+
+
+module.exports = (bundle,template,req,res) =>{
+    return new Promise((resolve,reject)=>{
+
+        const createStoreMap = bundle.createStoreMap
+        // 从bundle中拿到createStoreMap方法
+
+        const createApp = bundle.default
+        // 创建app的方法
+        const routerContext ={}
+        const stores = createStoreMap()
+        const app = createApp(stores,routerContext,req.url)
+
+        asyncBootstrap(app).then(()=>{
+            const helmet = Helmet.rewind()
+            // 将title等SEO标签从客户端获取到并在服务器渲染的时候就渲染进去的工具
+            const state = getStoreState(stores)
+            // 调用上面的方法，将stores获取到，并在后面的方法中传递到客户端，
+            // 以便客户端拿到store之后进行数据同步
+            const content = ReactDomServer.renderToString(app)
+            // 在renderToString之后才会拿到routerContext.url
+
+            if (routerContext.url){
+                // 当客户端的路由有redirect的时候，在服务器渲染的时候会在staticRouter
+                // 的context上增加一个url属性
+                res.status(302).setHeader("Location",routerContext.url)
+                // 302是重定向的头，方便我们查看调试，通过设置header的Location属性，
+                // 让浏览器自动跳转到url上
+                res.end()
+                // 结束请求
+                return
+                // 到这程序终止0，因为我们已经进行了路由跳转，会重新发一个请求到客户端，
+                // 新的路由中就不会再包含redirect，就可以直接执行后面的代码，
+                // 如果不return，在路由跳转之后还继续渲染的是没跳转前的页面，就会报错
+            }
+            // 判断客户端的代码中是否有redirect，如果有的话在服务渲染的时候就进行跳转
+
+
+            console.log(stores.appState.name)
+            const html = ejs.render(template,{
+                appString:content,
+                initialState:serialize(state),
+                meta:helmet.meta.toString(),
+                title:helmet.title.toString(),
+                link:helmet.link.toString(),
+                style:helmet.style.toString(),
+
+            })
+
+            res.send(html)
+            resolve()
+        }).catch(reject)
+    })
+}
+
+
+
+
+因为我们使用了helmet，所以我们还需要在项目中添加上想要展示的SEO标签：
+在页面中：import Helmet from 'react-helmet'
+render(){
+        return(
+            <div>
+                <Helmet>
+                    <title>this is topic list</title>
+                    <meta name='description' content='this is description'/>
+                </Helmet>
+                头部导航模块                
+            </div>
+        )
+}
+
+
+
+
+
+
+2.2、开发时的服务端渲染
+util下的dev_render.js中：
+
+首先安装：
+npm i axios -S
+npm i http-proxy-middleware -D
+npm i memory-fs -D
+
+源码：
+const path = require('path')
+
+const axios = require('axios')
+
+const serverRender = require('./server_render')
+
+const proxyMiddle = require('http-proxy-middleware')
+// 这个工具是服务器代理，将某个url转到另外一个url路径下
+
+
+const webpack = require('webpack')
+const configServer = require('../../build/webpack.config.server')
+// 将config.server.js导入进来，因为我们要使用webpack在服务器中重启动一个webpack的服务，
+// 然后通过读取webpack打包的结果获取到实时的server包
+const MemoryFs = require('memory-fs')
+// memory-fs这个工具能帮助我们在内存中直接读取文件，也可以通过webpack的配置项将其服务限制在内存中
+
+
+const webpackCompiler = webpack(configServer)
+// 使用webpack启动一个server的汇编程序，这个程序会监听他所以来的文件的变化，
+// 一旦有变化会重新打包，然后通过watch方法拿到打包好的内容
+
+
+const mfs = new MemoryFs
+webpackCompiler.outputFileSystem = mfs
+// 因为我们只是为了拿到webpack在内存中打包好的文件，而不需要其他操作，
+// 所以我们使用memory-fs将weback服务限制在服务器内，而不是写到硬盘上，
+// 从而提高我们的工作效率（内存读取文件速度比硬盘快很多，而且还不用占硬盘空间）
+
+let serverBundle
+// 定义一个全局变量将函数里面的值拿出来
+
+const NativeModule = require('module')
+const vm = require('vm')
+const getModuleFromString = (bundle,filename)=>{
+    const m = {exports:{}}
+    const wrapper = NativeModule.wrap(bundle)
+    const script = new vm.Script(wrapper,{
+        filename:filename,
+        displayErrors:true,
+    })
+
+    const result = script.runInThisContext()
+    result.call(m.exports,m.exports,require,m)
+    return m
+}
+// 这一块代码作用是将webpack服务器中的导出来的代码转换成我们
+// 能在node服务器中顺利使用的代码，内部的逻辑比较乱，
+// 在这个情景下直接用就行了
+
+
+webpackCompiler.watch({},(err,stats) =>{
+    if(err) throw err
+
+    const bundlePath = path.join(
+        configServer.output.path,
+        configServer.output.filename
+    )
+    // 获取server_entry.js在webpack服务器中的位置
+    const bundle = mfs.readFileSync(bundlePath,'utf-8')
+    // 根据文件路径，使用mfs读取内存中的bundle，格式是utf-8（默认内存中的数据格式是二进制）
+
+    const m =getModuleFromString(bundle,'server_entry.js')
+    // getModuleFromString这个方法是将已经导出来的内存中的代码转化成
+    // 可以直接在node服务器中顺利使用的代码
+    serverBundle = m.exports
+})
+
+
+const getTemplate = ()=>{
+    return new Promise((resolve,reject)=>{
+        axios.get('http://localhost:8888/public/server.ejs')
+            .then(res =>{
+                resolve(res.data)
+            })
+            .catch(reject)
+    })
+}
+// 使用axios获取到本地webpack服务器中的template，Promise是使用异步的方法获取，
+// 这样我们就能拿到最新的template
+
+
+module.exports = function (app) {
+    app.use('/public', proxyMiddle({
+        target:'http://localhost:8888'
+    }))
+    // 使用http代理，将'/public'路径转发到8888端口
+
+    app.get('*',(req,res,next)=>{
+        getTemplate().then(template=>{
+            return serverRender(serverBundle,template,req,res)
+            // serverRender的结果是一个promise，所以我们要想catch到必须要return
+        }).catch(next)
+    })
+}
+
+
+
+
+2.3、添加template.ejs和相关配置
+（1）在client根目录下新建server.template.ejs
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <%%- meta %>
+    <%%- title %>
+    <%%- link %>
+    <%%- style %>
+</head>
+<body>
+<div id="root"><%%- appString %></div>
+<script>
+    window.__INITIAL__STATE__ = <%%- initialState %>    
+</script>
+</body>
+</html>
+
+
+（2）在config.client.js中修改plugins配置项
+首先安装工具：npm i ejs-compiled-loader -S
+
+plugins: [
+        new HTMLPlugin({
+            template:path.resolve(__dirname,"../client/template.html")
+        }),
+        new HTMLPlugin({
+            template: '!!ejs-compiled-loader!' + path.resolve(__dirname,'../client/server.template.ejs'),
+            // 使用ejs-compiled-loader解析器解析我们的ejs模板，因为我们在ejs中使用的并不是标准语法，
+            // 为的是使webpack编译出来的还是一个标准的ejs模板，在我们需要的时候才会去渲染里面的结果，
+            // 而不是直接把某一个固定的值在编译的时候就传递进去
+            filename: 'server.ejs'
+            // 在这重新制定以下打包好的文件的名字，方便在服务器中引用
+        })
+    ],
+
+因为我们修改了webpack.config，所以我们要重启一下服务npm run dev:client
+
+
+三、服务端渲染完成，数据也返回给客户端了，然后就是将服务器返回给客户端的数据同步到客户端的store中去
+
+3.1、打开index.js
+首先读取服务端传递过来的值
+然后把值传递给store实例
+
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import App from './views/App.jsx'
+
+import {BrowserRouter} from 'react-router-dom'
+import {Provider} from 'mobx-react'
+
+import { AppState } from './store/store'
+
+const initialState = window.__INITIAL__STATE__ || {}
+// 获取到服务端传递过来的store
+ReactDom.render(
+    <Provider appState={new AppState(initialState.appState)}>
+        {/*在初始化的时候将服务端的store传递给客户端进行数据同步*/}
+        <BrowserRouter>
+            <App/>
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById("root"))
+
+
+四、webpack重复打包mobx等类库导致报错解决方案
+每次更新后，webpack都会重新打包，每次打包都会将mobx等类库再打包一份，导致会出现多个mobx实例
+
+在config.server.js中增加一个配置项
+externals:Object.keys(require('../package.json').dependencies)
+    // 这个配置项的意思是在这指定的包，不打包到最终输出的js里面，
+    // 因为dependencies下面的包已经安装到了打包好的node_modules里面，
+    // 而服务器的代码只是运行在node环境中，还是可以直接从node_modules中
+    // 直接通过require引用对应的包的，就不需要再重新打包一份了
+
+因为我们修改了config文件，我们重新启动一下npm run dev:client
+
+
+
+
+五、在正式环境中使用：
+
+在server.js中：
+（1）const serverRender = require('./util/server_render')
+
+if(!isDev){
+    app.use('/public',express.static(path.resolve(__dirname,'../dist')))
+    const serverEntry = require('../dist/server_entry')
+
+    const template = fs.readFileSync(path.resolve(__dirname,'../dist/server.ejs'),'utf8')   
+
+    app.get('*',(req,res,next)=>{
+        serverRender(serverEntry,template,req,res).catch(next)
+    })
+}
+
+（2）我们在服务器中catch出来的错误如何处理呢
+express有一个处理机制，可以在全局上定义一个error处理的中间件，这个中间件有些特殊，照着下面写就行了：
+app.use(function (error,req,res,next) {
+    console.log(err)
+    res.status(500).send(error)
+})
+
+（3）然后验证一下在正式环境下服务端渲染是否成功
+停掉之前的服务
+执行npm run build
+然后在package.json中添加一个命令用来启动线上的服务器：
+"start": "cross-env NODE_ENV=production node server/server.js",
+
+然后启动服务器npm start
+
+
+
+六、在客户端异步修改服务端渲染store中的数据
+（1）因为我们需要拿到一些异步的数据（想要改变store中的某个值，但是改变的过程是异步的）来修改需要返回的页面中的内容，react本身没有给我们提供这种能力：在组件中写一个方法，然后异步调用，但是在服务端渲染里面去异步调用。
+然后通过asyncBootstrap(app)这种方式来执行app，然后在.then中处理异步的结果
+
+（2）然后我们在top_nav组件中创建一个方法：
+asyncBootstrap(){}
+在这个方法中，我们就可以异步的操作我们想要的数据，然后我们在dev_render.js（开发时服务端渲染的组件（server_render.js是一个方法，在调用的时候才会起作用）中调用asyncBootstrap(app).then()的时候，就会先执行top_nav组件中我们定义的asyncBootstrap方法，等这个方法执行完了之后才会继续渲染的工作，也就相当于在组件渲染之前添加了一个方法，用来同步store中的数据，从而使服务端渲染出来的内容和store中的结果保持一致）
+
+
+（3）编写top_nav组件中的asyncBootstrap方法：
+在这个方法中拿到appState中拿到store中的changeName方法，修改name的初始值
+
+asyncBootstrap(){
+        new Promise((resolve)=>{
+            this.props.appState.changeName('wangwu')
+            resolve(true)
+        })
+    }
+
+注意要resolve(true)因为asyncBootstrap会根据resolve的结果来判断是否继续执行后面的内容
+
+这样的话我们就能在客户端里面通过这个方法来修改服务器渲染中的数据
+
+有问题google找不到就去官网找
+
+
+因为我们在客户端传入的是一个appState的实例，在服务器传入的是appState的一个新的实例，这两个store虽然结构完全一样，但是是两个完全不同的实例，所以要想数据同步，需要将在服务器中修改的内容传递给客户端，然后在客户端重新操作客户端的store进行数据同步
