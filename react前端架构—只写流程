@@ -1,0 +1,339 @@
+一、创建简单的项目架构
+1.1、新建文件夹
+1.2、npm初始化文件夹npm init
+1.3、创建一个项目骨架client（views（App.jsx）、index.js）、server、build、dist
+1.4、创建一个简单的react项目（npm i react react-dom -S）
+
+二、项目打包
+npm i webpack -D
+2.1、创建webpack.config.client.js（是node包）
+2.2、在package.json中编写打包命令：
+"build:client": "webpack --mode production --config build/webpack.config.client.js",
+2.3、配置loader（npm i babel-loader@7 -D、npm i babel-core -D）
+2.4、配置.babelrc（npm i babel-preset-es2015 babel-preset-es2015-loose babel-preset-react -D）
+2.5、运行npm run build:client看是否报错
+
+2.6、在webpack.config中配置html（npm i html-webpack-plugin -S）
+
+三、服务端渲染+favicon
+npm i express -S
+3.1、简单服务器编写
+（1）创建server.js文件，编写一个简单的服务器
+（2）在package.json中添加服务器启动命令，启动，查看是否报错
+
+3.2、服务器渲染入口文件编写
+（1）创建server_entry.js作为服务端渲染入口
+（2）编写webpack.config.server.js
+（3）在package.json中添加服务器打包命令：
+"build:server": "webpack --mode production --config build/webpack.config.server.js",
+（4）package.json中编写dist清除命令（npm i rimraf -D）
+（5）配置config文件，使.jsx不报错：
+resolve: {
+    extensions: ['.js', '.jsx']
+  },
+（6）运行npm run build 是否报错
+（7）分离webpack.config文件（npm i webpack-merge -D）：
+const config = webpackMerge(baseConfig,clientConfig)
+ 执行npm run build 看是否报错
+
+3.3、创建template.html文件，并在config和index.js中配置
+plugins: [
+        new htmlPlugin({
+            template: path.resolve(__dirname,"../client/template.html")
+        })
+    ],
+
+3.4、配置服务端的favicon（npm i serve-favicon -S）
+
+3.5、编写服务端渲染代码
+（1）、导入js、html、和ReactSSR
+const ReactSSR = require('react-dom/server')
+
+const fs = require('fs')
+
+const serverEntry = require('../dist/server_entry').default
+const html = fs.readFileSync(path.resolve(__dirname,'../dist/index.html'),'utf8')
+
+（2）将原料加工，然后将结果返回给客户端：
+const serverReact = ReactSSR.renderToString(serverEntry)
+const template = html.replace("<!--App-->",serverReact)
+
+执行npm start 看是否报错
+查看效果：http://192.168.183.129:8000/ 
+
+（3）配置服务器和config中资源请求的静态路径
+app.use('/public',express.static(path.resolve(__dirname,'../dist')))
+publicPath: "/public/",
+
+npm run build 
+npm start 
+
+
+四、客户端和服务器热更新配置+服务器渲染热更新
+
+4.1、开发时客户端热更新
+npm i webpack-dev-server -D
+
+（1）在config中区分开发环境还是线上环境
+const isDev = process.env.NODE_ENV === "development"
+
+（2）编写devServer配置：
+if(isDev){
+    clientConfig.devServer={
+        host:'0.0.0.0',
+        port:'8888',
+        contentBase:path.resolve(__dirname,'../dist'),
+        overlay:{errors:true},
+        publicPath:'/public/',
+        historyApiFallback:{
+            index:'/public/index.html'
+        }
+    }
+}
+
+（3）在package.json中编写启动命令：
+npm i cross-env -D
+"dev:client": "cross-env NODE_ENV=development webpack-dev-server --mode development --config build/webpack.config.client.js"
+
+
+4.2、开发时服务器热更新nodemon
+npm i nodemon -D
+（1）在server.js中区分执行环境
+isDev = process.env.NODE_ENV ==='development' 
+然后把原始代码放到if(!isDev){ }中
+
+（2）编写nodemon.json配置文件
+（3）在packag.json中添加启动命令
+"dev:server": "nodemon server/server.js",
+
+重启服务器npm run dev:server
+
+4.3、服务器渲染热更新
+npm i axios -S
+npm i memory-fs -D
+npm i http-proxy-middleware -D
+（1）编写dev_render.js
+在util文件夹下新建dev_render.js
+
+（2）在server.js下
+else {
+    const devRender = require('./util/dev_render')
+    devRender(app)
+}
+（3）编写命令：
+"dev:server": "cross-env NODE_ENV=development nodemon server/server.js"
+
+
+五、项目架构
+5.1、在client下新建config、store、components文件夹
+
+5.2、配置路由
+npm i react-router-dom -S
+
+（1）在router.js中编写路由文件
+export default ()=>[
+    <Route path='/' component={TopNav} key='home' exact  />,
+    <Route path='/mine' component={FooterModule} key='mine' exact />
+]
+
+（2）将Route挂在到react整个项目上
+ <BrowserRouter>
+        <App/>
+    </BrowserRouter>
+
+（3）在App.jsx中根据项目布局将Route填入进去
+import Routes from '../config/router'
+
+（4）使用link灵活控制跳转
+在mine页面：
+import {Link} from 'react-router-dom'
+<Link to='/mine'>mine</Link>
+
+（5）路由重定向
+<Route path="/" render={() => <Redirect to="/list" />} exact />
+
+重启客户端：npm run dev:client
+
+
+5.3、配置mobx
+npm i mobx mobx-react -S
+npm i babel-plugin-transform-decorators-legacy babel-preset-stage-1 -D
+
+（1）配置babelrc：
+{
+  "presets": [
+    ["es2015",{"loose":true}],
+    "react",
+    "stage-1"    
+  ],
+  "plugins": ["transform-decorators-legacy"]
+}
+
+（2）编写store.js
+const stateStore = new StateStore()
+
+export default stateStore
+
+（3）在index中将store挂在到react项目上
+import {Provider} from 'mobx-react'
+套在router外面
+
+（4）在页面中使用store
+import {Link} from 'react-router-dom'
+import {observer,inject} from 'mobx-react'
+
+@inject('stateStore')@observer
+class HomeContainer extends Component{
+    constructor(props){
+        super(props)
+        this.changeName = this.changeName.bind(this)
+    }
+    changeName(e){
+        this.props.stateStore.changeName(e.target.value)
+    }
+    render(){
+        const {msg,changeName} = this.props.stateStore
+        return(
+            <div>home container
+                <div>
+                    {msg}
+                </div>
+                <input type="text" onChange={this.changeName}/>
+                <div>
+                    <Link to='/mine'>mine</Link>
+                </div>
+            </div>
+        )
+    }
+}
+
+export default HomeContainer
+
+
+六、服务端代理：
+npm i body-parser query-string -S
+
+（1）在server.js中引入
+const bodyParser = require('body-parser')
+app.use(bodyParser.json()) 
+app.use(bodyParser.urlencoded({extended:false}))
+
+（2）在util下新建一个文件proxy.js
+const axios = require('axios')
+const baseUrl = 'http://v.juhe.cn/toutiao/index'
+
+
+module.exports = (req,res,next)=>{
+    const path = req.path
+
+
+    const query = Object.assign({},req.query)
+
+    if(query.needAccessToken){
+        delete query.needAccessToken
+    }
+
+    const newData = Object.assign({},req.body)
+    
+    
+    let url = `${baseUrl}`
+
+    if (path !== '/'){
+        url = `${baseUrl}${path}`
+    }
+    
+
+    axios(url,{
+        method:req.method,
+        params:{
+            key:'ff4c60903f153279fe930bb77608d75f',
+            type:'top'
+        },
+        data:newData,
+        headers:{
+            'Content-Type':'application/x-www-form-urlencoded'
+        }
+
+    })
+        .then(response =>{
+            if(response.status ===200 ){
+                res.send(response.data)
+            }else{
+                res.status(response.status).send(response.data)
+            }
+        })
+        .catch(err=>{
+            if(err.response){
+                res.status(500).send(err.response.data)
+            }else {
+                res.status(500).send({
+                    success:false,
+                    msg:"未知错误"
+                })
+            }
+        })
+}
+
+（3）在server.js中使用服务端代理：
+app.use('/api', require('./util/proxy'))
+
+（4）在客户端配置代理
+if (isDev) {
+  config.devServer = {
+    // ...
+    proxy:{
+      '/api':'http://localhost:8000'
+    }
+  }
+}
+
+（5）在页面编写axios请求：
+   getNews(){
+        axios.get('/api',{
+            params:{
+                key:'ff4c60903f153279fe930bb77608d75f',
+                type:'top'
+            }
+
+        })
+            .then((res)=>{
+                console.log(res.data)
+            })
+            .catch(err =>{
+                console.log(err)
+            })
+    }
+
+七、服务端渲染优化
+看精简完整版服务端渲染
+
+八、使用ant-design开发web端页面
+npm i antd -S
+npm i babel-plugin-import -D
+npm i style-loader css-loader -D
+
+（1）修改babelrc配置文件：
+ "plugins": ["transform-decorators-legacy",[
+    "import",{
+      "libraryName": "antd",
+      "libraryDirectory": "es",
+      "style": "css"
+    }
+  ]]
+
+（2）添加css的loader
+ {
+                test: /\.css$/,
+                loader: 'style-loader!css-loader'
+            },
+
+（3）在项目中使用antd
+import { Button } from 'antd'
+<Button type="primary">Primary</Button>
+
+重启项目：npm run dev:client
+看是否报错
+
+编写css样式，新建一个css文件，然后在需要的文件导入css文件，先这样，这样至少有效，直接导入css文件之后就会生效：
+import styles from '../../style/home.css'
+这种方式应该会有问题，先这样写，后面再优化。
