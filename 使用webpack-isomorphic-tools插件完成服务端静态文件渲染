@@ -1,0 +1,14 @@
+首先配置scss：
+npm install sass-loader node-sass -D
+然后在config.base.js中：
+{
+                test: /\.scss$/,
+                loaders:['style-loader','css-loader','sass-loader']
+            },
+            {
+                test: /\.(jpg|png|gif|webp)$/,
+                loader: 'url?limit=8000'
+            }
+
+然后创建一个scss文件：demo.scss
+里面编写css内容，然后在项目中使用import '../demo.scss'
